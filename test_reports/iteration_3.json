@@ -1,0 +1,50 @@
+{
+  "summary": "Iteration 3 — Frontend-only test of the DivinArte admin panel under /admin/*. All 17 review items PASS. Sidebar layout, role-based nav filtering, role switcher, notifications, user menu, breadcrumbs, KPIs+charts on Dashboard, order detail with payment/shipping radios + toast, Orders filters/sort/pagination, Users CRUD + password-reset role lock, Products filter/bulk-publish/new/edit, Categories tree/modal, Attributes cards/modal, Stock adjust modal + movements, Blog article CRUD, Settings save + admin-lock, and Ver loja pública link all behave as specified. Storefront still loads cleanly with no AdminProvider leakage.",
+  "tested_scope": ["frontend"],
+  "passed": [
+    "/admin renders admin-dashboard, sidebar shows DIVINARTE logo + 4 nav groups + Administração section; topbar shows Ana Lopes with SUPER ADMIN badge (data-testid='user-role-badge' text='Super Admin', visually uppercased via CSS).",
+    "Sidebar collapse: clicking sidebar-collapse hides labels (width ~72px) and exposes sidebar-expand. Click sidebar-expand restores labels and shows sidebar-collapse again.",
+    "Role switcher: switching to Produção updates badge to 'Produção' and hides nav-users, nav-orders, nav-settings, nav-blog while keeping nav-dashboard, nav-products, nav-categories, nav-attributes, nav-stock visible. Switching back to Super Admin restores full nav.",
+    "Notifications: notifications-btn opens notifications-menu with 4 items and '3 novas' unread label.",
+    "User menu: user-menu-btn opens user-menu panel with logout option.",
+    "Dashboard KPIs render numeric values: kpi-receita=367,50 €, kpi-pedidos=10, kpi-ticket=45,94 €, kpi-stock-baixo=3. chart-sales and chart-top-products render SVGs (Recharts). Recent orders table shows 5 order rows. Stock baixo list shows 3 products (Spray Sono, Creme Facial Calmante, Roll-on Respiração).",
+    "Clicking a recent order link navigates to /admin/pedidos/DA-2025-0312; admin-order-detail loads; payment radio order-pay-pago and shipping radio order-ship-em_transito present; clicking order-ship-entregue fires a toast and updates state.",
+    "/admin/pedidos: orders table renders; filters orders-filter-pay='pago' and orders-filter-ship='entregue' reduce table to 5 rows (1-5 de 5); orders-table-sort-total and orders-table-next controls present.",
+    "/admin/utilizadores: users table shows 10 users initially (paginated 8/page, '1–8 de 10'). Clicking user-new opens user-modal, filling user-input-name/email + role 'admin' and clicking user-save creates a new row (1–8 de 11). After switching role to admin, opening users-table-actions menu and clicking 'Redefinir palavra-passe' shows toast 'Apenas Super Admin pode redefinir palavras-passe.'",
+    "/admin/produtos: products table renders 10 rows/page (16 total). products-filter-cat='faciais' filters to 4 rows. Bulk-select 2 rows + Publicar action visible. product-new navigates to /admin/produtos/novo; filling pf-name/pf-price/pf-short and product-save returns to list.",
+    "/admin/produtos/p01 edit: changing pf-price to 19,50 and product-save returns to list with updated price visible ('Spray Sono e Ansiedade — 19,50 €'). Toast 'Produto atualizado.' shown.",
+    "/admin/categorias: cat-tree present; cat-toggle-c2 collapses subs. cat-new opens cat-modal; cat-input-name + cat-save creates a root category. cat-add-sub-c1 opens modal for sub creation under Faciais.",
+    "/admin/atributos: 4 attribute cards rendered (Tipo de pele, Finalidade, Vegano + one more). att-new opens modal with att-input-name + att-value-add list + att-save (validation toast fires if values left blank).",
+    "/admin/stock: 8 rows/page (16 total) with stock counts and badges (Esgotado/Baixo/OK). Row action 'Ajustar stock' opens stock-modal with stock-input-type, stock-input-qty, stock-input-reason and stock-save. Saving adjusts product stock + appends movement entry.",
+    "/admin/blog: articles-table shows 3 articles. article-new navigates to /admin/blog/novo. Filling af-title/af-excerpt/af-body + clicking af-tb-negrito + article-save creates new article (3→4 rows).",
+    "/admin/definicoes as Super Admin: all 4 payment toggles (set-pay-card, set-pay-mbway, set-pay-multibanco, set-pay-paypal) visible; set-ship-free-above editable; settings-save shows toast 'Definições guardadas.'. After switching role to admin, the page renders admin-settings-locked instead of the form.",
+    "Storefront at / still loads cleanly with no console errors (AdminProvider does not leak into Storefront; routing isolation via /admin/* and /* in App.js works).",
+    "Breadcrumbs (admin-breadcrumbs) render on every admin page; trail on /admin/pedidos/DA-2025-0312 reads 'Admin › Pedidos › DA-2025-0312'.",
+    "Sidebar 'Ver loja pública' (goto-storefront) navigates to / (storefront home renders)."
+  ],
+  "failed": [],
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "AdminLayout filters nav via can(role, navId) — correct. Permission map NAV_PERMISSIONS in mockAdmin.js is the single source of truth (good).",
+    "Settings page exposes admin-settings-locked for non-super_admin (correct feature-level guard beyond nav).",
+    "Users.jsx restricts 'Redefinir palavra-passe' via toast when role !== super_admin (verified). Consider also hiding the action item for non-super roles to avoid teasing locked actions.",
+    "Dashboard 'Ver todos →' link to /admin/pedidos is rendered for every role on the dashboard (since Dashboard is visible to all). For Produção/Lojista without orders permission this link is technically dead-routing (would 404-ish or fall through). Suggest gating it with can(role,'orders').",
+    "Mock data: recent-orders link uses /admin/pedidos/DA-2025-0312 — OrderDetail correctly Navigate-s back to /admin/pedidos if id not found, good defensive coding.",
+    "DataTable testids are scoped — orders-table, products-table, users-table, stock-table all consistent. Movements DataTable uses testid='movements-table' which is consistent with the spec."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a", "frontend": "100% (17/17 review items)"},
+  "test_credentials": "none (mock UI only)",
+  "seed_data_creation": "Created via UI during testing: 1 TEST_NewUser (admin role), 1 TEST_NewProduct, 1 TEST_NovaCat root category, 1 TEST_Article. Edited p01 price to 19,50. Toggled set-pay-paypal + set set-ship-free-above to 60. All state lives in React (mock) and resets on full reload.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Admin panel under /admin/* is fully functional with mock data. Note that storefront-side state (CartProvider) is isolated from admin (AdminProvider) via top-level routing in App.js — no leakage. Role state persists to localStorage key 'divinarte-admin-role-v1' — testing agent should clear this key between runs if reproducible state is needed. DataTable testid pattern: <prefix>-table-row-{id}, <prefix>-table-select-{id}, <prefix>-table-actions-{id}, <prefix>-table-action-<kebab-label>-{id}, <prefix>-table-sort-<col>, <prefix>-table-next/<prefix>-table-prev. Attribute values use att-value-{i} (not att-value-input-{i}); category roots use cat-{id} (not cat-root-{id}).",
+  "rca_of_the_issue": "n/a — no defects to RCA"
+}
