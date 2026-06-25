@@ -1,0 +1,26 @@
+{
+  "summary": "First-finish smoke test of DivinArte frontend-only React storefront. Verified home, navigation, shop catalog with pagination & filters, add-to-cart, cart drawer, checkout multi-step entry, product detail (gallery/qty/add), login page, blog list, contact form, EUR pt-PT locale, and mobile menu. 24/24 critical checks passed.",
+  "tested_scope": ["frontend", "integration"],
+  "passed": [
+    "Home page loads with Portuguese copy and title 'DivinArte — Cosmética natural artesanal'",
+    "Header navigation works for Início, Loja, Sobre, Blog, Contacto",
+    "Shop page renders 8 products per page (pagination active)",
+    "page-2 testid pagination clickable",
+    "Vegan filter (filter-vegan) clickable and applies",
+    "Add-to-cart from shop card opens cart drawer",
+    "cart-drawer-checkout button navigates to /checkout",
+    "Checkout page loads with multi-step form (9 inputs detected) and step-next button works",
+    "Product detail page navigation via /produto/:slug works; qty-plus and product-add-to-cart functional",
+    "Login page (/conta/login) loads with login-submit testid",
+    "Blog list shows 3 articles with /blog/:slug links",
+    "Contact form has contact-submit testid",
+    "EUR prices use pt-PT locale (e.g. '18,90\u00a0€') — 10+ samples found",
+    "Mobile hamburger (data-testid='mobile-menu-btn') opens menu at 390px viewport"
+  ],
+  "failed": [],
+  "action_items": [],
+  "success_rate": {"backend": "N/A (skipped per request)", "frontend": "100% (24/24)"},
+  "retest_needed": false,
+  "full_testing_deferred": true,
+  "notes": "Backend testing skipped per request (frontend-only build). Auth/payment/newsletter/contact are mocked as expected. Deeper coverage (full checkout completion, order success page, cart persistence across reloads, related products, sub-routes under /conta, blog detail bodies) deferred to full QA pass."
+}
