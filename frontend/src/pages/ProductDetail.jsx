@@ -5,6 +5,7 @@ import { findProduct, products } from "../data/mock";
 import { useCart } from "../context/CartContext";
 import { formatEUR } from "../lib/format";
 import { ProductCard } from "../components/ProductCard";
+import { RitualBundle } from "../components/RitualBundle";
 
 export const ProductDetail = () => {
   const { slug } = useParams();
@@ -114,6 +115,9 @@ export const ProductDetail = () => {
           </div>
         </div>
       </div>
+
+      {/* ritual bundle upsell */}
+      <RitualBundle product={product} />
 
       {/* related */}
       {related.length > 0 && (

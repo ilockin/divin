@@ -5,7 +5,7 @@ import { useCart } from "../context/CartContext";
 import { formatEUR } from "../lib/format";
 
 export const CartPage = () => {
-  const { items, totals, updateQty, removeItem } = useCart();
+  const { items, totals, updateQty, removeItem, promo, clearPromo } = useCart();
 
   if (items.length === 0) {
     return (
@@ -54,9 +54,18 @@ export const CartPage = () => {
           <h2 className="text-xl mb-5">Resumo</h2>
           <div className="space-y-2 font-body text-sm">
             <div className="flex justify-between"><span className="text-[var(--da-muted)]">Subtotal</span><span data-testid="cartpage-subtotal">{formatEUR(totals.subtotal)}</span></div>
+            {promo && totals.discount > 0 && (
+              <div className="flex justify-between text-[var(--da-leaf)]" data-testid="cartpage-discount">
+                <span className="flex items-center gap-2">
+                  {promo.label}
+                  <button onClick={clearPromo} className="text-[var(--da-muted)] hover:text-red-600 text-xs underline" data-testid="cartpage-remove-promo">remover</button>
+                </span>
+                <span>− {formatEUR(totals.discount)}</span>
+              </div>
+            )}
             <div className="flex justify-between"><span className="text-[var(--da-muted)]">Envio</span><span>{totals.shipping === 0 ? "Grátis" : formatEUR(totals.shipping)}</span></div>
             {totals.shipping > 0 && (
-              <p className="text-xs text-[var(--da-muted)] italic">Faltam {formatEUR(49 - totals.subtotal)} para envio grátis.</p>
+              <p className="text-xs text-[var(--da-muted)] italic">Faltam {formatEUR(49 - (totals.subtotal - totals.discount))} para envio grátis.</p>
             )}
           </div>
           <div className="border-t hairline mt-4 pt-4 flex justify-between text-lg font-semibold">

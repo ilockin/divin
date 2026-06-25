@@ -7,7 +7,7 @@ import { formatEUR } from "../lib/format";
 const STEPS = ["Contacto e Envio", "Método de Envio", "Pagamento"];
 
 export const Checkout = () => {
-  const { items, totals, clear } = useCart();
+  const { items, totals, clear, promo } = useCart();
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [form, setForm] = useState({
@@ -20,8 +20,9 @@ export const Checkout = () => {
 
   const update = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
-  const shippingPrice = form.shipping === "express" ? 7.9 : totals.subtotal >= 49 ? 0 : 4.9;
-  const total = totals.subtotal + shippingPrice;
+  const afterDiscount = totals.subtotal - totals.discount;
+  const shippingPrice = form.shipping === "express" ? 7.9 : afterDiscount >= 49 ? 0 : 4.9;
+  const total = afterDiscount + shippingPrice;
 
   const next = () => setStep((s) => Math.min(STEPS.length - 1, s + 1));
   const prev = () => setStep((s) => Math.max(0, s - 1));
@@ -83,7 +84,7 @@ export const Checkout = () => {
                 onChange={() => update("shipping", "standard")}
                 title="Envio Standard"
                 desc="2-4 dias úteis"
-                price={totals.subtotal >= 49 ? "Grátis" : formatEUR(4.9)}
+                price={afterDiscount >= 49 ? "Grátis" : formatEUR(4.9)}
                 testid="ship-standard"
               />
               <RadioCard
@@ -136,6 +137,12 @@ export const Checkout = () => {
           </div>
           <div className="border-t hairline mt-5 pt-4 space-y-2 font-body text-sm">
             <div className="flex justify-between"><span className="text-[var(--da-muted)]">Subtotal</span><span>{formatEUR(totals.subtotal)}</span></div>
+            {promo && totals.discount > 0 && (
+              <div className="flex justify-between text-[var(--da-leaf)]" data-testid="checkout-discount">
+                <span>{promo.label}</span>
+                <span>− {formatEUR(totals.discount)}</span>
+              </div>
+            )}
             <div className="flex justify-between"><span className="text-[var(--da-muted)]">Envio</span><span>{shippingPrice === 0 ? "Grátis" : formatEUR(shippingPrice)}</span></div>
           </div>
           <div className="border-t hairline mt-4 pt-4 flex justify-between text-lg font-semibold">

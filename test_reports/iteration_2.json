@@ -1,0 +1,50 @@
+{
+  "summary": "Iteration 2: tested ritual-bundle (product detail) + cart drawer free-shipping progress + upsell + promo discount across drawer/cart/checkout. 11/12 review items PASS. 1 CRITICAL bug found on Checkout step transition that breaks finishing an order.",
+  "tested_scope": ["frontend", "integration"],
+  "passed": [
+    "ritual-bundle visible at /produto/spray-sono-ansiedade with 3 toggles (main + spray-concentracao-mindfulness + balsamo-analgesico), all default aria-pressed=true",
+    "ritual-total initial = 54,27 € with subtotal 60,30 € strikethrough and 'Poupas 6,03 €' shown",
+    "Unchecking one companion updates ritual-total (37,26 €) and keeps savings line",
+    "Unchecking second companion → only 1 item left, ritual-total = 18,90 €, strikethrough + 'Poupas' line both disappear (0 strike elements)",
+    "Re-checking both companions restores 54,27 €; clicking ritual-add-all shows success toast 'Ritual adicionado ao carrinho — Desconto de ritual aplicado — poupas 6,03 €' and opens cart drawer",
+    "Cart drawer shows 3 items, cart-drawer-subtotal=60,30 €, cart-drawer-discount='Desconto ritual (-10%) − 6,03 €', cart-drawer-total=54,27 €, cart-shipping-progress reads 'Boa! Envio grátis desbloqueado.' (afterDiscount=54,27 ≥ 49)",
+    "Upsell card cart-upsell-balsamo-labial-mel (cheapest ≤20 € not in cart) appears with cart-upsell-add button; clicking it adds the item (4 items) and a new upsell suggestion (cart-upsell-roll-on-respiracao) replaces it",
+    "cart-drawer-remove-promo (X) removes discount; total recalculates to subtotal (no further shipping since ≥49)",
+    "/carrinho shows cartpage-discount '− 6,03 €' with cartpage-remove-promo link; clicking it removes discount and recomputes cartpage-total",
+    "/checkout summary shows checkout-discount '− 6,03 €' and checkout-total '54,27 €' immediately on load when promo active",
+    "Step 1 (shipping) → ship-standard displays 'Grátis' because afterDiscount (54,27) ≥ 49"
+  ],
+  "failed": [
+    "CRITICAL: Clicking step-next at step 1 (shipping) does NOT advance to step 2 (payment). Instead the form is submitted (finish()), the cart is cleared, and the user is redirected to /carrinho (because Checkout.jsx renders <Navigate to=/carrinho> when items.length===0). Repro: open /checkout with items + RITUAL10 promo, click step-next twice with default standard shipping. Expected URL=/checkout step 2; Actual URL=/carrinho with empty cart in localStorage. Tried both with and without explicitly clicking ship-standard first — same result."
+  ],
+  "rca_of_the_issue": {
+    "file": "/app/frontend/src/pages/Checkout.jsx (lines 112-121)",
+    "root_cause": "The same JSX slot renders <button type='button' onClick={next}> while step<2, and <button type='submit'> while step===2. When the user clicks step-next at step=1, React reconciles the same <button> DOM node — it just flips the `type` attribute and re-attaches the onClick. Browsers attribute the *click* event (which triggers implicit form submission for type=submit buttons inside a <form>) to the button as it appears AT THE END of the synchronous click sequence — by then React has already committed the state update and the node is type='submit'. Result: the same physical click that advanced step 1→2 also submits the form, calling finish() → clear() → setItems([]). The functional setState in finish() runs synchronously inside the click handler, so the Checkout re-renders with items=[] and its <Navigate to='/carrinho' replace/> fires before navigate('/checkout/sucesso') can resolve, sending the user to /carrinho instead of /checkout/sucesso.",
+    "mitigation": "Render TWO distinct buttons (not one slot that morphs), e.g. always use type='button' and trigger finish() via an explicit onClick on the final step, OR render only one of them inside the form (the submit) and keep step-next OUTSIDE the form. Simplest patch: change the submit button to type='button' and call finish via onClick; remove form's onSubmit handler (or guard finish() with `if (step !== STEPS.length - 1) return;`).",
+    "verification_after_fix": "Re-run: add ritual → /checkout → fill step-0 → click step-next (URL stays /checkout, step-shipping visible) → click step-next (step-payment visible, checkout-finish appears, items NOT cleared) → click checkout-finish (URL goes to /checkout/sucesso, LS cart & promo cleared)."
+  },
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "Checkout.jsx", "issue": "step-next at step=1 implicitly submits the form because the same <button> slot morphs from type='button' to type='submit' during the click — order is never completed.", "selector": "[data-testid='step-next']", "priority": "CRITICAL"}
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "action_items": [
+    "Fix Checkout.jsx step-next/checkout-finish button reconciliation bug (see rca_of_the_issue.mitigation). After fix, verify entire checkout flow including /checkout/sucesso clearing cart + promo from localStorage."
+  ],
+  "critical_code_review_comments": [
+    "Checkout.jsx: avoid morphing a single <button> slot between type='button' and type='submit'. Either render two distinct buttons, keep the wizard step-next outside the <form>, or always use type='button' and call finish() via onClick.",
+    "CartContext.clear() resets promo (good). totals.shipping correctly uses (subtotal - discount) so free-shipping threshold checks the discounted amount.",
+    "RitualBundle.jsx & CartDrawer.jsx are clean, small, well-tested data-testid coverage. No issues found."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (skipped)", "frontend": "92% (11/12)"},
+  "test_credentials": "n/a (frontend mock)",
+  "seed_data_creation": "none",
+  "retest_needed": true,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Iteration-2 ritual bundle + drawer upsell + promo discount across pages all pass. The only failing flow is Checkout: clicking step-next from step 1 (shipping) accidentally submits the form due to React reusing the same button node while changing its `type` from 'button' to 'submit'. After main agent fixes Checkout.jsx (see rca.mitigation), retest steps 1→2→checkout-finish→/checkout/sucesso and verify localStorage 'divinarte-cart-v1' and 'divinarte-promo-v1' are cleared.",
+  "test_report_links": []
+}
