@@ -119,11 +119,12 @@ export const Users = () => {
             </select>
           </>
         )}
-        rowActions={canManage ? (u) => [
-          { label: "Editar", onClick: openEdit },
-          { label: "Redefinir palavra-passe", onClick: resetPassword },
-          { label: "Remover", onClick: remove, danger: true },
-        ] : undefined}
+        rowActions={canManage ? (u) => {
+          const actions = [{ label: "Editar", onClick: openEdit }];
+          if (canResetPassword) actions.push({ label: "Redefinir palavra-passe", onClick: resetPassword });
+          actions.push({ label: "Remover", onClick: remove, danger: true });
+          return actions;
+        } : undefined}
       />
 
       <Modal

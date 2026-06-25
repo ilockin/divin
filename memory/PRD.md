@@ -31,12 +31,21 @@ Build the FRONT-END ONLY of an e-commerce storefront for a natural artisanal cos
 - Home com hero, trust strip, destaques, grade de categorias, história, testemunhos, blog teaser.
 - Loja com filtros (categoria, subcategoria, tipo de pele, finalidade, vegano), sort e paginação (8/página).
 - Página de produto com galeria/thumbnails, quantidade, benefícios, modo de uso, relacionados.
+- "Compõe o teu ritual" no detalhe (3 itens com toggle, −10% para 2+ itens).
 - Carrinho (drawer + página completa) com totais, envio grátis acima de 49 €, persistência local.
-- Checkout 3 passos (contacto+morada, envio, pagamento) e página de sucesso com ID gerado.
+- Cart drawer: barra de progresso de envio grátis + upsell pequeno + linha de desconto removível.
+- Checkout 3 passos (contacto+morada, envio, pagamento) e página de sucesso com ID gerado; promo propagado.
 - Área de conta (mock): visão geral, encomendas, perfil, moradas; login + registo (visual only).
 - Blog (lista + detalhe) e páginas estáticas Sobre / Contacto.
-- Toasts (sonner), formulários client-side, responsivo mobile-first.
-- Testing agent: 24/24 checks aprovados.
+- **Admin Panel** sob `/admin/*` com layout próprio (sidebar colapsável, topbar com pesquisa/notificações/role switcher/user menu, breadcrumbs).
+  - Dashboard com 4 KPIs, gráficos Recharts (linha + barras), pedidos recentes, alerta stock baixo.
+  - **Catálogo**: Produtos (DataTable + bulk publicar/rascunho + form completo com galeria/benefícios/flags), Categorias (árvore hierárquica + drag-to-reorder + subcategorias), Atributos & Filtros (cards + modal).
+  - **Stock**: tabela por produto + movimentos com histórico + modal de ajuste (entrada/saída).
+  - **Pedidos**: tabela com filtros pagamento/envio + detalhe com radios para atualizar estados.
+  - **Conteúdo**: Blog com DataTable de artigos + form com "rich-text" toolbar (markdown).
+  - **Administração**: Utilizadores com CRUD + papéis + bloqueio de reset de password fora de Super Admin; Definições (restritas a Super Admin) com dados da loja, toggles de pagamentos, opções de envio, preferências gerais.
+  - **Permissões por papel** (Super Admin / Admin / Produção / Lojista) aplicadas à navegação e a funcionalidades sensíveis.
+- Testing agent: 24/24 storefront + 17/17 admin checks aprovados.
 
 ## P0 / next actions (deferred to subsequent finishes)
 - Validações inline mais ricas (mensagens por campo) + máscaras (CP/telefone).

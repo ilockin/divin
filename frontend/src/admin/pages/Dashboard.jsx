@@ -5,13 +5,13 @@ import { TrendingUp, Package, ShoppingCart, AlertTriangle } from "lucide-react";
 import { KpiCard, SectionTitle, PageHeader } from "../components/Bits";
 import { StatusBadge } from "../components/DataTable";
 import { useAdmin } from "../context/AdminContext";
-import { salesSeries, topProductsSeries, PAYMENT_STATES, SHIPPING_STATES } from "../data/mockAdmin";
+import { salesSeries, topProductsSeries, PAYMENT_STATES, SHIPPING_STATES, can } from "../data/mockAdmin";
 import { formatEUR } from "../../lib/format";
 
 const stateOf = (list, id) => list.find((s) => s.id === id);
 
 export const Dashboard = () => {
-  const { orders, products } = useAdmin();
+  const { orders, products, role } = useAdmin();
   const totalRevenue = orders.reduce((s, o) => s + (o.payment === "pago" ? o.total : 0), 0);
   const ordersCount = orders.length;
   const ticketMedio = totalRevenue / Math.max(1, orders.filter((o) => o.payment === "pago").length);
@@ -64,7 +64,9 @@ export const Dashboard = () => {
         <div className="lg:col-span-2 bg-white border hairline rounded-2xl">
           <div className="px-5 py-4 border-b hairline flex items-center justify-between">
             <SectionTitle eyebrow="recentes" title="Pedidos recentes" />
-            <Link to="/admin/pedidos" className="font-body text-[11px] uppercase tracking-[0.2em] text-[var(--da-forest)] hover:text-[var(--da-leaf)]">ver todos →</Link>
+            {can(role, "orders") && (
+              <Link to="/admin/pedidos" className="font-body text-[11px] uppercase tracking-[0.2em] text-[var(--da-forest)] hover:text-[var(--da-leaf)]">ver todos →</Link>
+            )}
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm font-body" data-testid="dashboard-recent-orders">
