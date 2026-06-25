@@ -10,13 +10,14 @@ export const Checkout = () => {
   const { items, totals, clear, promo } = useCart();
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
+  const [submitted, setSubmitted] = useState(false);
   const [form, setForm] = useState({
     email: "", firstName: "", lastName: "", phone: "",
     address: "", city: "", zip: "", country: "Portugal",
     shipping: "standard", payment: "card",
   });
 
-  if (items.length === 0) return <Navigate to="/carrinho" replace />;
+  if (items.length === 0 && !submitted) return <Navigate to="/carrinho" replace />;
 
   const update = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
@@ -27,13 +28,13 @@ export const Checkout = () => {
   const next = () => setStep((s) => Math.min(STEPS.length - 1, s + 1));
   const prev = () => setStep((s) => Math.max(0, s - 1));
 
-  const finish = (e) => {
-    e.preventDefault();
+  const finish = () => {
     const orderId = "DA-" + new Date().getFullYear() + "-" + Math.floor(1000 + Math.random() * 9000);
     const order = { id: orderId, items, total, form };
     sessionStorage.setItem("divinarte-last-order", JSON.stringify(order));
+    setSubmitted(true);
     clear();
-    navigate("/checkout/sucesso?order=" + orderId);
+    navigate("/checkout/sucesso?order=" + orderId, { replace: true });
   };
 
   return (
@@ -55,7 +56,7 @@ export const Checkout = () => {
       </ol>
 
       <div className="grid lg:grid-cols-[1fr_380px] gap-10">
-        <form onSubmit={finish} className="space-y-8" data-testid="checkout-form">
+        <div className="space-y-8" data-testid="checkout-form">
           {step === 0 && (
             <section className="space-y-5" data-testid="step-contact">
               <h2 className="text-xl">Contacto</h2>
@@ -116,10 +117,10 @@ export const Checkout = () => {
             {step < STEPS.length - 1 ? (
               <button type="button" onClick={next} className="btn-da btn-da-primary" data-testid="step-next">Continuar</button>
             ) : (
-              <button type="submit" className="btn-da btn-da-primary" data-testid="checkout-finish">Finalizar compra</button>
+              <button type="button" onClick={finish} className="btn-da btn-da-primary" data-testid="checkout-finish">Finalizar compra</button>
             )}
           </div>
-        </form>
+        </div>
 
         <aside className="bg-white rounded-2xl border hairline p-6 h-fit sticky top-32">
           <h2 className="text-xl mb-5">Resumo da encomenda</h2>
