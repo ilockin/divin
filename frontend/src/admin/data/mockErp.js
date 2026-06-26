@@ -69,6 +69,31 @@ export const initialRecipes = {
   },
 };
 
+// ---------- Cálculo de custos (puros — recebem os insumos do estado) ----------
+export const getInsumo = (insumos, id) => insumos.find((i) => i.id === id);
+
+// custo de uma linha da ficha técnica = custo unitário do insumo × quantidade
+export const lineCost = (line, insumos) => {
+  const ins = getInsumo(insumos, line.insumoId);
+  return ins ? ins.cost * line.qty : 0;
+};
+
+// custo total de produção de uma ficha técnica (um produto)
+export const recipeCost = (recipe, insumos) =>
+  recipe ? recipe.lines.reduce((sum, l) => sum + lineCost(l, insumos), 0) : 0;
+
+// margem face ao preço de venda — devolve { custo, margemEur, margemPct }
+export const recipeMargin = (recipe, insumos, price) => {
+  const custo = recipeCost(recipe, insumos);
+  const margemEur = (price || 0) - custo;
+  const margemPct = price ? (margemEur / price) * 100 : 0;
+  return { custo, margemEur, margemPct };
+};
+
+// total de uma compra de insumos = soma de (quantidade × custo) das linhas
+export const purchaseTotal = (purchase) =>
+  (purchase?.lines || []).reduce((sum, l) => sum + (l.qty || 0) * (l.cost || 0), 0);
+
 // ---------- Production orders ----------
 export const PRODUCTION_STATES = [
   { id: "planeada", label: "Planeada", tone: "muted" },
@@ -142,6 +167,52 @@ export const initialShippingMethods = [
   { id: "sm3", name: "Recolha na loja",     description: "Levantamento gratuito no atelier.",   cost: 0,    eta: "Disponível em 24h", zones: "Porto",               active: true },
   { id: "sm4", name: "Envio Ilhas",         description: "Para Madeira e Açores via CTT.",      cost: 9.9,  eta: "5-7 dias úteis",   zones: "Madeira, Açores",      active: false },
 ];
+
+// ---------- Gestão de Envios (Prompt 2B) ----------
+// Zonas por país — métodos disponíveis + override de custo/prazo por método
+export const initialShippingZones = [
+  { id: "z-pt",  name: "Portugal",         active: true,  methodIds: ["sm1", "sm2", "sm3"], overrides: {} },
+  { id: "z-es",  name: "Espanha",          active: true,  methodIds: ["sm1", "sm2"],        overrides: { sm1: { cost: 7.9, eta: "4-6 dias úteis" } } },
+  { id: "z-eu",  name: "Resto da Europa",  active: true,  methodIds: ["sm1"],               overrides: { sm1: { cost: 12.9, eta: "5-8 dias úteis" } } },
+  { id: "z-int", name: "Internacional",    active: false, methodIds: ["sm1"],               overrides: { sm1: { cost: 19.9, eta: "7-15 dias úteis" } } },
+];
+
+// 18 distritos de Portugal Continental + Madeira + Açores
+export const PT_DISTRICTS = [
+  "Aveiro", "Beja", "Braga", "Bragança", "Castelo Branco", "Coimbra", "Évora", "Faro",
+  "Guarda", "Leiria", "Lisboa", "Portalegre", "Porto", "Santarém", "Setúbal",
+  "Viana do Castelo", "Vila Real", "Viseu", "Madeira", "Açores",
+];
+
+// Comunidades autónomas de Espanha
+export const ES_REGIONS = [
+  "Andaluzia", "Aragão", "Astúrias", "Ilhas Baleares", "Canárias", "Cantábria",
+  "Castela-Mancha", "Castela e Leão", "Catalunha", "Comunidade Valenciana",
+  "Estremadura", "Galiza", "La Rioja", "Madrid", "Múrcia", "Navarra", "País Basco",
+  "Ceuta", "Melilha",
+];
+
+// Regras específicas por distrito/região (têm prioridade sobre a zona do país).
+// Distritos sem regra herdam da zona. Chave = nome do distrito.
+export const initialDistrictRules = {
+  PT: {
+    "Madeira": { methodIds: ["sm4"], overrides: { sm4: { cost: 9.9, eta: "5-7 dias úteis" } } },
+    "Açores":  { methodIds: ["sm4"], overrides: { sm4: { cost: 11.9, eta: "6-9 dias úteis" } } },
+  },
+  ES: {
+    "Canárias":      { methodIds: ["sm1"], overrides: { sm1: { cost: 14.9, eta: "7-10 dias úteis" } } },
+    "Ilhas Baleares":{ methodIds: ["sm1"], overrides: { sm1: { cost: 10.9, eta: "5-7 dias úteis" } } },
+  },
+};
+
+// Regras por categoria/produto — que categorias podem usar que métodos.
+// `default` aplica-se às categorias sem regra específica.
+export const initialCategoryRules = {
+  default: ["sm1", "sm2", "sm3"],
+  bySlug: {
+    "corporais": ["sm1", "sm2"],
+  },
+};
 
 // ---------- Languages ----------
 export const initialLanguages = [

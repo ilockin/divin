@@ -1,0 +1,14 @@
+{
+  "name": "divin",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "cd frontend && yarn start",
+    "build": "cd frontend && yarn build",
+    "test": "cd frontend && yarn test"
+  },
+  "workspaces": [
+    "frontend",
+    "backend"
+  ]
+}

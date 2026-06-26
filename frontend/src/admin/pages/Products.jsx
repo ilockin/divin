@@ -102,15 +102,18 @@ const emptyProduct = {
   id: null, name: "", slug: "", short: "", description: "", usage: "",
   benefits: [""], price: 0, category: "faciais", size: "100ml",
   images: [], status: "rascunho", vegan: true, bio: true, stock: 0, minStock: 5,
+  shippingMode: "inherit", shippingMethodIds: [],
 };
 
 export const ProductForm = () => {
   const { id } = useParams();
-  const { products, setProducts } = useAdmin();
+  const { products, setProducts, shippingMethods } = useAdmin();
   const navigate = useNavigate();
   const isNew = id === "novo";
   const existing = !isNew && products.find((p) => p.id === id);
-  const [form, setForm] = useState(() => existing ? { ...existing, benefits: existing.benefits || [""] } : emptyProduct);
+  const [form, setForm] = useState(() => existing
+    ? { ...existing, benefits: existing.benefits || [""], shippingMode: existing.shippingMode || "inherit", shippingMethodIds: existing.shippingMethodIds || [] }
+    : emptyProduct);
 
   if (!isNew && !existing) return <Navigate to="/admin/produtos" replace />;
 
@@ -252,6 +255,38 @@ export const ProductForm = () => {
             <label className="flex items-center gap-2 font-body text-sm opacity-70">
               <input type="checkbox" checked readOnly /> Natural
             </label>
+          </div>
+
+          <div className="bg-white border hairline rounded-2xl p-6 space-y-4" data-testid="pf-shipping">
+            <SectionTitle eyebrow="envio" title="Modos de envio" />
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 font-body text-sm">
+                <input type="radio" name="shippingMode" checked={form.shippingMode === "inherit"} onChange={() => u("shippingMode", "inherit")} data-testid="pf-ship-inherit" />
+                Herdar das regras da categoria
+              </label>
+              <label className="flex items-center gap-2 font-body text-sm">
+                <input type="radio" name="shippingMode" checked={form.shippingMode === "custom"} onChange={() => u("shippingMode", "custom")} data-testid="pf-ship-custom" />
+                Personalizar
+              </label>
+            </div>
+            {form.shippingMode === "custom" && (
+              <div className="border-t hairline pt-3 space-y-2" data-testid="pf-ship-methods">
+                <p className="font-body text-[11px] text-[var(--da-muted)]">Métodos permitidos para este produto:</p>
+                {shippingMethods.map((m) => (
+                  <label key={m.id} className="flex items-center gap-2 font-body text-sm">
+                    <input
+                      type="checkbox"
+                      checked={form.shippingMethodIds.includes(m.id)}
+                      onChange={(e) => u("shippingMethodIds", e.target.checked
+                        ? [...form.shippingMethodIds, m.id]
+                        : form.shippingMethodIds.filter((x) => x !== m.id))}
+                      data-testid={`pf-ship-method-${m.id}`}
+                    />
+                    {m.name}
+                  </label>
+                ))}
+              </div>
+            )}
           </div>
         </aside>
       </div>

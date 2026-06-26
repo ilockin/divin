@@ -29,6 +29,15 @@ import { Stock } from "@/admin/pages/Stock";
 import { Orders as AdminOrders, OrderDetail } from "@/admin/pages/Orders";
 import { Blog as AdminBlog, ArticleForm } from "@/admin/pages/Blog";
 import { Settings as AdminSettings } from "@/admin/pages/Settings";
+import { Insumos } from "@/admin/pages/Insumos";
+import { FichaTecnica } from "@/admin/pages/FichaTecnica";
+import { OrdensProducao, OrdemProducaoDetail } from "@/admin/pages/OrdensProducao";
+import { FinanceiroOverview } from "@/admin/pages/FinanceiroOverview";
+import { Compras } from "@/admin/pages/Compras";
+import { Margens } from "@/admin/pages/Margens";
+import { Envios } from "@/admin/pages/Envios";
+import { Paginas } from "@/admin/pages/Paginas";
+import { PageBuilder } from "@/admin/pages/PageBuilder";
 
 const Storefront = () => (
   <CartProvider>
@@ -68,10 +77,20 @@ const Admin = () => (
         <Route path="categorias" element={<Categories />} />
         <Route path="atributos" element={<Attributes />} />
         <Route path="stock" element={<Stock />} />
+        <Route path="insumos" element={<Insumos />} />
+        <Route path="fichas-tecnicas" element={<FichaTecnica />} />
+        <Route path="ordens-producao" element={<OrdensProducao />} />
+        <Route path="ordens-producao/:id" element={<OrdemProducaoDetail />} />
+        <Route path="financeiro" element={<FinanceiroOverview />} />
+        <Route path="financeiro/compras" element={<Compras />} />
+        <Route path="financeiro/margens" element={<Margens />} />
         <Route path="pedidos" element={<AdminOrders />} />
         <Route path="pedidos/:id" element={<OrderDetail />} />
+        <Route path="envios" element={<Envios />} />
         <Route path="blog" element={<AdminBlog />} />
         <Route path="blog/:slug" element={<ArticleForm />} />
+        <Route path="paginas" element={<Paginas />} />
+        <Route path="paginas/:id" element={<PageBuilder />} />
         <Route path="definicoes" element={<AdminSettings />} />
       </Route>
     </Routes>

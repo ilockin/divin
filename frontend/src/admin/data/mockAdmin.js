@@ -18,8 +18,16 @@ export const NAV_PERMISSIONS = {
   categories: ["super_admin", "admin", "producao"],
   attributes: ["super_admin", "admin", "producao"],
   stock: ["super_admin", "admin", "producao"],
+  insumos: ["super_admin", "admin", "producao"],
+  recipes: ["super_admin", "admin", "producao"],
+  production: ["super_admin", "admin", "producao"],
   orders: ["super_admin", "admin", "lojista"],
+  shipping: ["super_admin", "admin"],
+  fin_overview: ["super_admin", "admin"],
+  fin_purchases: ["super_admin", "admin"],
+  fin_margins: ["super_admin", "admin"],
   blog: ["super_admin", "admin"],
+  pages: ["super_admin", "admin"],
   settings: ["super_admin"],
 };
 

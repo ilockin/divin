@@ -3,6 +3,8 @@ import { Outlet, NavLink, useLocation, Link } from "react-router-dom";
 import {
   LayoutDashboard, Users, Package, Tags, SlidersHorizontal,
   Boxes, ShoppingCart, FileText, Settings, ChevronLeft, ChevronRight,
+  FlaskConical, ClipboardList, Factory,
+  PieChart, Receipt, Percent, Truck, LayoutPanelTop,
 } from "lucide-react";
 import { useAdmin } from "../context/AdminContext";
 import { can } from "../data/mockAdmin";
@@ -25,12 +27,34 @@ const navGroups = [
     ],
   },
   {
+    title: "Produção",
+    items: [
+      { id: "insumos", to: "/admin/insumos", label: "Insumos", icon: FlaskConical },
+      { id: "recipes", to: "/admin/fichas-tecnicas", label: "Ficha Técnica", icon: ClipboardList },
+      { id: "production", to: "/admin/ordens-producao", label: "Ordens de Produção", icon: Factory },
+    ],
+  },
+  {
     title: "Comercial",
-    items: [{ id: "orders", to: "/admin/pedidos", label: "Pedidos", icon: ShoppingCart }],
+    items: [
+      { id: "orders", to: "/admin/pedidos", label: "Pedidos", icon: ShoppingCart },
+      { id: "shipping", to: "/admin/envios", label: "Gestão de Envios", icon: Truck },
+    ],
+  },
+  {
+    title: "Financeiro",
+    items: [
+      { id: "fin_overview", to: "/admin/financeiro", label: "Visão Geral", icon: PieChart, end: true },
+      { id: "fin_purchases", to: "/admin/financeiro/compras", label: "Compras", icon: Receipt },
+      { id: "fin_margins", to: "/admin/financeiro/margens", label: "Margens", icon: Percent },
+    ],
   },
   {
     title: "Conteúdo",
-    items: [{ id: "blog", to: "/admin/blog", label: "Blog / Artigos", icon: FileText }],
+    items: [
+      { id: "blog", to: "/admin/blog", label: "Blog / Artigos", icon: FileText },
+      { id: "pages", to: "/admin/paginas", label: "Construtor de Páginas", icon: LayoutPanelTop },
+    ],
   },
   {
     title: "Administração",
