@@ -40,7 +40,7 @@ export const initialAboutContent = {
     subtitle: "A DivinArte nasce do gesto simples de cuidar. Pequenos lotes, ingredientes naturais, mãos atentas — para que cada produto seja um momento de pausa.",
     titleFont: "serif-display", titleSize: "xl", titleColor: "#F7F4EC",
     eyebrowFont: "script", eyebrowSize: "3xl", eyebrowColor: "#B7BD53",
-    bodyFont: "body", bodySize: "base", bodyColor: "#FFFFFF",
+    bodyFont: "body", bodySize: "base", bodyColor: "#FFFFFF", bodyAlign: "", bodyLineHeight: "", bodyLetterSpacing: "",
   },
   story: {
     image: "https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&w=1200&q=70",
@@ -50,7 +50,7 @@ export const initialAboutContent = {
     paragraph2: "Inspiramo-nos numa visão serena e cristã do cuidado — cuidar do outro como gesto silencioso de amor, sem promessas grandiosas, sem milagres. Apenas pequenos rituais, repetidos com atenção.",
     titleFont: "serif-display", titleSize: "md", titleColor: "#14532D",
     eyebrowFont: "script", eyebrowSize: "2xl", eyebrowColor: "#2E9E44",
-    bodyFont: "body", bodySize: "base", bodyColor: "#1A1A1A",
+    bodyFont: "body", bodySize: "base", bodyColor: "#1A1A1A", bodyAlign: "", bodyLineHeight: "", bodyLetterSpacing: "",
   },
   values: {
     eyebrow: "os nossos valores",

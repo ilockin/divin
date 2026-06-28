@@ -1,4 +1,4 @@
-import { FONT_OPTIONS, FONT_SIZE_OPTIONS, TEXT_SIZE_OPTIONS } from "../admin/data/contentStyleOptions";
+import { FONT_OPTIONS, FONT_SIZE_OPTIONS, TEXT_SIZE_OPTIONS, LINE_HEIGHT_OPTIONS, LETTER_SPACING_OPTIONS } from "../admin/data/contentStyleOptions";
 
 // Classe/estilo de QUALQUER texto de uma secção, a partir de `${prefix}Font/Size/Color`.
 // `sizeOptions` permite usar uma escala diferente (títulos vs. eyebrow/corpo/itens).
@@ -8,7 +8,14 @@ export const textClassFor = (content, prefix, sizeOptions = FONT_SIZE_OPTIONS) =
   return `${font} ${size}`;
 };
 
-export const textStyleFor = (content, prefix) => ({ color: content[`${prefix}Color`] || undefined });
+// "" / ausente = automático (sem override) em todos os campos — preserva o alinhamento/altura/
+// espaçamento herdados do contentor ou da classe original, salvo escolha explícita do utilizador.
+export const textStyleFor = (content, prefix) => ({
+  color: content[`${prefix}Color`] || undefined,
+  textAlign: content[`${prefix}Align`] || undefined,
+  lineHeight: LINE_HEIGHT_OPTIONS.find((o) => o.id === content[`${prefix}LineHeight`])?.value,
+  letterSpacing: LETTER_SPACING_OPTIONS.find((o) => o.id === content[`${prefix}LetterSpacing`])?.value,
+});
 
 // Atalhos para o título (escala de tamanhos grande) — usados desde a Fase 1, mantidos tal qual.
 export const titleClassFor = (content) => textClassFor(content, "title", FONT_SIZE_OPTIONS);

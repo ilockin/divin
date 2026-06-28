@@ -1,6 +1,6 @@
 import React from "react";
 import { FormRow, fieldClass } from "../Bits";
-import { FONT_OPTIONS, FONT_SIZE_OPTIONS, TEXT_SIZE_OPTIONS } from "../../data/contentStyleOptions";
+import { FONT_OPTIONS, FONT_SIZE_OPTIONS, TEXT_SIZE_OPTIONS, ALIGN_OPTIONS, LINE_HEIGHT_OPTIONS, LETTER_SPACING_OPTIONS } from "../../data/contentStyleOptions";
 
 const RADIUS_PRESETS = [
   { label: "Quadrado", value: 0 },
@@ -54,6 +54,21 @@ export const TextStyleFields = ({ content, sectionKey, updateField, prefix, labe
       </FormRow>
       <FormRow label="Cor">
         <ColorField value={content[`${prefix}Color`]} onChange={(v) => updateField(sectionKey, `${prefix}Color`, v)} testid={`${tp}-color`} />
+      </FormRow>
+      <FormRow label="Alinhamento">
+        <select className={fieldClass} value={content[`${prefix}Align`] ?? ""} onChange={(e) => updateField(sectionKey, `${prefix}Align`, e.target.value)} data-testid={`${tp}-align`}>
+          {ALIGN_OPTIONS.map((a) => (<option key={a.id} value={a.id}>{a.label}</option>))}
+        </select>
+      </FormRow>
+      <FormRow label="Altura de linha">
+        <select className={fieldClass} value={content[`${prefix}LineHeight`] ?? ""} onChange={(e) => updateField(sectionKey, `${prefix}LineHeight`, e.target.value)} data-testid={`${tp}-line-height`}>
+          {LINE_HEIGHT_OPTIONS.map((o) => (<option key={o.id} value={o.id}>{o.label}</option>))}
+        </select>
+      </FormRow>
+      <FormRow label="Espaçamento entre letras">
+        <select className={fieldClass} value={content[`${prefix}LetterSpacing`] ?? ""} onChange={(e) => updateField(sectionKey, `${prefix}LetterSpacing`, e.target.value)} data-testid={`${tp}-letter-spacing`}>
+          {LETTER_SPACING_OPTIONS.map((o) => (<option key={o.id} value={o.id}>{o.label}</option>))}
+        </select>
       </FormRow>
     </div>
   );

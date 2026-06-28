@@ -26,7 +26,7 @@ const UNSPLASH3 = "https://images.unsplash.com/photo-1612817288484-6f916006741a?
 // Props por defeito de cada tipo de bloco
 export const DEFAULTS = {
   hero: () => ({ title: "A divina arte de cuidar de si", subtitle: "Cosmética natural artesanal, feita com serenidade.", buttonText: "Ver loja", buttonLink: "/loja", align: "center", bg: "#14532D" }),
-  texto: () => ({ text: "Escreva aqui o seu texto. Pode ser uma introdução, uma história da marca ou qualquer conteúdo.", align: "left" }),
+  texto: () => ({ text: "Escreva aqui o seu texto. Pode ser uma introdução, uma história da marca ou qualquer conteúdo.", align: "left", lineHeight: "", letterSpacing: "" }),
   imagem: () => ({ src: UNSPLASH, alt: "Imagem", align: "center" }),
   galeria: () => ({ items: [{ url: UNSPLASH }, { url: UNSPLASH2 }, { url: UNSPLASH3 }] }),
   carrossel: () => ({ items: [{ url: UNSPLASH }, { url: UNSPLASH2 }, { url: UNSPLASH3 }] }),
@@ -53,6 +53,8 @@ export const BLOCK_FIELDS = {
   texto: [
     { key: "text", label: "Texto", type: "textarea" },
     { key: "align", label: "Alinhamento", type: "select", options: ["left", "center", "right"] },
+    { key: "lineHeight", label: "Altura de linha", type: "select", options: ["", "1.25", "1.5", "1.75", "2"] },
+    { key: "letterSpacing", label: "Espaçamento entre letras", type: "select", options: ["", "-0.02em", "0.05em", "0.1em"] },
   ],
   imagem: [
     { key: "src", label: "URL da imagem", type: "text" },

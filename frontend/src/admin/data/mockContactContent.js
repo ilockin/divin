@@ -28,7 +28,7 @@ export const initialContactContent = {
     subtitle: "Estamos aqui para te ouvir — dúvidas, sugestões, recomendações de uso ou só uma palavra amiga.",
     titleFont: "serif-display", titleSize: "lg", titleColor: "#14532D",
     eyebrowFont: "script", eyebrowSize: "2xl", eyebrowColor: "#2E9E44",
-    bodyFont: "body", bodySize: "base", bodyColor: "#6B6F66",
+    bodyFont: "body", bodySize: "base", bodyColor: "#6B6F66", bodyAlign: "", bodyLineHeight: "", bodyLetterSpacing: "",
   },
   form: {
     submitText: "Enviar mensagem",

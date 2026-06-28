@@ -13,6 +13,6 @@ export const initialBlogContent = {
     subtitle: "Rituais, ingredientes e pequenas reflexões sobre a arte de cuidar.",
     titleFont: "serif-display", titleSize: "lg", titleColor: "#14532D",
     eyebrowFont: "script", eyebrowSize: "2xl", eyebrowColor: "#2E9E44",
-    bodyFont: "body", bodySize: "base", bodyColor: "#6B6F66",
+    bodyFont: "body", bodySize: "base", bodyColor: "#6B6F66", bodyAlign: "", bodyLineHeight: "", bodyLetterSpacing: "",
   },
 };

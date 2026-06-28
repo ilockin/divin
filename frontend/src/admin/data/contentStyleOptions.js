@@ -28,3 +28,27 @@ export const TEXT_SIZE_OPTIONS = [
   { id: "2xl", label: "Eyebrow (atual)", className: "text-2xl" },
   { id: "3xl", label: "Eyebrow grande", className: "text-3xl" },
 ];
+
+// "" = automático (sem override inline) — preserva o alinhamento/altura/espaçamento herdado
+// do contentor ou da classe Tailwind original, para não quebrar secções já centradas, etc.
+export const ALIGN_OPTIONS = [
+  { id: "", label: "Automático (atual)" },
+  { id: "left", label: "Esquerda" },
+  { id: "center", label: "Centro" },
+  { id: "right", label: "Direita" },
+];
+
+export const LINE_HEIGHT_OPTIONS = [
+  { id: "", label: "Automático (atual)" },
+  { id: "tight", label: "Apertada", value: "1.25" },
+  { id: "normal", label: "Normal", value: "1.5" },
+  { id: "relaxed", label: "Larga", value: "1.75" },
+  { id: "loose", label: "Extra larga", value: "2" },
+];
+
+export const LETTER_SPACING_OPTIONS = [
+  { id: "", label: "Automático (atual)" },
+  { id: "tight", label: "Apertado", value: "-0.02em" },
+  { id: "wide", label: "Largo", value: "0.05em" },
+  { id: "wider", label: "Extra largo", value: "0.1em" },
+];

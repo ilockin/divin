@@ -23,7 +23,14 @@ export const BlockView = ({ block, products = [] }) => {
         </div>
       );
     case "texto":
-      return <div className={`px-8 py-8 font-body text-[var(--da-ink)] leading-relaxed ${alignClass(p.align)}`}>{p.text}</div>;
+      return (
+        <div
+          className={`px-8 py-8 font-body text-[var(--da-ink)] leading-relaxed ${alignClass(p.align)}`}
+          style={{ lineHeight: p.lineHeight || undefined, letterSpacing: p.letterSpacing || undefined }}
+        >
+          {p.text}
+        </div>
+      );
     case "imagem":
       return (
         <div className="px-8 py-6">
