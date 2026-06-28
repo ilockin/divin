@@ -3,6 +3,7 @@ import { ROLES, adminUsers, adminProducts, adminOrders, adminArticles, adminAttr
 import { initialInsumos, initialRecipes, initialProductionOrders, initialPurchases, initialShippingMethods, initialLanguages, initialShippingZones, initialDistrictRules, initialCategoryRules } from "../data/mockErp";
 import { initialCoupons } from "../data/mockMarketing";
 import { loadPages, savePages } from "../../lib/pages";
+import { loadHomeContent, saveHomeContent } from "../../lib/homeContent";
 
 const AdminContext = createContext(null);
 
@@ -30,8 +31,10 @@ export const AdminProvider = ({ children }) => {
   const [categoryRules, setCategoryRules] = useState(initialCategoryRules);
   const [pages, setPages] = useState(loadPages);
   const [coupons, setCoupons] = useState(initialCoupons);
+  const [homeContent, setHomeContent] = useState(loadHomeContent);
 
   useEffect(() => { savePages(pages); }, [pages]);
+  useEffect(() => { saveHomeContent(homeContent); }, [homeContent]);
 
   const switchRole = (id) => {
     setRole(id);
@@ -69,6 +72,7 @@ export const AdminProvider = ({ children }) => {
     categoryRules, setCategoryRules,
     pages, setPages,
     coupons, setCoupons,
+    homeContent, setHomeContent,
   };
 
   return <AdminContext.Provider value={value}>{children}</AdminContext.Provider>;

@@ -1,6 +1,6 @@
 import { initialPages } from "../admin/data/mockPages";
 
-const PAGES_KEY = "divinarte-pages-v1";
+const PAGES_KEY = "divinarte-pages-v2";
 
 export const loadPages = () => {
   try {

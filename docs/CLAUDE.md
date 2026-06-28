@@ -60,15 +60,19 @@ Estas são o trabalho da próxima fase — não as atacar de surpresa numa taref
 - `components/` — componentes do storefront; `components/ui/` — primitivos shadcn.
 - `pages/` — páginas do storefront.
 - `lib/format.js` — `formatEUR(value)` (Intl pt-PT, EUR).
+- `lib/pages.js` — `loadPages()`/`savePages()` (localStorage `divinarte-pages-v1`) e `getPublishedPage(slug)`, usados pelo storefront para ligar páginas ao Construtor.
+- `lib/commission.js` — `calcCommission(product, qty)` / `formatCommission(product)` (comissão de afiliado).
+- `lib/coupons.js` — `validateCoupon(coupon, { subtotal, items })` / `couponToPromo(coupon)` (usados no `CartContext.applyPromo`).
+- `components/blocks/BlockRenderer.jsx` — `BlockView` (um bloco) / `BlockRenderer` (lista de blocos); partilhado entre o `PageBuilder.jsx` (admin) e as páginas do storefront com override.
+- `pages/DynamicPage.jsx` — rota `/:slug` (última do Storefront); resolve páginas novas criadas no construtor com slug livre.
 - `admin/` — **todo o back-office isolado aqui**:
   - `admin/components/` — `AdminLayout` (sidebar+main), `Topbar`, `Breadcrumbs`, `DataTable` (+ `StatusBadge`), `Modal`, `Bits` (`PageHeader`, `SectionTitle`, `FormRow`, `KpiCard`, `fieldClass`).
   - `admin/context/AdminContext.jsx` — provider único com estado de todos os módulos via `useState`; hook `useAdmin()`.
   - `admin/data/mockAdmin.js` — RBAC (`ROLES`, `NAV_PERMISSIONS`, `can(role, navId)`), produtos/encomendas/utilizadores/atributos, séries de KPI, `storeSettings`.
   - `admin/data/mockErp.js` — mock data de Produção/Financeiro/Envios/Idiomas (insumos, fichas técnicas, ordens, compras, séries financeiras, `initialShippingMethods`, `initialLanguages`).
   - `admin/data/mockMarketing.js` — `initialCoupons`, `COUPON_TYPES`, `COUPON_SCOPES` (cupões de desconto).
-  - `admin/pages/` — uma página por módulo: catálogo/operação (`Dashboard`, `Products` [+`ProductForm`], `Categories`, `Stock`, `Orders` [+`OrderDetail`], `Blog` [+`ArticleForm`], `Users`, `Settings`, `Coupons`); painel do afiliado (`AfiliadoDashboard`, `AfiliadoProducts`, `AfiliadoSales`, `AfiliadoLinks`).
-  - `lib/commission.js` — `calcCommission(product, qty)` / `formatCommission(product)` (comissão de afiliado).
-  - `lib/coupons.js` — `validateCoupon(coupon, { subtotal, items })` / `couponToPromo(coupon)` (usados no `CartContext.applyPromo`).
+  - `admin/data/mockPages.js` — `BLOCK_LIBRARY`, `DEFAULTS`, `BLOCK_FIELDS`, `BLOCK_LISTS`, `makeBlock`, `initialPages` (Construtor de Páginas).
+  - `admin/pages/` — uma página por módulo: catálogo/operação (`Dashboard`, `Products` [+`ProductForm`], `Categories`, `Stock`, `Orders` [+`OrderDetail`], `Blog` [+`ArticleForm`], `Users`, `Settings`, `Coupons`); painel do afiliado (`AfiliadoDashboard`, `AfiliadoProducts`, `AfiliadoSales`, `AfiliadoLinks`); conteúdo (`Paginas`/`PageBuilder`, `BlockLibrary`, `PackageSearch` — todos `super_admin`).
 
 ### Design tokens
 - Definidos como **variáveis CSS** em `src/index.css` (`:root`): `--da-leaf #2E9E44`, `--da-forest #14532D`, `--da-pine`, `--da-olive`, `--da-cream`, `--da-cream-2`, `--da-ink`, `--da-muted`, `--da-line` (hairline).
@@ -99,4 +103,7 @@ Estas são o trabalho da próxima fase — não as atacar de surpresa numa taref
 - **Afiliados:** ✅ feito (sessão 2026-06-28; papel renomeado de "lojista" para "afiliado" na mesma sessão) — comissão por produto (`commissionType`/`commissionValue` + secção no `ProductForm`, visível só para quem não é `afiliado`); `affiliateCode`/`affiliateActive` nos utilizadores `afiliado` (gerado em `Users.jsx` via `makeAffiliateCode`); `AdminContext.me` deriva do utilizador mock real do papel ativo. Painel próprio em `/admin/painel-afiliado` (+`/produtos`, `/vendas`, `/links`), com grupo de sidebar e `NAV_PERMISSIONS` dedicados (`afiliado_*`) — os outros grupos somem automaticamente para esse papel. Distinto de `/admin/afiliados` (plural), a vista do admin que agrega comissão por afiliado.
 - **Cupões de desconto:** ✅ feito — CRUD em `/admin/cupoes` (grupo "Marketing"); código, tipo (%/€), encomenda mínima, validade, limite de uso, âmbito (loja/categoria/produto). Aplicação real no `CartPage` e no `Checkout` (campo no resumo da encomenda, visível em qualquer passo), via `validateCoupon`/`couponToPromo` → `CartContext.applyPromo` (mecanismo já existia, usado antes só pelo bundle "RITUAL10").
 - **Vista admin "Afiliados" (`/admin/afiliados`):** ✅ feito — agrega, por afiliado, vendas/receita/comissão acumulada (`Affiliates.jsx`); grupo "Administração" da sidebar, permissão `admin`/`super_admin`.
+- **Páginas públicas editáveis pelo Construtor:** ✅ feito (sessão 2026-06-28) — `Home.jsx`/`About.jsx`/`Contact.jsx` verificam `getPublishedPage(slug reservado: "inicio"/"sobre"/"contacto")` (`lib/pages.js`) e, se existir página publicada com esse slug, renderizam-na via `BlockRenderer` (`components/blocks/BlockRenderer.jsx`, extraído do `PageBuilder.jsx`) em vez do JSX fixo — **opt-in**, sem override não há alteração nenhuma ao design original. `AdminContext.pages` persiste em `localStorage` (`divinarte-pages-v1`) para o storefront (árvore React separada do admin) conseguir ler o que foi publicado. Rota genérica `/:slug` (`DynamicPage.jsx`, última do Storefront em `App.js`) trata qualquer página nova criada no construtor com slug livre, com fallback "página não encontrada". Construtor (`pages`) agora restrito a `super_admin`.
+- **Biblioteca de Blocos (`/admin/blocos`, super_admin):** ✅ feito — catálogo dos tipos de `BLOCK_LIBRARY` com pré-visualização ao vivo; **não é** sistema de upload/plugins (decisão deliberada: inseguro/inviável numa SPA estática) — novos blocos exigem código novo em `BlockRenderer.jsx`/`mockPages.js`.
+- **Pesquisa de Pacotes (`/admin/pacotes`, super_admin):** ✅ feito — atalho que abre `npmjs.com/search` numa nova aba; não instala nada.
 - **Próximo:** nenhum trabalho de visual pendente. A próxima fase é back-end (Supabase) — ver `docs/CONTEXT.md`.

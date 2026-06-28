@@ -8,7 +8,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import {
-  LayoutTemplate, Type, Image as ImageIcon, Images, ShoppingBag, Megaphone, Video as VideoIcon,
+  LayoutTemplate, Type, Image as ImageIcon, Images, GalleryHorizontal, ShoppingBag, Megaphone, Video as VideoIcon,
   Quote, HelpCircle, Mail, Columns, Minus, GripVertical, Trash2, Copy, Plus,
   Monitor, Tablet, Smartphone, Eye, Save, Send, Undo2, Redo2, ChevronLeft,
 } from "lucide-react";
@@ -19,7 +19,7 @@ import { FormRow, fieldClass } from "../components/Bits";
 import { BlockView } from "../../components/blocks/BlockRenderer";
 
 const BLOCK_ICONS = {
-  hero: LayoutTemplate, texto: Type, imagem: ImageIcon, galeria: Images, produtos: ShoppingBag,
+  hero: LayoutTemplate, texto: Type, imagem: ImageIcon, galeria: Images, carrossel: GalleryHorizontal, produtos: ShoppingBag,
   banner: Megaphone, video: VideoIcon, testemunhos: Quote, faq: HelpCircle, newsletter: Mail,
   colunas: Columns, espacador: Minus,
 };

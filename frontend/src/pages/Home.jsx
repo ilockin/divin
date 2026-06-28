@@ -3,26 +3,13 @@ import { Link } from "react-router-dom";
 import { ArrowRight, Sparkles, Leaf, Heart, BadgeCheck } from "lucide-react";
 import { ProductCard } from "../components/ProductCard";
 import { products, categories, testimonials, blogPosts } from "../data/mock";
-import { getPublishedPage } from "../lib/pages";
-import { BlockRenderer } from "../components/blocks/BlockRenderer";
+import { loadHomeContent } from "../lib/homeContent";
 
 export const Home = () => {
-  const overridePage = getPublishedPage("inicio");
-  if (overridePage) {
-    return (
-      <div data-testid="home-page">
-        <BlockRenderer blocks={overridePage.blocks} products={products} />
-      </div>
-    );
-  }
-
+  const content = loadHomeContent();
   const featured = products.filter((p) => p.isNew).slice(0, 4);
-  const trust = [
-    { icon: Leaf, label: "100% Natural" },
-    { icon: Heart, label: "Vegano" },
-    { icon: Sparkles, label: "Artesanal" },
-    { icon: BadgeCheck, label: "Ingredientes BIO" },
-  ];
+  const trustIcons = [Leaf, Heart, Sparkles, BadgeCheck];
+  const trust = content.trust.labels.map((label, i) => ({ icon: trustIcons[i] || Leaf, label }));
 
   return (
     <div data-testid="home-page">
@@ -30,7 +17,7 @@ export const Home = () => {
       <section className="relative overflow-hidden">
         <div className="absolute inset-0">
           <img
-            src="https://images.unsplash.com/photo-1556228852-80b6e5eeff06?auto=format&fit=crop&w=2000&q=70"
+            src={content.hero.image}
             alt=""
             className="w-full h-full object-cover"
           />
@@ -38,19 +25,19 @@ export const Home = () => {
         </div>
         <div className="relative container-da py-32 sm:py-40 lg:py-52">
           <div className="max-w-xl">
-            <p className="font-script text-[var(--da-olive)] text-3xl mb-3">cuidar com atenção</p>
+            <p className="font-script text-[var(--da-olive)] text-3xl mb-3">{content.hero.eyebrow}</p>
             <h1 className="text-4xl sm:text-5xl lg:text-6xl leading-[1.05] text-white" style={{ color: "#F7F4EC" }}>
-              A divina arte de<br />cuidar de você.
+              {content.hero.titleLine1}<br />{content.hero.titleLine2}
             </h1>
             <p className="font-body text-base text-white/85 mt-6 max-w-md leading-relaxed">
-              Cosmética natural artesanal feita em pequenos lotes, em Portugal — para que cada gesto de cuidado seja também um momento de pausa.
+              {content.hero.subtitle}
             </p>
             <div className="flex flex-wrap gap-3 mt-8">
               <Link to="/loja" className="btn-da btn-da-primary" data-testid="hero-shop-btn">
-                Descobrir a loja <ArrowRight size={16} />
+                {content.hero.ctaShopText} <ArrowRight size={16} />
               </Link>
               <Link to="/sobre" className="btn-da btn-da-outline text-[#F7F4EC] border-[#F7F4EC] hover:bg-[#F7F4EC] hover:text-[var(--da-forest)]" data-testid="hero-about-btn">
-                A nossa história
+                {content.hero.ctaAboutText}
               </Link>
             </div>
           </div>
@@ -73,11 +60,11 @@ export const Home = () => {
       <section className="container-da py-24">
         <div className="flex items-end justify-between mb-12 flex-wrap gap-4">
           <div>
-            <p className="font-script text-[var(--da-leaf)] text-2xl">novidades da casa</p>
-            <h2 className="text-3xl sm:text-4xl mt-1">Produtos em destaque</h2>
+            <p className="font-script text-[var(--da-leaf)] text-2xl">{content.featured.eyebrow}</p>
+            <h2 className="text-3xl sm:text-4xl mt-1">{content.featured.title}</h2>
           </div>
           <Link to="/loja" className="link-underline text-sm tracking-[0.2em] uppercase font-body text-[var(--da-forest)]">
-            Ver toda a loja
+            {content.featured.linkText}
           </Link>
         </div>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-5 lg:gap-8">
@@ -88,8 +75,8 @@ export const Home = () => {
       {/* CATEGORIES */}
       <section className="container-da pb-24">
         <div className="text-center mb-12">
-          <p className="font-script text-[var(--da-leaf)] text-2xl">explora por categoria</p>
-          <h2 className="text-3xl sm:text-4xl mt-1">Pequenos rituais, grandes categorias</h2>
+          <p className="font-script text-[var(--da-leaf)] text-2xl">{content.categories.eyebrow}</p>
+          <h2 className="text-3xl sm:text-4xl mt-1">{content.categories.title}</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
           {categories.map((cat) => (
@@ -114,23 +101,23 @@ export const Home = () => {
       <section className="bg-[var(--da-pine)] text-white">
         <div className="container-da py-24 grid lg:grid-cols-2 gap-12 items-center">
           <div className="aspect-square rounded-2xl overflow-hidden">
-            <img src="https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&w=1200&q=75" alt="" className="w-full h-full object-cover" />
+            <img src={content.story.image} alt="" className="w-full h-full object-cover" />
           </div>
           <div>
-            <p className="font-script text-[var(--da-olive)] text-3xl mb-3">a nossa história</p>
+            <p className="font-script text-[var(--da-olive)] text-3xl mb-3">{content.story.eyebrow}</p>
             <h2 className="text-3xl sm:text-4xl leading-[1.1]" style={{ color: "#F7F4EC" }}>
-              Fórmulas suaves, feitas com<br />mãos atentas.
+              {content.story.title}
             </h2>
             <p className="font-body text-sm sm:text-base text-white/80 mt-6 leading-relaxed">
-              A DivinArte nasceu de um gesto simples — o de cuidar. Cada produto é pensado em pequenos lotes, com ingredientes naturais escolhidos com calma, plantas locais sempre que possível, e a convicção de que beleza é também uma forma de bondade.
+              {content.story.paragraph}
             </p>
             <ul className="mt-8 space-y-3 font-body text-sm">
-              <li className="leaf-bullet">Produção artesanal em Portugal, em pequenos lotes</li>
-              <li className="leaf-bullet">Ingredientes naturais, vegan-friendly sempre que possível</li>
-              <li className="leaf-bullet">Embalagem em vidro âmbar, reutilizável</li>
+              {content.story.bullets.map((bullet, i) => (
+                <li key={i} className="leaf-bullet">{bullet}</li>
+              ))}
             </ul>
             <Link to="/sobre" className="btn-da btn-da-outline mt-8 text-[#F7F4EC] border-[#F7F4EC] hover:bg-[#F7F4EC] hover:text-[var(--da-forest)]" data-testid="home-story-cta">
-              Saber mais sobre nós
+              {content.story.ctaText}
             </Link>
           </div>
         </div>
@@ -139,8 +126,8 @@ export const Home = () => {
       {/* TESTIMONIALS */}
       <section className="container-da py-24">
         <div className="text-center mb-12">
-          <p className="font-script text-[var(--da-leaf)] text-2xl">a voz de quem cuida connosco</p>
-          <h2 className="text-3xl sm:text-4xl mt-1">Pequenas palavras grandes</h2>
+          <p className="font-script text-[var(--da-leaf)] text-2xl">{content.testimonials.eyebrow}</p>
+          <h2 className="text-3xl sm:text-4xl mt-1">{content.testimonials.title}</h2>
         </div>
         <div className="grid md:grid-cols-3 gap-6">
           {testimonials.map((t, i) => (
@@ -160,11 +147,11 @@ export const Home = () => {
       <section className="container-da pb-24">
         <div className="flex items-end justify-between mb-12 flex-wrap gap-4">
           <div>
-            <p className="font-script text-[var(--da-leaf)] text-2xl">do nosso diário</p>
-            <h2 className="text-3xl sm:text-4xl mt-1">Rituais e ingredientes</h2>
+            <p className="font-script text-[var(--da-leaf)] text-2xl">{content.blog.eyebrow}</p>
+            <h2 className="text-3xl sm:text-4xl mt-1">{content.blog.title}</h2>
           </div>
           <Link to="/blog" className="link-underline text-sm tracking-[0.2em] uppercase font-body text-[var(--da-forest)]">
-            Ver todos os artigos
+            {content.blog.linkText}
           </Link>
         </div>
         <div className="grid md:grid-cols-3 gap-6">

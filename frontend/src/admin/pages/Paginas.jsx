@@ -28,6 +28,24 @@ export const Paginas = () => {
     toast.success(p.status === "publicado" ? "Movida para rascunho." : "Página publicada.");
   };
 
+  const duplicate = (p) => {
+    const baseSlug = `${p.slug}-copia`;
+    let slug = baseSlug;
+    let n = 2;
+    while (pages.some((x) => x.slug === slug)) { slug = `${baseSlug}-${n}`; n += 1; }
+    const clone = {
+      ...p,
+      id: "pg-" + Date.now(),
+      slug,
+      title: `${p.title} (cópia)`,
+      status: "rascunho",
+      date: new Date().toISOString().slice(0, 10),
+      blocks: p.blocks.map((b) => ({ ...b, props: { ...b.props } })),
+    };
+    setPages((prev) => [clone, ...prev]);
+    toast.success("Página duplicada.");
+  };
+
   const columns = [
     { key: "title", label: "Título", sortable: true,
       render: (p) => <Link to={`/admin/paginas/${p.id}`} className="font-semibold text-[var(--da-forest)] hover:text-[var(--da-leaf)]">{p.title}</Link> },
@@ -58,6 +76,7 @@ export const Paginas = () => {
         pageSize={10}
         rowActions={(p) => [
           { label: "Editar", onClick: () => navigate(`/admin/paginas/${p.id}`) },
+          { label: "Duplicar", onClick: () => duplicate(p) },
           { label: p.status === "publicado" ? "Mover para rascunho" : "Publicar", onClick: () => togglePublish(p) },
           { label: "Remover", onClick: () => remove(p), danger: true },
         ]}

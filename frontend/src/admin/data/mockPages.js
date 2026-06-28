@@ -6,6 +6,7 @@ export const BLOCK_LIBRARY = [
   { type: "texto", label: "Texto" },
   { type: "imagem", label: "Imagem" },
   { type: "galeria", label: "Galeria" },
+  { type: "carrossel", label: "Carrossel (Swiper)" },
   { type: "produtos", label: "Grade de Produtos" },
   { type: "banner", label: "Banner / CTA" },
   { type: "video", label: "Vídeo" },
@@ -28,6 +29,7 @@ export const DEFAULTS = {
   texto: () => ({ text: "Escreva aqui o seu texto. Pode ser uma introdução, uma história da marca ou qualquer conteúdo.", align: "left" }),
   imagem: () => ({ src: UNSPLASH, alt: "Imagem", align: "center" }),
   galeria: () => ({ items: [{ url: UNSPLASH }, { url: UNSPLASH2 }, { url: UNSPLASH3 }] }),
+  carrossel: () => ({ items: [{ url: UNSPLASH }, { url: UNSPLASH2 }, { url: UNSPLASH3 }] }),
   produtos: () => ({ title: "Os nossos produtos", count: 3 }),
   banner: () => ({ title: "Oferta especial", text: "Portes grátis em compras acima de 49€.", buttonText: "Saber mais", buttonLink: "/loja", bg: "#2E9E44" }),
   video: () => ({ url: "", caption: "Legenda do vídeo (demonstração)." }),
@@ -89,6 +91,7 @@ export const BLOCK_FIELDS = {
 // Blocos com listas de itens (geridas à parte no painel de propriedades)
 export const BLOCK_LISTS = {
   galeria: { prop: "items", label: "Imagens", newItem: () => ({ url: UNSPLASH }), fields: [{ key: "url", label: "URL da imagem", type: "text" }] },
+  carrossel: { prop: "items", label: "Imagens", newItem: () => ({ url: UNSPLASH }), fields: [{ key: "url", label: "URL da imagem", type: "text" }] },
   testemunhos: { prop: "items", label: "Testemunhos", newItem: () => ({ name: "", text: "" }), fields: [{ key: "name", label: "Nome", type: "text" }, { key: "text", label: "Texto", type: "textarea" }] },
   faq: { prop: "items", label: "Perguntas", newItem: () => ({ q: "", a: "" }), fields: [{ key: "q", label: "Pergunta", type: "text" }, { key: "a", label: "Resposta", type: "textarea" }] },
 };
@@ -102,7 +105,7 @@ export const makeBlock = (type) => {
 // Páginas mock iniciais
 export const initialPages = [
   {
-    id: "pg-home", title: "Página inicial", slug: "inicio", status: "publicado", date: "2025-10-18",
+    id: "pg-home", title: "Página inicial", slug: "inicio", status: "rascunho", date: "2025-10-18",
     blocks: [
       { id: "b1", type: "hero", props: DEFAULTS.hero() },
       { id: "b2", type: "produtos", props: { title: "Mais vendidos", count: 3 } },

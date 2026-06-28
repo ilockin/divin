@@ -1,5 +1,10 @@
 import React from "react";
 import { Video as VideoIcon } from "lucide-react";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Navigation, Pagination } from "swiper/modules";
+import "swiper/css";
+import "swiper/css/navigation";
+import "swiper/css/pagination";
 import { formatEUR } from "../../lib/format";
 
 const alignClass = (a) => (a === "center" ? "text-center" : a === "right" ? "text-right" : "text-left");
@@ -29,6 +34,26 @@ export const BlockView = ({ block, products = [] }) => {
       return (
         <div className="px-8 py-6 grid grid-cols-2 sm:grid-cols-3 gap-3">
           {(p.items || []).map((it, i) => <img key={i} src={it.url} alt="" className="rounded-lg aspect-square object-cover w-full" />)}
+        </div>
+      );
+    case "carrossel":
+      return (
+        <div className="px-8 py-6">
+          <Swiper
+            modules={[Navigation, Pagination]}
+            navigation
+            pagination={{ clickable: true }}
+            spaceBetween={16}
+            slidesPerView={1.15}
+            breakpoints={{ 640: { slidesPerView: 2.2 }, 1024: { slidesPerView: 3 } }}
+            className="rounded-xl [&_.swiper-button-next]:text-[var(--da-forest)] [&_.swiper-button-prev]:text-[var(--da-forest)] [&_.swiper-pagination-bullet-active]:bg-[var(--da-leaf)]"
+          >
+            {(p.items || []).map((it, i) => (
+              <SwiperSlide key={i}>
+                <img src={it.url} alt="" className="rounded-lg aspect-square object-cover w-full" />
+              </SwiperSlide>
+            ))}
+          </Swiper>
         </div>
       );
     case "produtos":

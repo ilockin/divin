@@ -9,13 +9,12 @@ import { TrendingUp, ShoppingCart, Percent } from "lucide-react";
 export const Affiliates = () => {
   const { users, orders, products } = useAdmin();
 
-  const commissionFor = (order) =>
-    order.items.reduce((sum, item) => {
-      const p = products.find((x) => x.id === item.id);
-      return p ? sum + calcCommission(p, item.qty) : sum;
-    }, 0);
-
   const rows = useMemo(() => {
+    const commissionFor = (order) =>
+      order.items.reduce((sum, item) => {
+        const p = products.find((x) => x.id === item.id);
+        return p ? sum + calcCommission(p, item.qty) : sum;
+      }, 0);
     const afiliados = users.filter((u) => u.role === "afiliado");
     return afiliados.map((u) => {
       const myOrders = orders.filter((o) => o.affiliateCode === u.affiliateCode);

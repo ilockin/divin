@@ -1,6 +1,6 @@
 import React from "react";
 import {
-  LayoutTemplate, Type, Image as ImageIcon, Images, ShoppingBag, Megaphone, Video as VideoIcon,
+  LayoutTemplate, Type, Image as ImageIcon, Images, GalleryHorizontal, ShoppingBag, Megaphone, Video as VideoIcon,
   Quote, HelpCircle, Mail, Columns, Minus,
 } from "lucide-react";
 import { PageHeader, SectionTitle } from "../components/Bits";
@@ -9,7 +9,7 @@ import { BLOCK_LIBRARY, makeBlock } from "../data/mockPages";
 import { BlockView } from "../../components/blocks/BlockRenderer";
 
 const BLOCK_ICONS = {
-  hero: LayoutTemplate, texto: Type, imagem: ImageIcon, galeria: Images, produtos: ShoppingBag,
+  hero: LayoutTemplate, texto: Type, imagem: ImageIcon, galeria: Images, carrossel: GalleryHorizontal, produtos: ShoppingBag,
   banner: Megaphone, video: VideoIcon, testemunhos: Quote, faq: HelpCircle, newsletter: Mail,
   colunas: Columns, espacador: Minus,
 };
