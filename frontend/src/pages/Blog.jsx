@@ -1,19 +1,21 @@
 import React from "react";
 import { Link, useParams, Navigate } from "react-router-dom";
-import { blogPosts, findPost } from "../data/mock";
+import { loadPublishedArticles, findArticle } from "../lib/articles";
 import { loadBlogContent } from "../lib/blogContent";
 import { HeaderSection } from "../components/blog/BlogSections";
 import { EditPageButton } from "../components/EditPageButton";
+import { EditArticleButton } from "../components/EditArticleButton";
 
 export const Blog = () => {
   const content = loadBlogContent();
+  const posts = loadPublishedArticles();
 
   return (
     <div className="container-da py-12" data-testid="blog-page">
       <HeaderSection content={content.header} />
 
       <div className="grid md:grid-cols-3 gap-8 mt-12">
-        {blogPosts.map((post) => (
+        {posts.map((post) => (
           <Link key={post.slug} to={`/blog/${post.slug}`} className="group block" data-testid={`blog-card-${post.slug}`}>
             <div className="aspect-[4/3] overflow-hidden rounded-2xl">
               <img src={post.cover} alt={post.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
@@ -31,10 +33,10 @@ export const Blog = () => {
 
 export const BlogPost = () => {
   const { slug } = useParams();
-  const post = findPost(slug);
-  if (!post) return <Navigate to="/blog" replace />;
+  const post = findArticle(slug);
+  if (!post || post.status !== "publicado") return <Navigate to="/blog" replace />;
 
-  const related = blogPosts.filter((p) => p.slug !== slug).slice(0, 2);
+  const related = loadPublishedArticles().filter((p) => p.slug !== slug).slice(0, 2);
 
   return (
     <article className="py-12" data-testid="blog-post-page">
@@ -49,14 +51,7 @@ export const BlogPost = () => {
           <img src={post.cover} alt={post.title} className="w-full h-full object-cover" />
         </div>
       </div>
-      <div className="container-da max-w-3xl mt-10 font-body text-base leading-relaxed text-[var(--da-ink)] space-y-5">
-        <p>{post.body}</p>
-        <p>Estes pequenos momentos não exigem grandes preparativos. Bastam alguns minutos, uma luz suave, e a vontade de pausar. Acreditamos que a beleza acontece quando o cuidado é simples — feito de gestos repetidos com atenção.</p>
-        <p>Em cada artigo partilhamos uma parte do nosso modo de fazer. Esperamos que aqui encontres inspiração para os teus próprios rituais.</p>
-        <blockquote className="border-l-4 border-[var(--da-leaf)] pl-5 italic text-[var(--da-forest)] font-serif-display normal-case" style={{ letterSpacing: "0.02em" }}>
-          “Cuidar é a forma mais antiga de bondade.”
-        </blockquote>
-      </div>
+      <div className="container-da max-w-3xl mt-10 article-content" dangerouslySetInnerHTML={{ __html: post.body }} />
 
       {related.length > 0 && (
         <div className="container-da max-w-3xl mt-16 pt-10 border-t hairline">
@@ -74,6 +69,7 @@ export const BlogPost = () => {
           </div>
         </div>
       )}
+      <EditArticleButton slug={post.slug} />
     </article>
   );
 };

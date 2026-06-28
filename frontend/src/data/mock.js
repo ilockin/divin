@@ -256,7 +256,7 @@ export const blogPosts = [
     date: "2025-10-12",
     cover: "https://images.unsplash.com/photo-1556228852-80b6e5eeff06?auto=format&fit=crop&w=1400&q=70",
     author: "Equipa DivinArte",
-    body: "Há noites em que basta acender uma luz quente, respirar fundo e aplicar um gesto de cuidado para o corpo entender que é hora de abrandar. Neste artigo partilhamos um ritual simples — em três passos — que pode acompanhar-te todas as noites.",
+    body: "<p>Há noites em que basta acender uma luz quente, respirar fundo e aplicar um gesto de cuidado para o corpo entender que é hora de abrandar. Neste artigo partilhamos um ritual simples — em três passos — que pode acompanhar-te todas as noites.</p><h2>1. Prepara o ambiente</h2><p>Luz suave, telefone longe, um momento só teu. Estes pequenos momentos não exigem grandes preparativos — bastam alguns minutos e a vontade de pausar.</p><h2>2. O gesto de cuidado</h2><p>Aplica o Spray Sono e Ansiedade na almofada e nos pulsos, com respirações lentas e profundas.</p><h2>3. Repete com atenção</h2><ul><li>Mesma hora, todas as noites</li><li>Sem pressa</li><li>Sem expectativas — só o gesto</li></ul><blockquote>Cuidar é a forma mais antiga de bondade.</blockquote><p>Em cada artigo partilhamos uma parte do nosso modo de fazer. Esperamos que aqui encontres inspiração para os teus próprios rituais.</p>",
   },
   {
     slug: "ingredientes-em-foco-rosa-mosqueta",
@@ -266,7 +266,7 @@ export const blogPosts = [
     date: "2025-09-30",
     cover: "https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&w=1400&q=70",
     author: "Equipa DivinArte",
-    body: "A rosa-mosqueta é apreciada pelas suas notas suaves e pela sua textura sedosa. Aqui contamos um pouco da sua origem e da forma como a usamos.",
+    body: "<p>A rosa-mosqueta é apreciada pelas suas notas suaves e pela sua textura sedosa. Aqui contamos um pouco da sua origem e da forma como a usamos.</p><h2>De onde vem</h2><p>Extraído das semente da roseira-brava, é um óleo tradicionalmente usado em rituais de cuidado da pele em climas frios e secos.</p><h2>Como o usamos</h2><ul><li>No Sérum Revigorante, combinado com vitamina C</li><li>Em pequenas quantidades, para não pesar na pele</li><li>De preferência à noite, antes de dormir</li></ul><p>Em cada artigo partilhamos uma parte do nosso modo de fazer. Esperamos que aqui encontres inspiração para os teus próprios rituais.</p>",
   },
   {
     slug: "natural-vs-bio-o-que-significa",
@@ -276,7 +276,7 @@ export const blogPosts = [
     date: "2025-09-15",
     cover: "https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&w=1400&q=70",
     author: "Equipa DivinArte",
-    body: "Natural, BIO, vegano… Os rótulos nem sempre dizem o mesmo. Neste artigo damos definições simples para te ajudar a escolher.",
+    body: "<p>Natural, BIO, vegano… Os rótulos nem sempre dizem o mesmo. Neste artigo damos definições simples para te ajudar a escolher.</p><h2>Natural</h2><p>Ingredientes de origem botânica, sem promessas exageradas — só o essencial.</p><h2>BIO</h2><p>Cultivo sem pesticidas de síntese, com origem certificada.</p><h2>Vegano</h2><p>Sem ingredientes de origem animal, em nenhuma fase do processo.</p><p>Em cada artigo partilhamos uma parte do nosso modo de fazer. Esperamos que aqui encontres inspiração para os teus próprios rituais.</p>",
   },
 ];
 

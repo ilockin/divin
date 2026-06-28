@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 import { Link, useNavigate, useParams, Navigate } from "react-router-dom";
-import { Plus, Bold, Italic, List, Image as ImageIcon, Link2, Heading2, Quote } from "lucide-react";
+import { Plus } from "lucide-react";
 import { toast } from "sonner";
 import { DataTable, StatusBadge } from "../components/DataTable";
 import { PageHeader, FormRow, fieldClass, SectionTitle } from "../components/Bits";
+import { RichTextEditor } from "../components/RichTextEditor";
 import { useAdmin } from "../context/AdminContext";
 
 const CATEGORIES = ["Rituais", "Ingredientes", "Saber mais", "Marca"];
@@ -101,8 +102,6 @@ export const ArticleForm = () => {
     navigate("/admin/blog");
   };
 
-  const insertSnippet = (snippet) => u("body", (form.body || "") + snippet);
-
   return (
     <div data-testid="admin-article-form">
       <PageHeader
@@ -125,37 +124,9 @@ export const ArticleForm = () => {
             <textarea rows={2} className={fieldClass} value={form.excerpt} onChange={(e) => u("excerpt", e.target.value)} data-testid="af-excerpt" />
           </FormRow>
 
-          {/* "rich text" toolbar (visual only) */}
           <div>
             <p className="font-body text-xs tracking-[0.18em] uppercase text-[var(--da-forest)] mb-2">Conteúdo</p>
-            <div className="bg-[var(--da-cream-2)]/50 border hairline rounded-t-lg flex items-center gap-1 p-1.5" data-testid="af-toolbar">
-              {[
-                { Icon: Bold, label: "Negrito", snippet: "**texto**" },
-                { Icon: Italic, label: "Itálico", snippet: "_texto_" },
-                { Icon: Heading2, label: "Subtítulo", snippet: "\n## Subtítulo\n" },
-                { Icon: Quote, label: "Citação", snippet: "\n> citação\n" },
-                { Icon: List, label: "Lista", snippet: "\n- item\n- item\n" },
-                { Icon: Link2, label: "Link", snippet: "[texto](https://)" },
-                { Icon: ImageIcon, label: "Imagem", snippet: "\n![alt](url)\n" },
-              ].map(({ Icon, label, snippet }) => (
-                <button
-                  key={label}
-                  type="button"
-                  onClick={() => insertSnippet(snippet)}
-                  title={label}
-                  data-testid={`af-tb-${label.toLowerCase()}`}
-                  className="w-8 h-8 rounded hover:bg-white flex items-center justify-center text-[var(--da-forest)]"
-                ><Icon size={14} /></button>
-              ))}
-            </div>
-            <textarea
-              rows={14}
-              value={form.body}
-              onChange={(e) => u("body", e.target.value)}
-              data-testid="af-body"
-              placeholder="Escreve o teu artigo aqui... Suporta markdown leve no preview da loja."
-              className="w-full border-t-0 border hairline rounded-b-lg px-4 py-3 font-body text-sm focus:outline-none focus:border-[var(--da-leaf)] bg-white"
-            />
+            <RichTextEditor value={form.body} onChange={(html) => u("body", html)} />
           </div>
         </div>
 

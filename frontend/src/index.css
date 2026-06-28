@@ -84,6 +84,22 @@ body {
 
 .hairline { border-color: var(--da-line); }
 
+/* Conteúdo rico do artigo do blog (HTML gerado pelo editor de artigos) */
+.article-content { font-family: "Montserrat", sans-serif; font-size: 1rem; line-height: 1.75; color: var(--da-ink); }
+.article-content > * + * { margin-top: 1.25rem; }
+.article-content h2 { font-size: 1.5rem; margin-top: 2rem; }
+.article-content h3 { font-size: 1.25rem; margin-top: 1.75rem; }
+.article-content ul, .article-content ol { padding-left: 1.5rem; }
+.article-content ul { list-style: disc; }
+.article-content ol { list-style: decimal; }
+.article-content li + li { margin-top: 0.4rem; }
+.article-content a { color: var(--da-leaf); text-decoration: underline; }
+.article-content img { border-radius: 1rem; width: 100%; }
+.article-content blockquote {
+    border-left: 4px solid var(--da-leaf); padding-left: 1.25rem; font-style: italic;
+    color: var(--da-forest); font-family: "Cinzel", serif; letter-spacing: 0.02em; text-transform: none;
+}
+
 /* Hero gradient overlay — soft, not gaudy */
 .hero-overlay {
     background: linear-gradient(180deg, rgba(20,83,45,0.05) 0%, rgba(20,83,45,0.55) 100%);

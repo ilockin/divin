@@ -2,7 +2,8 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Sparkles, Leaf, Heart, BadgeCheck } from "lucide-react";
 import { ProductCard } from "../ProductCard";
-import { products, categories, testimonials, blogPosts } from "../../data/mock";
+import { products, categories, testimonials } from "../../data/mock";
+import { loadPublishedArticles } from "../../lib/articles";
 import {
   titleClassFor as titleClass, titleStyleFor as titleStyle, buttonStyleFor as buttonStyle,
   eyebrowClassFor as eyebrowClass, eyebrowStyleFor as eyebrowStyle,
@@ -150,7 +151,9 @@ export const TestimonialsSection = ({ content }) => (
   </section>
 );
 
-export const BlogSection = ({ content }) => (
+export const BlogSection = ({ content }) => {
+  const posts = loadPublishedArticles().slice(0, 3);
+  return (
   <section className="container-da pb-24">
     <div className="flex items-end justify-between mb-12 flex-wrap gap-4">
       <div>
@@ -162,7 +165,7 @@ export const BlogSection = ({ content }) => (
       </Link>
     </div>
     <div className="grid md:grid-cols-3 gap-6">
-      {blogPosts.map((post) => (
+      {posts.map((post) => (
         <Link key={post.slug} to={`/blog/${post.slug}`} className="group block" data-testid={`home-blog-${post.slug}`}>
           <div className="aspect-[4/3] overflow-hidden rounded-2xl">
             <img src={post.cover} alt={post.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
@@ -174,7 +177,8 @@ export const BlogSection = ({ content }) => (
       ))}
     </div>
   </section>
-);
+  );
+};
 
 export const HOME_SECTIONS = [
   { key: "hero", label: "Hero", Component: HeroSection },

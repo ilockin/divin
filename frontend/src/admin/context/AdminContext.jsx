@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { ROLES, adminUsers, adminProducts, adminOrders, adminArticles, adminAttributes, stockMovements as initialMovements, storeSettings as initialSettings } from "../data/mockAdmin";
+import { ROLES, adminUsers, adminProducts, adminOrders, adminAttributes, stockMovements as initialMovements, storeSettings as initialSettings } from "../data/mockAdmin";
+import { loadArticles, saveArticles } from "../../lib/articles";
 import { initialInsumos, initialRecipes, initialProductionOrders, initialPurchases, initialShippingMethods, initialLanguages, initialShippingZones, initialDistrictRules, initialCategoryRules } from "../data/mockErp";
 import { initialCoupons } from "../data/mockMarketing";
 import { loadPages, savePages } from "../../lib/pages";
@@ -19,7 +20,7 @@ export const AdminProvider = ({ children }) => {
   const [users, setUsers] = useState(adminUsers);
   const [productsList, setProductsList] = useState(adminProducts);
   const [orders, setOrders] = useState(adminOrders);
-  const [articles, setArticles] = useState(adminArticles);
+  const [articles, setArticles] = useState(loadArticles);
   const [attributes, setAttributes] = useState(adminAttributes);
   const [movements, setMovements] = useState(initialMovements);
   const [settings, setSettings] = useState(initialSettings);
@@ -50,6 +51,7 @@ export const AdminProvider = ({ children }) => {
   useEffect(() => { saveContactContent(contactContent); }, [contactContent]);
   useEffect(() => { saveIntegrations(integrations); }, [integrations]);
   useEffect(() => { saveBlogContent(blogContent); }, [blogContent]);
+  useEffect(() => { saveArticles(articles); }, [articles]);
 
   const switchRole = (id) => {
     setRole(id);
