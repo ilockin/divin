@@ -4,6 +4,8 @@ import { initialInsumos, initialRecipes, initialProductionOrders, initialPurchas
 import { initialCoupons } from "../data/mockMarketing";
 import { loadPages, savePages } from "../../lib/pages";
 import { loadHomeContent, saveHomeContent } from "../../lib/homeContent";
+import { loadAboutContent, saveAboutContent } from "../../lib/aboutContent";
+import { loadLeads, saveLeads } from "../../lib/leads";
 
 const AdminContext = createContext(null);
 
@@ -32,9 +34,13 @@ export const AdminProvider = ({ children }) => {
   const [pages, setPages] = useState(loadPages);
   const [coupons, setCoupons] = useState(initialCoupons);
   const [homeContent, setHomeContent] = useState(loadHomeContent);
+  const [aboutContent, setAboutContent] = useState(loadAboutContent);
+  const [leads, setLeads] = useState(loadLeads);
 
   useEffect(() => { savePages(pages); }, [pages]);
   useEffect(() => { saveHomeContent(homeContent); }, [homeContent]);
+  useEffect(() => { saveAboutContent(aboutContent); }, [aboutContent]);
+  useEffect(() => { saveLeads(leads); }, [leads]);
 
   const switchRole = (id) => {
     setRole(id);
@@ -73,6 +79,8 @@ export const AdminProvider = ({ children }) => {
     pages, setPages,
     coupons, setCoupons,
     homeContent, setHomeContent,
+    aboutContent, setAboutContent,
+    leads, setLeads,
   };
 
   return <AdminContext.Provider value={value}>{children}</AdminContext.Provider>;

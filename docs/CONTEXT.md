@@ -7,13 +7,13 @@
 
 ## 0. O que mudou nesta versão (v2)
 
-- **Emergent** agora é plano **pago** (export via GitHub habilitado); usado **apenas** para o visual.
+- A ferramenta de geração visual usada inicialmente passou a plano **pago** (export via GitHub habilitado); usada **apenas** para o visual.
 - **Hospedagem definida:** front-end na **Vercel** (deploy automático a cada `git push`); banco/auth/API no **Supabase**.
 - **Lovable descartado** (não importa repositórios; é construtor de IA, não host).
 - **Modos de envio** são **geríveis pelo admin** (CRUD), não fixos.
 - Site **multi-idioma na interface** (i18n); **o blog NÃO é traduzido** por esta definição.
 - Novo **Sistema de Envios** por zona (país), por distrito (PT/ES) e por produto/categoria, com página dedicada `/admin/envios`.
-- **Painel administrativo** construído visualmente no Emergent (Prompts 1, 2, 2B e 3).
+- **Painel administrativo** construído visualmente na ferramenta de geração visual (Prompts 1, 2, 2B e 3).
 
 ---
 
@@ -32,9 +32,9 @@ Marca: **DivinArte — Cosmética natural artesanal**. Tom de voz: **cristão pr
 ## 2. Decisões já tomadas
 
 - Arquitetura: **sistema único custom** (não híbrido).
-- **Emergent** (plano pago) é usado **APENAS** para gerar o **visual** (loja + painel do cliente + painel admin) com mock data. Nenhuma lógica ou back-end é feito nele. Export via **"Save to GitHub"**.
+- A ferramenta de geração visual (plano pago) é usada **APENAS** para gerar o **visual** (loja + painel do cliente + painel admin) com mock data. Nenhuma lógica ou back-end é feito nela. Export via **"Save to GitHub"**.
 - **Lógica, back-end, banco, autenticação, pagamentos, i18n e motor de envios** são feitos no **VS Code + Claude Code**.
-- **Banco de dados:** **Supabase (PostgreSQL)**. **NÃO usar MongoDB** (default do Emergent é descartado).
+- **Banco de dados:** **Supabase (PostgreSQL)**. **NÃO usar MongoDB** (a predefinição da ferramenta de geração visual é descartada).
 - **Hospedagem:** front-end na **Vercel** (auto-deploy via GitHub). Supabase para dados/auth.
 - **Pagamentos:** **Stripe** primeiro; **MB Way / Multibanco** e **PayPal** depois.
 
@@ -94,7 +94,7 @@ Marca: **DivinArte — Cosmética natural artesanal**. Tom de voz: **cristão pr
 4. **Estoque** — saldo e movimentações por produto.
 5. **Produção / Fórmulas** *(núcleo customizado)* — insumos com custo; ficha técnica (BOM: produto → insumos + quantidades); ordem de produção que baixa insumo e calcula custo.
 6. **Financeiro** — compras de insumo, receita, margens, relatórios.
-7. **Loja (storefront)** — home, catálogo, detalhe, carrinho, checkout, área do cliente. *(Visual gerado no Emergent; multi-idioma na interface — ver §12.)*
+7. **Loja (storefront)** — home, catálogo, detalhe, carrinho, checkout, área do cliente. *(Visual gerado na ferramenta de geração visual; multi-idioma na interface — ver §12.)*
 8. **Pagamentos** — Stripe; depois MB Way/Multibanco, PayPal.
 9. **Blog / CMS** — editor TipTap, artigos, categorias. *(Conteúdo NÃO traduzido pelo i18n — ver §12.)*
 10. **Construtor de páginas** — drag & drop (DnD Kit). O mais complexo; por último.
@@ -112,21 +112,21 @@ Marca: **DivinArte — Cosmética natural artesanal**. Tom de voz: **cristão pr
 - **Fase 4 — Financeiro.**
 - **Fase 5 — Conteúdo:** blog e, por último, construtor de páginas.
 
-> Visual de todas as áreas (loja, painel cliente, admin) é gerado no Emergent; a lógica de cada fase é implementada no VS Code.
+> Visual de todas as áreas (loja, painel cliente, admin) é gerado na ferramenta de geração visual; a lógica de cada fase é implementada no VS Code.
 
 ---
 
-## 8. Fluxo de trabalho: Emergent → VS Code → Vercel
+## 8. Fluxo de trabalho: geração visual → VS Code → Vercel
 
-1. **Emergent (pago)** gera o visual (loja + painel cliente + admin), só mock data.
+1. **Ferramenta de geração visual (paga)** gera o visual (loja + painel cliente + admin), só mock data.
 2. **"Save to GitHub"** → repositório.
 3. **Clonar** o repo no VS Code.
-4. **Claude Code:** monta projeto Vite + TS limpo, porta os componentes de UI do Emergent e implementa todo o back-end (Supabase, auth, RLS, lógica, pagamentos, i18n, motor de envios).
+4. **Claude Code:** monta projeto Vite + TS limpo, porta os componentes de UI gerados visualmente e implementa todo o back-end (Supabase, auth, RLS, lógica, pagamentos, i18n, motor de envios).
 5. **Deploy:** Vercel conectada ao repo → **auto-deploy a cada `push`**.
    - Chaves do Supabase: `.env` (local, **não** vai pro GitHub) **e** Environment Variables da Vercel.
    - A `anon key` pode ficar no front (a RLS protege os dados). A **`service_role key` NUNCA** vai no front — só em Edge Functions (servidor).
 
-> Nota: o stack nativo do Emergent (React + FastAPI + MongoDB) é descartado; aproveita-se **só a camada React/UI**, substituindo o back-end por Supabase.
+> Nota: o stack nativo gerado por essa ferramenta (React + FastAPI + MongoDB) é descartado; aproveita-se **só a camada React/UI**, substituindo o back-end por Supabase.
 
 ---
 

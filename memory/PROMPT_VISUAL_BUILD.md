@@ -1,6 +1,6 @@
-# Emergent — Prompt de primeiro build (loja DivinArte, SOMENTE FRONT-END)
+# Prompt de primeiro build (loja DivinArte, SOMENTE FRONT-END)
 
-Cole TUDO que está dentro do bloco abaixo no campo de chat do Emergent como seu primeiro prompt.
+Cole TUDO que está dentro do bloco abaixo no campo de chat da ferramenta de geração visual como seu primeiro prompt.
 
 Quando o agente fizer perguntas antes de construir, responda:
 - Chave de LLM: **"Use the Universal LLM Key."**
@@ -58,10 +58,10 @@ A cohesive, polished, fully responsive React + Tailwind frontend with all the pa
 - "Add a sticky 'Adicionar ao carrinho' bar on the product detail page for mobile."
 - "Create a 4th category section on the home page with an image banner."
 
-## O que NÃO pedir ao Emergent (fica pro VS Code + Claude Code)
+## O que NÃO pedir à ferramenta de geração visual (fica pro VS Code + Claude Code)
 
 - Painel administrativo, ERP, produção, insumos, fórmulas, estoque, financeiro.
 - Integração real de pagamentos (Stripe, MB Way, etc.).
 - Autenticação real, banco de dados, Supabase, RLS.
 
-Esses módulos são back-end e lógica — feitos no VS Code para não gastar créditos e não depender do MongoDB padrão do Emergent.
+Esses módulos são back-end e lógica — feitos no VS Code para não gastar créditos e não depender do MongoDB padrão dessa ferramenta.

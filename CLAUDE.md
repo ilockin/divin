@@ -21,8 +21,8 @@ A próxima fase é ligar tudo a um back-end real (Supabase: auth, RLS, dados), p
 
 ## Ordem de construção do visual (concluída)
 
-1. ✅ **Prompt 2** — módulos Produção/ERP e Financeiro + alterações em `/admin/definicoes`. Spec: `docs/PROMPT_EMERGENT_ADMIN_2.md`.
-2. ✅ **Prompt 2B** — Gestão de Envios (`/admin/envios`) + secção "Envio" no formulário de produto. Spec: `docs/PROMPT_2B_EMERGENT_ADMIN_2B.md`.
+1. ✅ **Prompt 2** — módulos Produção/ERP e Financeiro + alterações em `/admin/definicoes`. Spec: `docs/PROMPT_VISUAL_ADMIN_2.md`.
+2. ✅ **Prompt 2B** — Gestão de Envios (`/admin/envios`) + secção "Envio" no formulário de produto. Spec: `docs/PROMPT_2B_VISUAL_ADMIN_2B.md`.
 3. ✅ **Prompt 3** — Construtor de páginas (drag & drop, `/admin/paginas`). Spec: `docs/PROMPT_3_CONSTRUTOR_PAGINAS.md`.
 
 Implementado no commit `8407c13` ("Completar visual do admin: Producao/ERP, Financeiro, Envios e Construtor de Paginas").
@@ -48,7 +48,7 @@ Estas são o trabalho da próxima fase — não as atacar de surpresa numa taref
 > Preenchido após exploração (sessão 2026-06-26). O código do visual vive em `frontend/`.
 
 ### Framework e build
-- **React 19** + **JavaScript/JSX** (não TypeScript, apesar de o CONTEXT.md mencionar TS — o projeto Emergent é JS). `jsconfig.json` define o alias **`@/` → `frontend/src/`**.
+- **React 19** + **JavaScript/JSX** (não TypeScript, apesar de o CONTEXT.md mencionar TS — o visual gerado inicialmente é JS). `jsconfig.json` define o alias **`@/` → `frontend/src/`**.
 - **Build:** Create React App via **CRACO** (`craco start/build/test`), **não Vite**. `craco.config.js` na raiz do frontend.
 - **Estilos:** Tailwind CSS 3 + shadcn/ui (`components.json`, `src/components/ui/`). Animações via `tailwindcss-animate`.
 - **Routing:** `react-router-dom` v7.

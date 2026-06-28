@@ -4,6 +4,14 @@ import { toast } from "sonner";
 import { getPublishedPage } from "../lib/pages";
 import { BlockRenderer } from "../components/blocks/BlockRenderer";
 import { products as catalogProducts } from "../data/mock";
+import { addLead } from "../lib/leads";
+
+const CONTACT_FIELDS_SNAPSHOT = [
+  { id: "name", label: "Nome" },
+  { id: "email", label: "E-mail" },
+  { id: "subject", label: "Assunto" },
+  { id: "message", label: "Mensagem" },
+];
 
 export const Contact = () => {
   const overridePage = getPublishedPage("contacto");
@@ -12,6 +20,7 @@ export const Contact = () => {
 
   const submit = (e) => {
     e.preventDefault();
+    addLead(form, CONTACT_FIELDS_SNAPSHOT);
     toast.success("Mensagem enviada", { description: "Responderemos em breve. Obrigada pelo teu cuidado." });
     setForm({ name: "", email: "", subject: "", message: "" });
   };

@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Users, Package, Tags, SlidersHorizontal,
   Boxes, ShoppingCart, FileText, Settings, ChevronLeft, ChevronRight,
   FlaskConical, ClipboardList, Factory,
-  PieChart, Receipt, Percent, Truck, LayoutPanelTop, Link2, Tag, UserCheck, Blocks, Home,
+  PieChart, Receipt, Percent, Truck, LayoutPanelTop, Link2, Tag, UserCheck, Blocks, Home, BookHeart, Inbox,
 } from "lucide-react";
 import { useAdmin } from "../context/AdminContext";
 import { can } from "../data/mockAdmin";
@@ -47,6 +47,7 @@ const navGroups = [
     title: "Comercial",
     items: [
       { id: "orders", to: "/admin/pedidos", label: "Pedidos", icon: ShoppingCart },
+      { id: "leads", to: "/admin/leads", label: "Mensagens de Contacto", icon: Inbox },
       { id: "shipping", to: "/admin/envios", label: "Gestão de Envios", icon: Truck },
     ],
   },
@@ -63,6 +64,7 @@ const navGroups = [
     items: [
       { id: "blog", to: "/admin/blog", label: "Blog / Artigos", icon: FileText },
       { id: "home_content", to: "/admin/conteudo-inicio", label: "Página Inicial", icon: Home },
+      { id: "about_content", to: "/admin/conteudo-sobre", label: "Página Sobre", icon: BookHeart },
       { id: "pages", to: "/admin/paginas", label: "Construtor de Páginas", icon: LayoutPanelTop },
       { id: "block_library", to: "/admin/blocos", label: "Biblioteca de Blocos", icon: Blocks },
     ],

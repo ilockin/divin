@@ -3,24 +3,9 @@ import { Link } from "react-router-dom";
 import { ArrowRight, Sparkles, Leaf, Heart, BadgeCheck } from "lucide-react";
 import { ProductCard } from "../ProductCard";
 import { products, categories, testimonials, blogPosts } from "../../data/mock";
-import { FONT_OPTIONS, FONT_SIZE_OPTIONS } from "../../admin/data/mockHomeContent";
+import { titleClassFor as titleClass, titleStyleFor as titleStyle, buttonStyleFor as buttonStyle } from "../../lib/contentStyle";
 
 const TRUST_ICONS = [Leaf, Heart, Sparkles, BadgeCheck];
-
-// Classe/estilo do título de cada secção, a partir de titleFont/titleSize/titleColor.
-const titleClass = (content) => {
-  const font = FONT_OPTIONS.find((f) => f.id === content.titleFont)?.className || "";
-  const size = FONT_SIZE_OPTIONS.find((s) => s.id === content.titleSize)?.className || "";
-  return `${font} ${size}`;
-};
-const titleStyle = (content) => ({ color: content.titleColor || undefined });
-
-// Estilo de um botão a partir de {prefix}Bg/{prefix}Radius. Bg só é aplicado quando definido
-// (string vazia = mantém a cor/hover original da classe .btn-da-*).
-const buttonStyle = (content, prefix) => ({
-  borderRadius: `${content[`${prefix}Radius`] ?? 999}px`,
-  ...(content[`${prefix}Bg`] ? { backgroundColor: content[`${prefix}Bg`] } : {}),
-});
 
 export const HeroSection = ({ content }) => (
   <section className="relative overflow-hidden">
