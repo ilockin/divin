@@ -23,6 +23,7 @@ const LABELS = {
   "conteudo-sobre": "Página Sobre",
   "conteudo-contacto": "Página Contacto",
   "conteudo-blog": "Página Blog",
+  menu: "Menu Principal",
   blocos: "Biblioteca de Blocos",
   cupoes: "Cupões de Desconto",
   afiliados: "Afiliados",

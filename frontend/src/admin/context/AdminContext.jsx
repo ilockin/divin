@@ -10,6 +10,7 @@ import { loadLeads, saveLeads } from "../../lib/leads";
 import { loadContactContent, saveContactContent } from "../../lib/contactContent";
 import { loadIntegrations, saveIntegrations } from "../../lib/integrations";
 import { loadBlogContent, saveBlogContent } from "../../lib/blogContent";
+import { loadMenuContent, saveMenuContent } from "../../lib/menuContent";
 
 const AdminContext = createContext(null);
 
@@ -43,6 +44,7 @@ export const AdminProvider = ({ children }) => {
   const [contactContent, setContactContent] = useState(loadContactContent);
   const [integrations, setIntegrations] = useState(loadIntegrations);
   const [blogContent, setBlogContent] = useState(loadBlogContent);
+  const [menuContent, setMenuContent] = useState(loadMenuContent);
 
   useEffect(() => { savePages(pages); }, [pages]);
   useEffect(() => { saveHomeContent(homeContent); }, [homeContent]);
@@ -52,6 +54,7 @@ export const AdminProvider = ({ children }) => {
   useEffect(() => { saveIntegrations(integrations); }, [integrations]);
   useEffect(() => { saveBlogContent(blogContent); }, [blogContent]);
   useEffect(() => { saveArticles(articles); }, [articles]);
+  useEffect(() => { saveMenuContent(menuContent); }, [menuContent]);
 
   const switchRole = (id) => {
     setRole(id);
@@ -95,6 +98,7 @@ export const AdminProvider = ({ children }) => {
     contactContent, setContactContent,
     integrations, setIntegrations,
     blogContent, setBlogContent,
+    menuContent, setMenuContent,
   };
 
   return <AdminContext.Provider value={value}>{children}</AdminContext.Provider>;

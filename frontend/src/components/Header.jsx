@@ -3,14 +3,24 @@ import { Link, NavLink, useNavigate } from "react-router-dom";
 import { Search, ShoppingBag, User, Menu, X } from "lucide-react";
 import { Logo } from "./Logo";
 import { useCart } from "../context/CartContext";
+import { loadMenuContent } from "../lib/menuContent";
 
-const navItems = [
-  { to: "/", label: "Início" },
-  { to: "/loja", label: "Loja" },
-  { to: "/sobre", label: "Sobre" },
-  { to: "/blog", label: "Blog" },
-  { to: "/contacto", label: "Contacto" },
-];
+const resolveClassName = (className) => (typeof className === "function" ? className({ isActive: false }) : className);
+
+const NavLinkOrAnchor = ({ item, className, onClick, testid }) => {
+  if (item.link?.startsWith("http")) {
+    return (
+      <a href={item.link} target="_blank" rel="noopener noreferrer" data-testid={testid} className={resolveClassName(className)} onClick={onClick}>
+        {item.label}
+      </a>
+    );
+  }
+  return (
+    <NavLink to={item.link} end={item.link === "/"} data-testid={testid} onClick={onClick} className={className}>
+      {item.label}
+    </NavLink>
+  );
+};
 
 export const Header = () => {
   const { totals, setDrawerOpen } = useCart();
@@ -18,6 +28,7 @@ export const Header = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
   const navigate = useNavigate();
+  const navItems = loadMenuContent().items;
 
   const submitSearch = (e) => {
     e.preventDefault();
@@ -52,17 +63,29 @@ export const Header = () => {
 
         <nav className="hidden lg:flex items-center gap-9 font-body text-[12px] tracking-[0.22em] uppercase">
           {navItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              data-testid={`nav-${item.label.toLowerCase()}`}
-              end={item.to === "/"}
-              className={({ isActive }) =>
-                `link-underline ${isActive ? "text-[var(--da-leaf)]" : "text-[var(--da-forest)]"} hover:text-[var(--da-leaf)] transition-colors`
-              }
-            >
-              {item.label}
-            </NavLink>
+            <div key={item.id} className="relative group">
+              <NavLinkOrAnchor
+                item={item}
+                testid={`nav-${item.label.toLowerCase()}`}
+                className={({ isActive } = {}) =>
+                  `link-underline flex items-center gap-1 ${isActive ? "text-[var(--da-leaf)]" : "text-[var(--da-forest)]"} hover:text-[var(--da-leaf)] transition-colors`
+                }
+              />
+              {item.children?.length > 0 && (
+                <div className="absolute left-0 top-full pt-3 hidden group-hover:block z-30" data-testid={`submenu-${item.label.toLowerCase()}`}>
+                  <div className="bg-white border hairline rounded-xl shadow-lg py-2 min-w-[180px]">
+                    {item.children.map((child) => (
+                      <NavLinkOrAnchor
+                        key={child.id}
+                        item={child}
+                        testid={`subnav-${child.label.toLowerCase()}`}
+                        className="block px-4 py-2 text-[11px] text-[var(--da-forest)] hover:text-[var(--da-leaf)] hover:bg-[var(--da-cream-2)]/40 normal-case tracking-normal"
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           ))}
         </nav>
 
@@ -120,19 +143,27 @@ export const Header = () => {
       {/* mobile nav */}
       {mobileOpen && (
         <div className="lg:hidden border-t hairline bg-[#F7F4EC]" data-testid="mobile-nav">
-          <div className="container-da py-4 flex flex-col gap-3 font-body text-sm uppercase tracking-[0.2em]">
+          <div className="container-da py-4 flex flex-col gap-1 font-body text-sm uppercase tracking-[0.2em]">
             {navItems.map((item) => (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                end={item.to === "/"}
-                onClick={() => setMobileOpen(false)}
-                className={({ isActive }) =>
-                  `py-2 ${isActive ? "text-[var(--da-leaf)]" : "text-[var(--da-forest)]"}`
-                }
-              >
-                {item.label}
-              </NavLink>
+              <div key={item.id}>
+                <NavLinkOrAnchor
+                  item={item}
+                  onClick={() => setMobileOpen(false)}
+                  className={({ isActive } = {}) => `py-2 flex items-center gap-1 ${isActive ? "text-[var(--da-leaf)]" : "text-[var(--da-forest)]"}`}
+                />
+                {item.children?.length > 0 && (
+                  <div className="pl-4 flex flex-col gap-1 pb-2 normal-case tracking-normal text-xs" data-testid={`mobile-submenu-${item.label.toLowerCase()}`}>
+                    {item.children.map((child) => (
+                      <NavLinkOrAnchor
+                        key={child.id}
+                        item={child}
+                        onClick={() => setMobileOpen(false)}
+                        className="py-1.5 text-[var(--da-muted)] hover:text-[var(--da-leaf)]"
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
             ))}
             <Link to="/conta/login" onClick={() => setMobileOpen(false)} className="py-2 text-[var(--da-forest)]">
               Conta

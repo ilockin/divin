@@ -51,6 +51,7 @@ import { AboutVisualEditor } from "@/admin/pages/AboutVisualEditor";
 import { Leads } from "@/admin/pages/Leads";
 import { ContactVisualEditor } from "@/admin/pages/ContactVisualEditor";
 import { BlogVisualEditor } from "@/admin/pages/BlogVisualEditor";
+import { MenuVisualEditor } from "@/admin/pages/MenuVisualEditor";
 
 const Storefront = () => (
   <CartProvider>
@@ -111,6 +112,7 @@ const Admin = () => (
         <Route path="conteudo-sobre" element={<AboutVisualEditor />} />
         <Route path="conteudo-contacto" element={<ContactVisualEditor />} />
         <Route path="conteudo-blog" element={<BlogVisualEditor />} />
+        <Route path="menu" element={<MenuVisualEditor />} />
         <Route path="painel-afiliado" element={<AfiliadoDashboard />} />
         <Route path="painel-afiliado/produtos" element={<AfiliadoProducts />} />
         <Route path="painel-afiliado/vendas" element={<AfiliadoSales />} />
