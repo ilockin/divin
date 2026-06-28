@@ -49,6 +49,8 @@ import { BlockLibrary } from "@/admin/pages/BlockLibrary";
 import { HomeVisualEditor } from "@/admin/pages/HomeVisualEditor";
 import { AboutVisualEditor } from "@/admin/pages/AboutVisualEditor";
 import { Leads } from "@/admin/pages/Leads";
+import { ContactVisualEditor } from "@/admin/pages/ContactVisualEditor";
+import { BlogVisualEditor } from "@/admin/pages/BlogVisualEditor";
 
 const Storefront = () => (
   <CartProvider>
@@ -107,6 +109,8 @@ const Admin = () => (
         <Route path="blocos" element={<BlockLibrary />} />
         <Route path="conteudo-inicio" element={<HomeVisualEditor />} />
         <Route path="conteudo-sobre" element={<AboutVisualEditor />} />
+        <Route path="conteudo-contacto" element={<ContactVisualEditor />} />
+        <Route path="conteudo-blog" element={<BlogVisualEditor />} />
         <Route path="painel-afiliado" element={<AfiliadoDashboard />} />
         <Route path="painel-afiliado/produtos" element={<AfiliadoProducts />} />
         <Route path="painel-afiliado/vendas" element={<AfiliadoSales />} />

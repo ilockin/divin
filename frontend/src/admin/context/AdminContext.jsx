@@ -6,6 +6,9 @@ import { loadPages, savePages } from "../../lib/pages";
 import { loadHomeContent, saveHomeContent } from "../../lib/homeContent";
 import { loadAboutContent, saveAboutContent } from "../../lib/aboutContent";
 import { loadLeads, saveLeads } from "../../lib/leads";
+import { loadContactContent, saveContactContent } from "../../lib/contactContent";
+import { loadIntegrations, saveIntegrations } from "../../lib/integrations";
+import { loadBlogContent, saveBlogContent } from "../../lib/blogContent";
 
 const AdminContext = createContext(null);
 
@@ -36,11 +39,17 @@ export const AdminProvider = ({ children }) => {
   const [homeContent, setHomeContent] = useState(loadHomeContent);
   const [aboutContent, setAboutContent] = useState(loadAboutContent);
   const [leads, setLeads] = useState(loadLeads);
+  const [contactContent, setContactContent] = useState(loadContactContent);
+  const [integrations, setIntegrations] = useState(loadIntegrations);
+  const [blogContent, setBlogContent] = useState(loadBlogContent);
 
   useEffect(() => { savePages(pages); }, [pages]);
   useEffect(() => { saveHomeContent(homeContent); }, [homeContent]);
   useEffect(() => { saveAboutContent(aboutContent); }, [aboutContent]);
   useEffect(() => { saveLeads(leads); }, [leads]);
+  useEffect(() => { saveContactContent(contactContent); }, [contactContent]);
+  useEffect(() => { saveIntegrations(integrations); }, [integrations]);
+  useEffect(() => { saveBlogContent(blogContent); }, [blogContent]);
 
   const switchRole = (id) => {
     setRole(id);
@@ -81,6 +90,9 @@ export const AdminProvider = ({ children }) => {
     homeContent, setHomeContent,
     aboutContent, setAboutContent,
     leads, setLeads,
+    contactContent, setContactContent,
+    integrations, setIntegrations,
+    blogContent, setBlogContent,
   };
 
   return <AdminContext.Provider value={value}>{children}</AdminContext.Provider>;

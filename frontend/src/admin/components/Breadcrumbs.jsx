@@ -21,6 +21,8 @@ const LABELS = {
   paginas: "Construtor de Páginas",
   "conteudo-inicio": "Página Inicial",
   "conteudo-sobre": "Página Sobre",
+  "conteudo-contacto": "Página Contacto",
+  "conteudo-blog": "Página Blog",
   blocos: "Biblioteca de Blocos",
   cupoes: "Cupões de Desconto",
   afiliados: "Afiliados",

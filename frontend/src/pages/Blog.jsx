@@ -1,13 +1,16 @@
 import React from "react";
 import { Link, useParams, Navigate } from "react-router-dom";
 import { blogPosts, findPost } from "../data/mock";
+import { loadBlogContent } from "../lib/blogContent";
+import { HeaderSection } from "../components/blog/BlogSections";
+import { EditPageButton } from "../components/EditPageButton";
 
 export const Blog = () => {
+  const content = loadBlogContent();
+
   return (
     <div className="container-da py-12" data-testid="blog-page">
-      <p className="font-script text-[var(--da-leaf)] text-2xl">do nosso diário</p>
-      <h1 className="text-4xl sm:text-5xl mt-1">Blog</h1>
-      <p className="font-body text-[var(--da-muted)] mt-4 max-w-2xl">Rituais, ingredientes e pequenas reflexões sobre a arte de cuidar.</p>
+      <HeaderSection content={content.header} />
 
       <div className="grid md:grid-cols-3 gap-8 mt-12">
         {blogPosts.map((post) => (
@@ -21,6 +24,7 @@ export const Blog = () => {
           </Link>
         ))}
       </div>
+      <EditPageButton editorPath="/admin/conteudo-blog" />
     </div>
   );
 };

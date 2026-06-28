@@ -33,6 +33,8 @@ export const NAV_PERMISSIONS = {
   block_library: ["super_admin"],
   home_content: ["super_admin"],
   about_content: ["super_admin"],
+  contact_content: ["super_admin"],
+  blog_content: ["super_admin"],
   coupons: ["super_admin", "admin"],
   settings: ["super_admin"],
   afiliado_dashboard: ["afiliado"],
@@ -221,7 +223,7 @@ export const storeSettings = {
   email: "ola@divinarte.pt",
   phone: "+351 220 000 000",
   address: "Rua das Camélias, 12 · 4100-100 Porto",
-  paymentMethods: { card: true, mbway: true, multibanco: true, paypal: false },
+  paymentMethods: { card: true, mbway: true, multibanco: true, paypal: false, klarna: false, lusopay: false, googlewallet: false },
   shippingOptions: { standard: { active: true, price: 4.9 }, express: { active: true, price: 7.9 }, freeAbove: 49 },
   general: { currency: "EUR", language: "pt-PT", maintenanceMode: false, lowStockAlert: 5 },
 };

@@ -4,9 +4,10 @@ import { toast } from "sonner";
 import { useAdmin } from "../context/AdminContext";
 import { CartContext } from "../../context/CartContext";
 import { HOME_SECTIONS } from "../../components/home/HomeSections";
-import { HOME_FIELDS, SECTION_BUTTONS, SECTION_LINKS, initialHomeContent } from "../data/mockHomeContent";
+import { HOME_FIELDS, SECTION_BUTTONS, SECTION_LINKS, SECTIONS_WITH_BODY, SECTION_ITEM_LISTS, initialHomeContent } from "../data/mockHomeContent";
+import { EDITABLE_PAGES } from "../data/editablePages";
 import { FormRow, fieldClass, SectionTitle } from "../components/Bits";
-import { TitleStyleFields, ButtonFields, LinkFields } from "../components/contentEditor/ContentFieldEditors";
+import { TitleStyleFields, TextStyleFields, ButtonFields, LinkFields } from "../components/contentEditor/ContentFieldEditors";
 import { EditorTopBar } from "../components/contentEditor/EditorTopBar";
 import { SelectableSection } from "../components/contentEditor/SelectableSection";
 import { useContentDraft } from "../hooks/useContentDraft";
@@ -20,7 +21,7 @@ const previewCart = {
 
 export const HomeVisualEditor = () => {
   const { homeContent, setHomeContent } = useAdmin();
-  const { draft, updateField, save, resetToDefaults } = useContentDraft(homeContent, setHomeContent, initialHomeContent);
+  const { draft, updateField, save, resetToDefaults, isDirty } = useContentDraft(homeContent, setHomeContent, initialHomeContent);
   const [selectedKey, setSelectedKey] = useState(null);
 
   const updateTrustLabel = (i, value) =>
@@ -35,7 +36,7 @@ export const HomeVisualEditor = () => {
 
   return (
     <div data-testid="admin-home-editor" className="-m-6 lg:-m-8 flex flex-col h-[calc(100vh-112px)]">
-      <EditorTopBar title="Conteúdo da Página Inicial" onReset={resetToDefaults} onSave={save} />
+      <EditorTopBar title="Conteúdo da Página Inicial" onReset={resetToDefaults} onSave={save} isDirty={isDirty} pages={EDITABLE_PAGES.filter((p) => p.path !== "/admin/conteudo-inicio")} />
 
       <div className="flex-1 flex min-h-0">
         {/* tela — a Home real, secção a secção */}
@@ -68,7 +69,18 @@ export const HomeVisualEditor = () => {
               ))}
 
               {selected.key !== "trust" && (
-                <TitleStyleFields content={draft[selected.key]} sectionKey={selected.key} updateField={updateField} testidPrefix="home-title" />
+                <>
+                  <TextStyleFields content={draft[selected.key]} sectionKey={selected.key} updateField={updateField} prefix="eyebrow" label="Estilo do texto de abertura" testidPrefix="home-eyebrow" />
+                  <TitleStyleFields content={draft[selected.key]} sectionKey={selected.key} updateField={updateField} testidPrefix="home-title" />
+                </>
+              )}
+
+              {SECTIONS_WITH_BODY.includes(selected.key) && (
+                <TextStyleFields content={draft[selected.key]} sectionKey={selected.key} updateField={updateField} prefix="body" label="Estilo do texto" testidPrefix="home-body" />
+              )}
+
+              {SECTION_ITEM_LISTS[selected.key] && (
+                <TextStyleFields content={draft[selected.key]} sectionKey={selected.key} updateField={updateField} prefix="item" label={SECTION_ITEM_LISTS[selected.key].label} testidPrefix="home-item" />
               )}
 
               {(SECTION_BUTTONS[selected.key] || []).map(({ prefix, label }) => (

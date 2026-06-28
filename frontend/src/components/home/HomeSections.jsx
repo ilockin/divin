@@ -3,7 +3,12 @@ import { Link } from "react-router-dom";
 import { ArrowRight, Sparkles, Leaf, Heart, BadgeCheck } from "lucide-react";
 import { ProductCard } from "../ProductCard";
 import { products, categories, testimonials, blogPosts } from "../../data/mock";
-import { titleClassFor as titleClass, titleStyleFor as titleStyle, buttonStyleFor as buttonStyle } from "../../lib/contentStyle";
+import {
+  titleClassFor as titleClass, titleStyleFor as titleStyle, buttonStyleFor as buttonStyle,
+  eyebrowClassFor as eyebrowClass, eyebrowStyleFor as eyebrowStyle,
+  bodyClassFor as bodyClass, bodyStyleFor as bodyStyle,
+  itemClassFor as itemClass, itemStyleFor as itemStyle,
+} from "../../lib/contentStyle";
 
 const TRUST_ICONS = [Leaf, Heart, Sparkles, BadgeCheck];
 
@@ -15,11 +20,11 @@ export const HeroSection = ({ content }) => (
     </div>
     <div className="relative container-da py-32 sm:py-40 lg:py-52">
       <div className="max-w-xl">
-        <p className="font-script text-[var(--da-olive)] text-3xl mb-3">{content.eyebrow}</p>
+        <p className={`${eyebrowClass(content)} mb-3`} style={eyebrowStyle(content)}>{content.eyebrow}</p>
         <h1 className={`${titleClass(content)} leading-[1.05]`} style={titleStyle(content)}>
           {content.titleLine1}<br />{content.titleLine2}
         </h1>
-        <p className="font-body text-base text-white/85 mt-6 max-w-md leading-relaxed">
+        <p className={`${bodyClass(content)} mt-6 max-w-md leading-relaxed`} style={bodyStyle(content)}>
           {content.subtitle}
         </p>
         <div className="flex flex-wrap gap-3 mt-8">
@@ -43,7 +48,7 @@ export const TrustSection = ({ content }) => (
         return (
           <div key={label} className="flex items-center gap-3 justify-center">
             <Icon size={22} className="text-[var(--da-leaf)]" />
-            <span className="font-body text-xs sm:text-sm tracking-[0.18em] uppercase text-[var(--da-forest)]">{label}</span>
+            <span className={`${itemClass(content)} tracking-[0.18em] uppercase`} style={itemStyle(content)}>{label}</span>
           </div>
         );
       })}
@@ -57,7 +62,7 @@ export const FeaturedSection = ({ content }) => {
     <section className="container-da py-24">
       <div className="flex items-end justify-between mb-12 flex-wrap gap-4">
         <div>
-          <p className="font-script text-[var(--da-leaf)] text-2xl">{content.eyebrow}</p>
+          <p className={eyebrowClass(content)} style={eyebrowStyle(content)}>{content.eyebrow}</p>
           <h2 className={`${titleClass(content)} mt-1`} style={titleStyle(content)}>{content.title}</h2>
         </div>
         <Link to={content.linkHref} className="link-underline text-sm tracking-[0.2em] uppercase font-body text-[var(--da-forest)]">
@@ -74,7 +79,7 @@ export const FeaturedSection = ({ content }) => {
 export const CategoriesSection = ({ content }) => (
   <section className="container-da pb-24">
     <div className="text-center mb-12">
-      <p className="font-script text-[var(--da-leaf)] text-2xl">{content.eyebrow}</p>
+      <p className={eyebrowClass(content)} style={eyebrowStyle(content)}>{content.eyebrow}</p>
       <h2 className={`${titleClass(content)} mt-1`} style={titleStyle(content)}>{content.title}</h2>
     </div>
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
@@ -104,16 +109,16 @@ export const StorySection = ({ content }) => (
         <img src={content.image} alt="" className="w-full h-full object-cover" />
       </div>
       <div>
-        <p className="font-script text-[var(--da-olive)] text-3xl mb-3">{content.eyebrow}</p>
+        <p className={`${eyebrowClass(content)} mb-3`} style={eyebrowStyle(content)}>{content.eyebrow}</p>
         <h2 className={`${titleClass(content)} leading-[1.1]`} style={titleStyle(content)}>
           {content.title}
         </h2>
-        <p className="font-body text-sm sm:text-base text-white/80 mt-6 leading-relaxed">
+        <p className={`${bodyClass(content)} mt-6 leading-relaxed`} style={bodyStyle(content)}>
           {content.paragraph}
         </p>
-        <ul className="mt-8 space-y-3 font-body text-sm">
+        <ul className="mt-8 space-y-3">
           {content.bullets.map((bullet, i) => (
-            <li key={i} className="leaf-bullet">{bullet}</li>
+            <li key={i} className={`leaf-bullet ${itemClass(content)}`} style={itemStyle(content)}>{bullet}</li>
           ))}
         </ul>
         <Link to={content.ctaLink} className="btn-da btn-da-outline mt-8 text-[#F7F4EC] border-[#F7F4EC] hover:bg-[#F7F4EC] hover:text-[var(--da-forest)]" style={buttonStyle(content, "cta")} data-testid="home-story-cta">
@@ -127,7 +132,7 @@ export const StorySection = ({ content }) => (
 export const TestimonialsSection = ({ content }) => (
   <section className="container-da py-24">
     <div className="text-center mb-12">
-      <p className="font-script text-[var(--da-leaf)] text-2xl">{content.eyebrow}</p>
+      <p className={eyebrowClass(content)} style={eyebrowStyle(content)}>{content.eyebrow}</p>
       <h2 className={`${titleClass(content)} mt-1`} style={titleStyle(content)}>{content.title}</h2>
     </div>
     <div className="grid md:grid-cols-3 gap-6">
@@ -149,7 +154,7 @@ export const BlogSection = ({ content }) => (
   <section className="container-da pb-24">
     <div className="flex items-end justify-between mb-12 flex-wrap gap-4">
       <div>
-        <p className="font-script text-[var(--da-leaf)] text-2xl">{content.eyebrow}</p>
+        <p className={eyebrowClass(content)} style={eyebrowStyle(content)}>{content.eyebrow}</p>
         <h2 className={`${titleClass(content)} mt-1`} style={titleStyle(content)}>{content.title}</h2>
       </div>
       <Link to={content.linkHref} className="link-underline text-sm tracking-[0.2em] uppercase font-body text-[var(--da-forest)]">

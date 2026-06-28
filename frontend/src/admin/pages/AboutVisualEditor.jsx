@@ -1,16 +1,17 @@
 import React, { useState } from "react";
 import { useAdmin } from "../context/AdminContext";
 import { ABOUT_SECTIONS } from "../../components/about/AboutSections";
-import { ABOUT_FIELDS, SECTION_BUTTONS, initialAboutContent } from "../data/mockAboutContent";
+import { ABOUT_FIELDS, SECTION_BUTTONS, SECTIONS_WITH_BODY, initialAboutContent } from "../data/mockAboutContent";
+import { EDITABLE_PAGES } from "../data/editablePages";
 import { FormRow, fieldClass, SectionTitle } from "../components/Bits";
-import { TitleStyleFields, ButtonFields } from "../components/contentEditor/ContentFieldEditors";
+import { TitleStyleFields, TextStyleFields, ButtonFields } from "../components/contentEditor/ContentFieldEditors";
 import { EditorTopBar } from "../components/contentEditor/EditorTopBar";
 import { SelectableSection } from "../components/contentEditor/SelectableSection";
 import { useContentDraft } from "../hooks/useContentDraft";
 
 export const AboutVisualEditor = () => {
   const { aboutContent, setAboutContent } = useAdmin();
-  const { draft, updateField, save, resetToDefaults } = useContentDraft(aboutContent, setAboutContent, initialAboutContent);
+  const { draft, updateField, save, resetToDefaults, isDirty } = useContentDraft(aboutContent, setAboutContent, initialAboutContent);
   const [selectedKey, setSelectedKey] = useState(null);
 
   const updateValueItem = (i, key, value) =>
@@ -20,7 +21,7 @@ export const AboutVisualEditor = () => {
 
   return (
     <div data-testid="admin-about-editor" className="-m-6 lg:-m-8 flex flex-col h-[calc(100vh-112px)]">
-      <EditorTopBar title="Conteúdo da Página Sobre" onReset={resetToDefaults} onSave={save} />
+      <EditorTopBar title="Conteúdo da Página Sobre" onReset={resetToDefaults} onSave={save} isDirty={isDirty} pages={EDITABLE_PAGES.filter((p) => p.path !== "/admin/conteudo-sobre")} />
 
       <div className="flex-1 flex min-h-0">
         <main className="flex-1 overflow-y-auto bg-[var(--da-cream-2)]/40" onClick={() => setSelectedKey(null)}>
@@ -48,7 +49,12 @@ export const AboutVisualEditor = () => {
                 </FormRow>
               ))}
 
+              <TextStyleFields content={draft[selected.key]} sectionKey={selected.key} updateField={updateField} prefix="eyebrow" label="Estilo do texto de abertura" testidPrefix="about-eyebrow" />
               <TitleStyleFields content={draft[selected.key]} sectionKey={selected.key} updateField={updateField} testidPrefix="about-title" />
+
+              {SECTIONS_WITH_BODY.includes(selected.key) && (
+                <TextStyleFields content={draft[selected.key]} sectionKey={selected.key} updateField={updateField} prefix="body" label="Estilo do texto" testidPrefix="about-body" />
+              )}
 
               {(SECTION_BUTTONS[selected.key] || []).map(({ prefix, label }) => (
                 <ButtonFields key={prefix} content={draft[selected.key]} sectionKey={selected.key} prefix={prefix} label={label} updateField={updateField} testidPrefix="about" />
@@ -56,6 +62,8 @@ export const AboutVisualEditor = () => {
 
               {selected.key === "values" && (
                 <div className="border-t hairline pt-4 space-y-4">
+                  <TextStyleFields content={draft.values} sectionKey="values" updateField={updateField} prefix="itemTitle" label="Estilo do título dos cartões" testidPrefix="about-item-title" />
+                  <TextStyleFields content={draft.values} sectionKey="values" updateField={updateField} prefix="itemText" label="Estilo do texto dos cartões" testidPrefix="about-item-text" />
                   <p className="font-body text-xs tracking-[0.18em] uppercase text-[var(--da-forest)]">Cartões de valores</p>
                   {draft.values.items.map((item, i) => (
                     <div key={i} className="border hairline rounded-lg p-3 space-y-2" data-testid={`about-value-${i}`}>

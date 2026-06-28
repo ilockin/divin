@@ -1,6 +1,6 @@
 // Conteúdo editável da Home (textos/imagens estáticos) — frontend-only.
 // Produtos, categorias, depoimentos e posts do blog continuam ligados aos mocks reais (data/mock.js).
-// FONT_OPTIONS/FONT_SIZE_OPTIONS ficam em contentStyleOptions.js (partilhadas com Sobre/Contacto).
+// FONT_OPTIONS/FONT_SIZE_OPTIONS/TEXT_SIZE_OPTIONS ficam em contentStyleOptions.js (partilhadas com Sobre/Contacto/Blog).
 
 // Botões reais da Home, por secção — cada "prefix" gera os campos {prefix}Text/Link/Bg/Radius.
 export const SECTION_BUTTONS = {
@@ -17,6 +17,15 @@ export const SECTION_BUTTONS = {
 export const SECTION_LINKS = {
   featured: { prefix: "link", label: 'Link "Ver toda a loja"' },
   blog: { prefix: "link", label: 'Link "Ver todos os artigos"' },
+};
+
+// Secções com um subtítulo/parágrafo de corpo (estilo "body").
+export const SECTIONS_WITH_BODY = ["hero", "story"];
+
+// Secções com uma lista de itens de texto (estilo "item", aplicado a todos os itens da lista).
+export const SECTION_ITEM_LISTS = {
+  trust: { label: "Estilo dos selos" },
+  story: { label: "Estilo dos pontos" },
 };
 
 // Campos editáveis por secção (consumidos pelo HomeVisualEditor) — botões/links têm UI própria (ver acima),
@@ -61,22 +70,27 @@ export const initialHomeContent = {
     titleLine2: "cuidar de você.",
     subtitle: "Cosmética natural artesanal feita em pequenos lotes, em Portugal — para que cada gesto de cuidado seja também um momento de pausa.",
     titleFont: "serif-display", titleSize: "xl", titleColor: "#F7F4EC",
+    eyebrowFont: "script", eyebrowSize: "3xl", eyebrowColor: "#B7BD53",
+    bodyFont: "body", bodySize: "base", bodyColor: "#FFFFFF",
     ctaShopText: "Descobrir a loja", ctaShopLink: "/loja", ctaShopBg: "", ctaShopRadius: 999,
     ctaAboutText: "A nossa história", ctaAboutLink: "/sobre", ctaAboutBg: "", ctaAboutRadius: 999,
   },
   trust: {
     labels: ["100% Natural", "Vegano", "Artesanal", "Ingredientes BIO"],
+    itemFont: "body", itemSize: "xs", itemColor: "#14532D",
   },
   featured: {
     eyebrow: "novidades da casa",
     title: "Produtos em destaque",
     titleFont: "serif-display", titleSize: "md", titleColor: "#14532D",
+    eyebrowFont: "script", eyebrowSize: "2xl", eyebrowColor: "#2E9E44",
     linkText: "Ver toda a loja", linkHref: "/loja",
   },
   categories: {
     eyebrow: "explora por categoria",
     title: "Pequenos rituais, grandes categorias",
     titleFont: "serif-display", titleSize: "md", titleColor: "#14532D",
+    eyebrowFont: "script", eyebrowSize: "2xl", eyebrowColor: "#2E9E44",
   },
   story: {
     image: "https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&w=1200&q=75",
@@ -89,17 +103,22 @@ export const initialHomeContent = {
       "Embalagem em vidro âmbar, reutilizável",
     ],
     titleFont: "serif-display", titleSize: "md", titleColor: "#F7F4EC",
+    eyebrowFont: "script", eyebrowSize: "3xl", eyebrowColor: "#B7BD53",
+    bodyFont: "body", bodySize: "sm", bodyColor: "#FFFFFF",
+    itemFont: "body", itemSize: "sm", itemColor: "#FFFFFF",
     ctaText: "Saber mais sobre nós", ctaLink: "/sobre", ctaBg: "", ctaRadius: 999,
   },
   testimonials: {
     eyebrow: "a voz de quem cuida connosco",
     title: "Pequenas palavras grandes",
     titleFont: "serif-display", titleSize: "md", titleColor: "#14532D",
+    eyebrowFont: "script", eyebrowSize: "2xl", eyebrowColor: "#2E9E44",
   },
   blog: {
     eyebrow: "do nosso diário",
     title: "Rituais e ingredientes",
     titleFont: "serif-display", titleSize: "md", titleColor: "#14532D",
+    eyebrowFont: "script", eyebrowSize: "2xl", eyebrowColor: "#2E9E44",
     linkText: "Ver todos os artigos", linkHref: "/blog",
   },
 };

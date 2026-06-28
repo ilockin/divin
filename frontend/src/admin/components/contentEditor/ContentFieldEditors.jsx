@@ -1,6 +1,6 @@
 import React from "react";
 import { FormRow, fieldClass } from "../Bits";
-import { FONT_OPTIONS, FONT_SIZE_OPTIONS } from "../../data/contentStyleOptions";
+import { FONT_OPTIONS, FONT_SIZE_OPTIONS, TEXT_SIZE_OPTIONS } from "../../data/contentStyleOptions";
 
 const RADIUS_PRESETS = [
   { label: "Quadrado", value: 0 },
@@ -35,24 +35,33 @@ export const RadiusField = ({ value, onChange, testid }) => (
   </div>
 );
 
-// Bloco "Estilo do título" (fonte/tamanho/cor) — usado em qualquer secção que tenha um título principal.
+// Bloco genérico de estilo (fonte/tamanho/cor) para QUALQUER texto — título, eyebrow, corpo, itens de lista.
+// `prefix` define as chaves lidas/escritas (`${prefix}Font/Size/Color`); `sizeOptions` a escala usada.
+export const TextStyleFields = ({ content, sectionKey, updateField, prefix, label, sizeOptions = TEXT_SIZE_OPTIONS, testidPrefix }) => {
+  const tp = testidPrefix || prefix;
+  return (
+    <div className="border-t hairline pt-4 space-y-4">
+      <p className="font-body text-xs tracking-[0.18em] uppercase text-[var(--da-forest)]">{label}</p>
+      <FormRow label="Fonte">
+        <select className={fieldClass} value={content[`${prefix}Font`]} onChange={(e) => updateField(sectionKey, `${prefix}Font`, e.target.value)} data-testid={`${tp}-font`}>
+          {FONT_OPTIONS.map((f) => (<option key={f.id} value={f.id}>{f.label}</option>))}
+        </select>
+      </FormRow>
+      <FormRow label="Tamanho">
+        <select className={fieldClass} value={content[`${prefix}Size`]} onChange={(e) => updateField(sectionKey, `${prefix}Size`, e.target.value)} data-testid={`${tp}-size`}>
+          {sizeOptions.map((s) => (<option key={s.id} value={s.id}>{s.label}</option>))}
+        </select>
+      </FormRow>
+      <FormRow label="Cor">
+        <ColorField value={content[`${prefix}Color`]} onChange={(v) => updateField(sectionKey, `${prefix}Color`, v)} testid={`${tp}-color`} />
+      </FormRow>
+    </div>
+  );
+};
+
+// Atalho para o título — escala de tamanhos grande, mesmo comportamento de sempre.
 export const TitleStyleFields = ({ content, sectionKey, updateField, testidPrefix = "title" }) => (
-  <div className="border-t hairline pt-4 space-y-4">
-    <p className="font-body text-xs tracking-[0.18em] uppercase text-[var(--da-forest)]">Estilo do título</p>
-    <FormRow label="Fonte">
-      <select className={fieldClass} value={content.titleFont} onChange={(e) => updateField(sectionKey, "titleFont", e.target.value)} data-testid={`${testidPrefix}-font`}>
-        {FONT_OPTIONS.map((f) => (<option key={f.id} value={f.id}>{f.label}</option>))}
-      </select>
-    </FormRow>
-    <FormRow label="Tamanho">
-      <select className={fieldClass} value={content.titleSize} onChange={(e) => updateField(sectionKey, "titleSize", e.target.value)} data-testid={`${testidPrefix}-size`}>
-        {FONT_SIZE_OPTIONS.map((s) => (<option key={s.id} value={s.id}>{s.label}</option>))}
-      </select>
-    </FormRow>
-    <FormRow label="Cor do título">
-      <ColorField value={content.titleColor} onChange={(v) => updateField(sectionKey, "titleColor", v)} testid={`${testidPrefix}-color`} />
-    </FormRow>
-  </div>
+  <TextStyleFields content={content} sectionKey={sectionKey} updateField={updateField} prefix="title" label="Estilo do título" sizeOptions={FONT_SIZE_OPTIONS} testidPrefix={testidPrefix} />
 );
 
 // Bloco de botão (texto/link/cor de fundo/raio) — um por {prefix} de SECTION_BUTTONS.

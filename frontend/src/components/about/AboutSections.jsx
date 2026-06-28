@@ -1,7 +1,18 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { Leaf, Heart, Sparkles, BadgeCheck } from "lucide-react";
-import { titleClassFor as titleClass, titleStyleFor as titleStyle, buttonStyleFor as buttonStyle } from "../../lib/contentStyle";
+import {
+  titleClassFor as titleClass, titleStyleFor as titleStyle, buttonStyleFor as buttonStyle,
+  eyebrowClassFor as eyebrowClass, eyebrowStyleFor as eyebrowStyle,
+  bodyClassFor as bodyClass, bodyStyleFor as bodyStyle,
+  textClassFor, textStyleFor,
+} from "../../lib/contentStyle";
+import { TEXT_SIZE_OPTIONS } from "../../admin/data/contentStyleOptions";
+
+const itemTitleClass = (c) => textClassFor(c, "itemTitle", TEXT_SIZE_OPTIONS);
+const itemTitleStyle = (c) => textStyleFor(c, "itemTitle");
+const itemTextClass = (c) => textClassFor(c, "itemText", TEXT_SIZE_OPTIONS);
+const itemTextStyle = (c) => textStyleFor(c, "itemText");
 
 const VALUE_ICONS = [Leaf, Heart, Sparkles, BadgeCheck];
 
@@ -12,11 +23,11 @@ export const HeroSection = ({ content }) => (
       <div className="absolute inset-0 bg-[var(--da-pine)]/55" />
     </div>
     <div className="relative container-da py-28 sm:py-36 text-center">
-      <p className="font-script text-[var(--da-olive)] text-3xl">{content.eyebrow}</p>
+      <p className={eyebrowClass(content)} style={eyebrowStyle(content)}>{content.eyebrow}</p>
       <h1 className={`${titleClass(content)} mt-2`} style={titleStyle(content)}>
         {content.title}
       </h1>
-      <p className="font-body text-base text-white/85 mt-6 max-w-2xl mx-auto leading-relaxed">
+      <p className={`${bodyClass(content)} mt-6 max-w-2xl mx-auto leading-relaxed`} style={bodyStyle(content)}>
         {content.subtitle}
       </p>
     </div>
@@ -29,12 +40,12 @@ export const StorySection = ({ content }) => (
       <img src={content.image} alt="" className="w-full h-full object-cover" />
     </div>
     <div>
-      <p className="font-script text-[var(--da-leaf)] text-2xl">{content.eyebrow}</p>
+      <p className={eyebrowClass(content)} style={eyebrowStyle(content)}>{content.eyebrow}</p>
       <h2 className={`${titleClass(content)} mt-1`} style={titleStyle(content)}>{content.title}</h2>
-      <p className="font-body text-base text-[var(--da-ink)] mt-6 leading-relaxed">
+      <p className={`${bodyClass(content)} mt-6 leading-relaxed`} style={bodyStyle(content)}>
         {content.paragraph1}
       </p>
-      <p className="font-body text-base text-[var(--da-ink)] mt-4 leading-relaxed">
+      <p className={`${bodyClass(content)} mt-4 leading-relaxed`} style={bodyStyle(content)}>
         {content.paragraph2}
       </p>
     </div>
@@ -45,7 +56,7 @@ export const ValuesSection = ({ content }) => (
   <section className="bg-[var(--da-cream-2)]">
     <div className="container-da py-20">
       <div className="text-center">
-        <p className="font-script text-[var(--da-leaf)] text-2xl">{content.eyebrow}</p>
+        <p className={eyebrowClass(content)} style={eyebrowStyle(content)}>{content.eyebrow}</p>
         <h2 className={`${titleClass(content)} mt-1`} style={titleStyle(content)}>{content.title}</h2>
       </div>
       <div className="grid md:grid-cols-4 gap-6 mt-12">
@@ -54,8 +65,8 @@ export const ValuesSection = ({ content }) => (
           return (
             <div key={i} className="bg-white rounded-2xl p-6 border hairline">
               <Icon className="text-[var(--da-leaf)]" size={24} />
-              <h3 className="text-lg mt-4">{item.title}</h3>
-              <p className="font-body text-sm text-[var(--da-muted)] mt-2 leading-relaxed">{item.text}</p>
+              <h3 className={`${itemTitleClass(content)} mt-4`} style={itemTitleStyle(content)}>{item.title}</h3>
+              <p className={`${itemTextClass(content)} mt-2 leading-relaxed`} style={itemTextStyle(content)}>{item.text}</p>
             </div>
           );
         })}

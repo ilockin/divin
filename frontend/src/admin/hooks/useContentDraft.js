@@ -23,5 +23,7 @@ export const useContentDraft = (content, setContent, initialContent) => {
     toast("Predefinições aplicadas — clica em Guardar para confirmar.");
   };
 
-  return { draft, setDraft, updateField, save, resetToDefaults };
+  const isDirty = JSON.stringify(draft) !== JSON.stringify(content);
+
+  return { draft, setDraft, updateField, save, resetToDefaults, isDirty };
 };

@@ -4,6 +4,10 @@ export const SECTION_BUTTONS = {
   cta: [{ prefix: "button", label: 'Botão "Descobrir a loja"' }],
 };
 
+// Secções com subtítulo/parágrafo(s) de corpo (estilo "body").
+export const SECTIONS_WITH_BODY = ["hero", "story"];
+
+
 export const ABOUT_FIELDS = {
   hero: [
     { key: "eyebrow", label: "Texto de abertura", type: "text" },
@@ -35,6 +39,8 @@ export const initialAboutContent = {
     title: "Cuidar é uma forma de bondade.",
     subtitle: "A DivinArte nasce do gesto simples de cuidar. Pequenos lotes, ingredientes naturais, mãos atentas — para que cada produto seja um momento de pausa.",
     titleFont: "serif-display", titleSize: "xl", titleColor: "#F7F4EC",
+    eyebrowFont: "script", eyebrowSize: "3xl", eyebrowColor: "#B7BD53",
+    bodyFont: "body", bodySize: "base", bodyColor: "#FFFFFF",
   },
   story: {
     image: "https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&w=1200&q=70",
@@ -43,11 +49,16 @@ export const initialAboutContent = {
     paragraph1: "A nossa marca foi crescendo aos poucos — entre infusões, óleos macerados e cadernos cheios de notas. Acreditamos que a cosmética pode ser feita com a mesma atenção com que se cozinha em casa: poucos ingredientes, escolhidos com cuidado, e respeito pelo tempo.",
     paragraph2: "Inspiramo-nos numa visão serena e cristã do cuidado — cuidar do outro como gesto silencioso de amor, sem promessas grandiosas, sem milagres. Apenas pequenos rituais, repetidos com atenção.",
     titleFont: "serif-display", titleSize: "md", titleColor: "#14532D",
+    eyebrowFont: "script", eyebrowSize: "2xl", eyebrowColor: "#2E9E44",
+    bodyFont: "body", bodySize: "base", bodyColor: "#1A1A1A",
   },
   values: {
     eyebrow: "os nossos valores",
     title: "No que acreditamos",
     titleFont: "serif-display", titleSize: "md", titleColor: "#14532D",
+    eyebrowFont: "script", eyebrowSize: "2xl", eyebrowColor: "#2E9E44",
+    itemTitleFont: "serif-display", itemTitleSize: "lg", itemTitleColor: "#14532D",
+    itemTextFont: "body", itemTextSize: "sm", itemTextColor: "#6B6F66",
     items: [
       { title: "Natural", text: "Ingredientes de origem botânica, escolhidos pela sua bondade." },
       { title: "Cuidado", text: "Pequenos lotes, mãos atentas, produção artesanal em Portugal." },
@@ -59,6 +70,7 @@ export const initialAboutContent = {
     eyebrow: "vamos cuidar juntos",
     title: "Começa o teu ritual",
     titleFont: "serif-display", titleSize: "md", titleColor: "#14532D",
+    eyebrowFont: "script", eyebrowSize: "2xl", eyebrowColor: "#2E9E44",
     buttonText: "Descobrir a loja", buttonLink: "/loja", buttonBg: "", buttonRadius: 999,
   },
 };

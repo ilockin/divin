@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Users, Package, Tags, SlidersHorizontal,
   Boxes, ShoppingCart, FileText, Settings, ChevronLeft, ChevronRight,
   FlaskConical, ClipboardList, Factory,
-  PieChart, Receipt, Percent, Truck, LayoutPanelTop, Link2, Tag, UserCheck, Blocks, Home, BookHeart, Inbox,
+  PieChart, Receipt, Percent, Truck, LayoutPanelTop, Link2, Tag, UserCheck, Blocks, Home, BookHeart, Inbox, MailPlus,
 } from "lucide-react";
 import { useAdmin } from "../context/AdminContext";
 import { can } from "../data/mockAdmin";
@@ -65,6 +65,8 @@ const navGroups = [
       { id: "blog", to: "/admin/blog", label: "Blog / Artigos", icon: FileText },
       { id: "home_content", to: "/admin/conteudo-inicio", label: "Página Inicial", icon: Home },
       { id: "about_content", to: "/admin/conteudo-sobre", label: "Página Sobre", icon: BookHeart },
+      { id: "contact_content", to: "/admin/conteudo-contacto", label: "Página Contacto", icon: MailPlus },
+      { id: "blog_content", to: "/admin/conteudo-blog", label: "Página Blog", icon: FileText },
       { id: "pages", to: "/admin/paginas", label: "Construtor de Páginas", icon: LayoutPanelTop },
       { id: "block_library", to: "/admin/blocos", label: "Biblioteca de Blocos", icon: Blocks },
     ],

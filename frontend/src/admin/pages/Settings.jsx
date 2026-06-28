@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Save, CreditCard, Smartphone, Wallet, Building2, Plus, Truck, Pencil, Trash2, Star } from "lucide-react";
+import { Save, CreditCard, Smartphone, Wallet, Building2, Plus, Truck, Pencil, Trash2, Star, Banknote, Landmark, Wallet2 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, FormRow, fieldClass, SectionTitle } from "../components/Bits";
 import { StatusBadge } from "../components/DataTable";
@@ -25,8 +25,10 @@ const Toggle = ({ checked, onChange, testid, disabled }) => (
 const emptyMethod = { id: null, name: "", description: "", cost: 0, eta: "", zones: "", active: true };
 
 export const Settings = () => {
-  const { settings, setSettings, role, shippingMethods, setShippingMethods, languages, setLanguages } = useAdmin();
+  const { settings, setSettings, role, shippingMethods, setShippingMethods, languages, setLanguages, integrations, setIntegrations } = useAdmin();
   const [form, setForm] = useState(settings);
+  const [intForm, setIntForm] = useState(integrations);
+  const ui = (key, value) => setIntForm((prev) => ({ ...prev, [key]: value }));
 
   // modais/estado de envios
   const [methodOpen, setMethodOpen] = useState(false);
@@ -46,6 +48,7 @@ export const Settings = () => {
 
   const save = () => {
     setSettings(form);
+    setIntegrations(intForm);
     toast.success("Definições guardadas.");
   };
 
@@ -160,6 +163,9 @@ export const Settings = () => {
               { key: "mbway", label: "MB Way", Icon: Smartphone },
               { key: "multibanco", label: "Multibanco", Icon: Building2 },
               { key: "paypal", label: "PayPal", Icon: Wallet },
+              { key: "klarna", label: "Klarna", Icon: Banknote },
+              { key: "lusopay", label: "LusoPay", Icon: Landmark },
+              { key: "googlewallet", label: "Google Wallet", Icon: Wallet2 },
             ].map(({ key, label, Icon }) => (
               <div key={key} className="flex items-center justify-between py-2" data-testid={`set-pay-${key}-row`}>
                 <div className="flex items-center gap-3">
@@ -293,6 +299,39 @@ export const Settings = () => {
             </p>
           </section>
         </div>
+
+        {/* integrações Google */}
+        <section className="bg-white border hairline rounded-2xl p-6 space-y-4" data-testid="set-integrations">
+          <SectionTitle eyebrow="integrações" title="Google & código avançado" />
+          <p className="font-body text-[11px] text-[var(--da-muted)] italic">
+            Estes campos são reais — os IDs e o código são inseridos diretamente na loja pública. Não exigem chaves secretas, por isso podes preenchê-los já.
+          </p>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <FormRow label="Google Analytics (Measurement ID)" hint="Ex.: G-XXXXXXXXXX">
+              <input className={fieldClass} value={intForm.googleAnalyticsId} onChange={(e) => ui("googleAnalyticsId", e.target.value)} data-testid="set-ga-id" />
+            </FormRow>
+            <FormRow label="Google Ads (Conversion ID)" hint="Ex.: AW-XXXXXXXXX">
+              <input className={fieldClass} value={intForm.googleAdsId} onChange={(e) => ui("googleAdsId", e.target.value)} data-testid="set-ads-id" />
+            </FormRow>
+          </div>
+          <FormRow label="Google Search Console — código de verificação" hint='O valor do atributo "content" da meta tag que o Search Console pede.'>
+            <input className={fieldClass} value={intForm.searchConsoleVerification} onChange={(e) => ui("searchConsoleVerification", e.target.value)} data-testid="set-search-console" />
+          </FormRow>
+
+          <div className="border-t hairline pt-4 space-y-4">
+            <p className="font-body text-xs tracking-[0.18em] uppercase text-[var(--da-forest)]">Código avançado</p>
+            <p className="font-body text-[11px] text-[var(--da-muted)]">Cola aqui apenas snippets de confiança (Google Tag Manager, Meta Pixel, etc.) — são inseridos diretamente na página, sem validação.</p>
+            <FormRow label="Cabeçalho (dentro de &lt;head&gt;)">
+              <textarea rows={3} className={fieldClass} value={intForm.headerCode} onChange={(e) => ui("headerCode", e.target.value)} data-testid="set-header-code" />
+            </FormRow>
+            <FormRow label="Body (logo após a abertura de &lt;body&gt;)">
+              <textarea rows={3} className={fieldClass} value={intForm.bodyCode} onChange={(e) => ui("bodyCode", e.target.value)} data-testid="set-body-code" />
+            </FormRow>
+            <FormRow label="Rodapé (antes do fecho de &lt;/body&gt;)">
+              <textarea rows={3} className={fieldClass} value={intForm.footerCode} onChange={(e) => ui("footerCode", e.target.value)} data-testid="set-footer-code" />
+            </FormRow>
+          </div>
+        </section>
       </div>
 
       {/* modal modo de envio */}
