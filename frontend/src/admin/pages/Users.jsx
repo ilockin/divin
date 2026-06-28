@@ -5,7 +5,7 @@ import { DataTable, StatusBadge } from "../components/DataTable";
 import { Modal } from "../components/Modal";
 import { PageHeader, FormRow, fieldClass } from "../components/Bits";
 import { useAdmin } from "../context/AdminContext";
-import { USER_ROLE_OPTIONS, ROLES } from "../data/mockAdmin";
+import { USER_ROLE_OPTIONS, ROLES, makeAffiliateCode } from "../data/mockAdmin";
 
 const emptyForm = { id: null, name: "", email: "", role: "cliente", active: true };
 
@@ -30,12 +30,15 @@ export const Users = () => {
 
   const save = () => {
     if (!form.name || !form.email) { toast.error("Preenche nome e e-mail."); return; }
+    const payload = { ...form };
+    if (payload.role === "lojista" && !payload.affiliateCode) payload.affiliateCode = makeAffiliateCode(payload.name);
+    if (payload.role === "lojista") payload.affiliateActive = payload.active;
     if (form.id) {
-      setUsers((prev) => prev.map((u) => (u.id === form.id ? { ...u, ...form } : u)));
+      setUsers((prev) => prev.map((u) => (u.id === form.id ? { ...u, ...payload } : u)));
       toast.success("Utilizador atualizado.");
     } else {
       const id = "u" + String(users.length + 1).padStart(2, "0");
-      setUsers((prev) => [...prev, { ...form, id, createdAt: new Date().toISOString().slice(0, 10) }]);
+      setUsers((prev) => [...prev, { ...payload, id, createdAt: new Date().toISOString().slice(0, 10) }]);
       toast.success("Utilizador criado.");
     }
     setModal(false);
@@ -158,6 +161,20 @@ export const Users = () => {
             </select>
           </FormRow>
         </div>
+
+        {form.role === "lojista" && (
+          <div className="mt-6 border-t hairline pt-5" data-testid="user-affiliate">
+            <p className="font-body text-xs tracking-[0.18em] uppercase text-[var(--da-forest)] mb-3">Afiliado</p>
+            <FormRow label="Link de afiliado" hint="Gerado automaticamente a partir do nome; usar no link partilhado pelo lojista." testid="user-form-affiliate">
+              <input
+                readOnly
+                className={fieldClass + " bg-[var(--da-cream-2)]/40 text-[var(--da-muted)]"}
+                value={`divinarte.pt/loja?ref=${form.affiliateCode || makeAffiliateCode(form.name || "novo")}`}
+                data-testid="user-input-affiliate-link"
+              />
+            </FormRow>
+          </div>
+        )}
 
         {form.id && (
           <div className="mt-6 border-t hairline pt-5">

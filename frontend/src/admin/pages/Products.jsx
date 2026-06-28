@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { DataTable, StatusBadge } from "../components/DataTable";
 import { PageHeader, FormRow, fieldClass, SectionTitle } from "../components/Bits";
 import { useAdmin } from "../context/AdminContext";
-import { adminCategories } from "../data/mockAdmin";
+import { adminCategories, COMMISSION_TYPES } from "../data/mockAdmin";
 import { formatEUR } from "../../lib/format";
 
 export const Products = () => {
@@ -103,17 +103,20 @@ const emptyProduct = {
   benefits: [""], price: 0, category: "faciais", size: "100ml",
   images: [], status: "rascunho", vegan: true, bio: true, stock: 0, minStock: 5,
   shippingMode: "inherit", shippingMethodIds: [],
+  commissionType: "percentage", commissionValue: 0,
 };
 
 export const ProductForm = () => {
   const { id } = useParams();
-  const { products, setProducts, shippingMethods } = useAdmin();
+  const { products, setProducts, shippingMethods, role } = useAdmin();
   const navigate = useNavigate();
   const isNew = id === "novo";
   const existing = !isNew && products.find((p) => p.id === id);
   const [form, setForm] = useState(() => existing
-    ? { ...existing, benefits: existing.benefits || [""], shippingMode: existing.shippingMode || "inherit", shippingMethodIds: existing.shippingMethodIds || [] }
+    ? { ...existing, benefits: existing.benefits || [""], shippingMode: existing.shippingMode || "inherit", shippingMethodIds: existing.shippingMethodIds || [],
+        commissionType: existing.commissionType || "percentage", commissionValue: existing.commissionValue ?? 0 }
     : emptyProduct);
+  const canEditCommission = role !== "lojista";
 
   if (!isNew && !existing) return <Navigate to="/admin/produtos" replace />;
 
@@ -133,7 +136,7 @@ export const ProductForm = () => {
     e?.preventDefault();
     if (!form.name || !form.price) { toast.error("Preenche nome e preço."); return; }
     const slug = form.slug || form.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
-    const payload = { ...form, slug, price: parseFloat(form.price), stock: parseInt(form.stock, 10) || 0 };
+    const payload = { ...form, slug, price: parseFloat(form.price), stock: parseInt(form.stock, 10) || 0, commissionValue: parseFloat(form.commissionValue) || 0 };
     if (isNew) {
       const newId = "p" + String(products.length + 1).padStart(2, "0");
       setProducts((prev) => [...prev, { ...payload, id: newId, images: payload.images.length ? payload.images : ["https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&w=1200&q=70"] }]);
@@ -256,6 +259,20 @@ export const ProductForm = () => {
               <input type="checkbox" checked readOnly /> Natural
             </label>
           </div>
+
+          {canEditCommission && (
+            <div className="bg-white border hairline rounded-2xl p-6 space-y-4" data-testid="pf-commission">
+              <SectionTitle eyebrow="afiliados" title="Comissão de afiliado" />
+              <FormRow label="Tipo de comissão">
+                <select className={fieldClass} value={form.commissionType} onChange={(e) => u("commissionType", e.target.value)} data-testid="pf-commission-type">
+                  {COMMISSION_TYPES.map((c) => (<option key={c.id} value={c.id}>{c.label}</option>))}
+                </select>
+              </FormRow>
+              <FormRow label={form.commissionType === "percentage" ? "Comissão (%)" : "Comissão (€)"} hint="Valor que o lojista recebe por unidade vendida através do seu link de afiliado.">
+                <input type="number" step="0.1" min="0" className={fieldClass} value={form.commissionValue} onChange={(e) => u("commissionValue", e.target.value)} data-testid="pf-commission-value" />
+              </FormRow>
+            </div>
+          )}
 
           <div className="bg-white border hairline rounded-2xl p-6 space-y-4" data-testid="pf-shipping">
             <SectionTitle eyebrow="envio" title="Modos de envio" />

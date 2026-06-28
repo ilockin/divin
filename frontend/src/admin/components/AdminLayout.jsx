@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Users, Package, Tags, SlidersHorizontal,
   Boxes, ShoppingCart, FileText, Settings, ChevronLeft, ChevronRight,
   FlaskConical, ClipboardList, Factory,
-  PieChart, Receipt, Percent, Truck, LayoutPanelTop,
+  PieChart, Receipt, Percent, Truck, LayoutPanelTop, Link2,
 } from "lucide-react";
 import { useAdmin } from "../context/AdminContext";
 import { can } from "../data/mockAdmin";
@@ -16,6 +16,15 @@ const navGroups = [
   {
     title: "Visão geral",
     items: [{ id: "dashboard", to: "/admin", label: "Dashboard", icon: LayoutDashboard, end: true }],
+  },
+  {
+    title: "Painel Lojista",
+    items: [
+      { id: "lojista_dashboard", to: "/admin/lojista", label: "Dashboard", icon: LayoutDashboard, end: true },
+      { id: "lojista_products", to: "/admin/lojista/produtos", label: "Meus Produtos", icon: Package },
+      { id: "lojista_sales", to: "/admin/lojista/vendas", label: "Minhas Vendas", icon: Receipt },
+      { id: "lojista_links", to: "/admin/lojista/links", label: "Meus Links", icon: Link2 },
+    ],
   },
   {
     title: "Catálogo",

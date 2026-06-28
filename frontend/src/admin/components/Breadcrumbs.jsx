@@ -20,6 +20,9 @@ const LABELS = {
   paginas: "Construtor de Páginas",
   utilizadores: "Utilizadores",
   definicoes: "Definições",
+  lojista: "Painel Lojista",
+  vendas: "Minhas Vendas",
+  links: "Meus Links",
   novo: "Novo",
   editar: "Editar",
 };

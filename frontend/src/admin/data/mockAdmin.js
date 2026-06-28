@@ -12,16 +12,16 @@ export const ROLES = [
 
 // nav id -> allowed roles
 export const NAV_PERMISSIONS = {
-  dashboard: ["super_admin", "admin", "producao", "lojista"],
+  dashboard: ["super_admin", "admin", "producao"],
   users: ["super_admin", "admin"],
-  products: ["super_admin", "admin", "producao", "lojista"],
+  products: ["super_admin", "admin", "producao"],
   categories: ["super_admin", "admin", "producao"],
   attributes: ["super_admin", "admin", "producao"],
   stock: ["super_admin", "admin", "producao"],
   insumos: ["super_admin", "admin", "producao"],
   recipes: ["super_admin", "admin", "producao"],
   production: ["super_admin", "admin", "producao"],
-  orders: ["super_admin", "admin", "lojista"],
+  orders: ["super_admin", "admin"],
   shipping: ["super_admin", "admin"],
   fin_overview: ["super_admin", "admin"],
   fin_purchases: ["super_admin", "admin"],
@@ -29,6 +29,10 @@ export const NAV_PERMISSIONS = {
   blog: ["super_admin", "admin"],
   pages: ["super_admin", "admin"],
   settings: ["super_admin"],
+  lojista_dashboard: ["lojista"],
+  lojista_products: ["lojista"],
+  lojista_sales: ["lojista"],
+  lojista_links: ["lojista"],
 };
 
 export const can = (role, navId) => (NAV_PERMISSIONS[navId] || []).includes(role);
@@ -55,12 +59,36 @@ export const USER_ROLE_OPTIONS = [
   { id: "cliente", label: "Cliente" },
 ];
 
+// ---------- Affiliates ----------
+export const COMMISSION_TYPES = [
+  { id: "percentage", label: "Percentagem (%)" },
+  { id: "fixed", label: "Valor fixo (€)" },
+];
+
+const stripDiacritics = (s) => Array.from(s.normalize("NFD"))
+  .filter((ch) => ch.codePointAt(0) < 0x300 || ch.codePointAt(0) > 0x36f)
+  .join("");
+
+export const makeAffiliateCode = (name) =>
+  "AC-" + stripDiacritics(name).split(" ")[0].toUpperCase();
+
+adminUsers
+  .filter((u) => u.role === "lojista")
+  .forEach((u) => { u.affiliateCode = makeAffiliateCode(u.name); u.affiliateActive = u.active; });
+
 // ---------- Catalog (extends storefront products with admin fields) ----------
+const COMMISSIONS = [
+  { commissionType: "percentage", commissionValue: 10 },
+  { commissionType: "fixed", commissionValue: 2 },
+  { commissionType: "percentage", commissionValue: 15 },
+];
+
 export const adminProducts = catalogProducts.map((p, i) => ({
   ...p,
   stock: [4, 38, 12, 27, 53, 2, 19, 8, 31, 45, 22, 0, 17, 24, 9, 36][i % 16],
   minStock: 5,
   status: i % 7 === 0 ? "rascunho" : "publicado",
+  ...COMMISSIONS[i % COMMISSIONS.length],
 }));
 
 export const adminCategories = catalogCategories;

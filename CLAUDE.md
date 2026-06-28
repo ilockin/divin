@@ -4,12 +4,14 @@
 > **Especificação completa do projeto: `docs/CONTEXT.md` — lê SEMPRE primeiro.**
 > **Gestor de pacotes: `yarn`** — usar `yarn install`, `yarn dev`, `yarn add <pkg>` (nunca `npm`).
 
-## Fase atual: terminar o VISUAL (mock data)
+## Fase atual: VISUAL concluído (mock data) — próxima fase é o BACK-END
 
-Estamos a continuar um projeto cujo visual começou no Emergent. Agora o Claude Code completa o restante do visual, **sem back-end**:
-- Apenas UI: páginas, componentes, routing, estilos, interações.
-- **Mock data** (ficheiro local). Nada de Supabase, base de dados, API real ou autenticação real — isso é a próxima fase.
+O visual (loja + painel admin) está **completo**, com mock data, sem back-end:
+- UI: páginas, componentes, routing, estilos, interações — tudo feito.
+- **Mock data** (ficheiros locais). Nada de Supabase, base de dados, API real ou autenticação real ainda — isso é a próxima fase.
 - Todo o texto visível em **Português (Portugal)**. Usar € onde aplicável.
+
+A próxima fase é ligar tudo a um back-end real (Supabase: auth, RLS, dados), pagamentos, i18n e motor de envios — ver `docs/CONTEXT.md` §6-12.
 
 ## Regra de ouro: continuar o MESMO estilo
 
@@ -17,25 +19,29 @@ Estamos a continuar um projeto cujo visual começou no Emergent. Agora o Claude 
 - **Não introduzas novos padrões nem bibliotecas** a não ser que a spec peça explicitamente (ex.: DnD Kit no construtor de páginas).
 - **Reutiliza** os componentes que já existem (DataTable, formulários, cards, modais, etc.).
 
-## Ordem de construção (o que falta)
+## Ordem de construção do visual (concluída)
 
-1. **Prompt 2** — completar o que ficou por fazer: módulos Produção/ERP e Financeiro + alterações em `/admin/definicoes`. Spec: `docs/PROMPT_EMERGENT_ADMIN_2.md`.
-2. **Prompt 2B** — Gestão de Envios (`/admin/envios`) + secção "Envio" no formulário de produto. Spec: `docs/PROMPT_EMERGENT_ENVIOS.md`.
-3. **Prompt 3** — Construtor de páginas (drag & drop). Spec: `docs/PROMPT_3_CONSTRUTOR_PAGINAS.md`.
+1. ✅ **Prompt 2** — módulos Produção/ERP e Financeiro + alterações em `/admin/definicoes`. Spec: `docs/PROMPT_EMERGENT_ADMIN_2.md`.
+2. ✅ **Prompt 2B** — Gestão de Envios (`/admin/envios`) + secção "Envio" no formulário de produto. Spec: `docs/PROMPT_2B_EMERGENT_ADMIN_2B.md`.
+3. ✅ **Prompt 3** — Construtor de páginas (drag & drop, `/admin/paginas`). Spec: `docs/PROMPT_3_CONSTRUTOR_PAGINAS.md`.
 
-Faz **um módulo de cada vez**, em **Plan Mode**: descreve a abordagem e espera aprovação antes de implementar. Mantém os diffs pequenos e revisáveis.
+Implementado no commit `8407c13` ("Completar visual do admin: Producao/ERP, Financeiro, Envios e Construtor de Paginas").
+
+Ao trabalhar na próxima fase (back-end), faz **um módulo de cada vez**, em **Plan Mode**: descreve a abordagem e espera aprovação antes de implementar. Mantém os diffs pequenos e revisáveis.
 
 ## Design tokens (marca DivinArte)
 
 - Cores: verde folha `#2E9E44` (primária/acento) · verde floresta `#14532D` · verde pinho `#2C4A3B` · oliva `#B7BD53` · creme `#F7F4EC` · carvão `#1A1A1A`.
 - Fontes (Google Fonts): títulos/logo **Cinzel** · interface **Montserrat** · manuscrito **Caveat**.
 
-## NÃO fazer agora (é a próxima fase — lógica)
+## NÃO fazer ainda sem alinhar primeiro (é a próxima fase — lógica)
 
 - Supabase, base de dados, autenticação real, RLS.
 - Pagamentos (Stripe, MB Way, Multibanco, PayPal).
 - Motor de i18n (react-i18next) — e o blog fica **fora** da tradução.
 - Motor de resolução de envios no checkout.
+
+Estas são o trabalho da próxima fase — não as atacar de surpresa numa tarefa não relacionada; confirma o âmbito com o utilizador antes de começar.
 
 ## Convenções detectadas
 
@@ -81,7 +87,10 @@ Faz **um módulo de cada vez**, em **Plan Mode**: descreve a abordagem e espera 
 4. `admin/components/Breadcrumbs.jsx` — adicionar rótulos PT ao mapa `LABELS`.
 5. `admin/context/AdminContext.jsx` — importar do mock e expor `state/setState` se o módulo precisar de estado partilhado.
 
-### Estado de implementação do Prompt 2 (verificado)
-- **Mock data:** ✅ já existe em `mockErp.js` (insumos, fichas, ordens, compras, finanças, métodos de envio, idiomas).
-- **Parte A (Produção + Financeiro):** ❌ por fazer — sem páginas, sem grupos na sidebar, sem rotas, sem ligação ao `AdminContext`, sem permissões/breadcrumbs.
-- **Parte B (Definições):** ❌ por fazer — `Settings.jsx` ainda usa os toggles de envio fixos (Standard/Expresso) em vez da lista CRUD de modos de envio; e não tem o gestor de idiomas. Os dados (`initialShippingMethods`, `initialLanguages`, `LANGUAGE_CATALOG`) já existem mas não estão a ser usados.
+### Estado de implementação (verificado — sessão 2026-06-28, commit `8407c13`)
+- **Mock data:** ✅ `mockErp.js` (insumos, fichas, ordens, compras, finanças, métodos de envio, idiomas) e `mockPages.js` (construtor de páginas).
+- **Produção + Financeiro:** ✅ feito — páginas `Insumos`, `FichaTecnica`, `OrdensProducao`/`OrdemProducaoDetail`, `FinanceiroOverview`, `Compras`, `Margens`; grupos na sidebar, rotas em `App.js`, ligação ao `AdminContext`, permissões/breadcrumbs.
+- **Definições (envios + idiomas):** ✅ feito — `Settings.jsx` usa a lista CRUD de modos de envio (`initialShippingMethods`) e tem o gestor de idiomas (`initialLanguages`, `LANGUAGE_CATALOG`).
+- **Gestão de Envios (`/admin/envios`):** ✅ feito — tabs Zonas por País, Distritos PT/ES, Regras por Categoria; secção "Envio" no `ProductForm`.
+- **Construtor de Páginas (`/admin/paginas`):** ✅ feito — editor drag & drop com DnD Kit, paleta de blocos, propriedades, undo/redo, pré-visualização responsiva.
+- **Próximo:** nenhum trabalho de visual em falta. A próxima fase é back-end (Supabase) — ver `docs/CONTEXT.md`.
