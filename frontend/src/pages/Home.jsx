@@ -3,8 +3,19 @@ import { Link } from "react-router-dom";
 import { ArrowRight, Sparkles, Leaf, Heart, BadgeCheck } from "lucide-react";
 import { ProductCard } from "../components/ProductCard";
 import { products, categories, testimonials, blogPosts } from "../data/mock";
+import { getPublishedPage } from "../lib/pages";
+import { BlockRenderer } from "../components/blocks/BlockRenderer";
 
 export const Home = () => {
+  const overridePage = getPublishedPage("inicio");
+  if (overridePage) {
+    return (
+      <div data-testid="home-page">
+        <BlockRenderer blocks={overridePage.blocks} products={products} />
+      </div>
+    );
+  }
+
   const featured = products.filter((p) => p.isNew).slice(0, 4);
   const trust = [
     { icon: Leaf, label: "100% Natural" },

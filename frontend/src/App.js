@@ -16,6 +16,7 @@ import { Orders as AccountOrders, Profile, Addresses } from "@/pages/AccountSect
 import { Blog, BlogPost } from "@/pages/Blog";
 import { About } from "@/pages/About";
 import { Contact } from "@/pages/Contact";
+import { DynamicPage } from "@/pages/DynamicPage";
 
 // Admin
 import { AdminProvider } from "@/admin/context/AdminContext";
@@ -38,6 +39,13 @@ import { Margens } from "@/admin/pages/Margens";
 import { Envios } from "@/admin/pages/Envios";
 import { Paginas } from "@/admin/pages/Paginas";
 import { PageBuilder } from "@/admin/pages/PageBuilder";
+import { AfiliadoDashboard } from "@/admin/pages/AfiliadoDashboard";
+import { AfiliadoProducts } from "@/admin/pages/AfiliadoProducts";
+import { AfiliadoSales } from "@/admin/pages/AfiliadoSales";
+import { AfiliadoLinks } from "@/admin/pages/AfiliadoLinks";
+import { Coupons } from "@/admin/pages/Coupons";
+import { Affiliates } from "@/admin/pages/Affiliates";
+import { BlockLibrary } from "@/admin/pages/BlockLibrary";
 
 const Storefront = () => (
   <CartProvider>
@@ -61,6 +69,7 @@ const Storefront = () => (
         <Route path="/blog/:slug" element={<BlogPost />} />
         <Route path="/sobre" element={<About />} />
         <Route path="/contacto" element={<Contact />} />
+        <Route path="/:slug" element={<DynamicPage />} />
       </Routes>
     </Layout>
   </CartProvider>
@@ -91,6 +100,13 @@ const Admin = () => (
         <Route path="blog/:slug" element={<ArticleForm />} />
         <Route path="paginas" element={<Paginas />} />
         <Route path="paginas/:id" element={<PageBuilder />} />
+        <Route path="blocos" element={<BlockLibrary />} />
+        <Route path="painel-afiliado" element={<AfiliadoDashboard />} />
+        <Route path="painel-afiliado/produtos" element={<AfiliadoProducts />} />
+        <Route path="painel-afiliado/vendas" element={<AfiliadoSales />} />
+        <Route path="painel-afiliado/links" element={<AfiliadoLinks />} />
+        <Route path="cupoes" element={<Coupons />} />
+        <Route path="afiliados" element={<Affiliates />} />
         <Route path="definicoes" element={<AdminSettings />} />
       </Route>
     </Routes>

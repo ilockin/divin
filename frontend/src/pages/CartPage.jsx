@@ -1,11 +1,28 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Minus, Plus, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { useCart } from "../context/CartContext";
 import { formatEUR } from "../lib/format";
+import { initialCoupons } from "../admin/data/mockMarketing";
+import { validateCoupon, couponToPromo } from "../lib/coupons";
 
 export const CartPage = () => {
-  const { items, totals, updateQty, removeItem, promo, clearPromo } = useCart();
+  const { items, totals, updateQty, removeItem, promo, applyPromo, clearPromo } = useCart();
+  const [couponCode, setCouponCode] = useState("");
+
+  const applyCoupon = (e) => {
+    e.preventDefault();
+    const code = couponCode.trim().toUpperCase();
+    if (!code) return;
+    const coupon = initialCoupons.find((c) => c.code === code);
+    if (!coupon) { toast.error("Cupão inválido."); return; }
+    const result = validateCoupon(coupon, { subtotal: totals.subtotal, items });
+    if (!result.ok) { toast.error(result.reason); return; }
+    applyPromo(couponToPromo(coupon));
+    toast.success(`Cupão ${coupon.code} aplicado.`);
+    setCouponCode("");
+  };
 
   if (items.length === 0) {
     return (
@@ -52,6 +69,20 @@ export const CartPage = () => {
 
         <aside className="bg-white rounded-2xl border hairline p-6 h-fit sticky top-32">
           <h2 className="text-xl mb-5">Resumo</h2>
+
+          {!promo && (
+            <form onSubmit={applyCoupon} className="flex gap-2 mb-5" data-testid="cartpage-coupon-form">
+              <input
+                value={couponCode}
+                onChange={(e) => setCouponCode(e.target.value)}
+                placeholder="Cupão de desconto"
+                data-testid="cartpage-coupon-input"
+                className="flex-1 bg-white border hairline rounded-lg px-3.5 py-2.5 font-body text-sm focus:outline-none focus:border-[var(--da-leaf)]"
+              />
+              <button type="submit" data-testid="cartpage-coupon-apply" className="btn-da btn-da-outline text-xs whitespace-nowrap">Aplicar</button>
+            </form>
+          )}
+
           <div className="space-y-2 font-body text-sm">
             <div className="flex justify-between"><span className="text-[var(--da-muted)]">Subtotal</span><span data-testid="cartpage-subtotal">{formatEUR(totals.subtotal)}</span></div>
             {promo && totals.discount > 0 && (

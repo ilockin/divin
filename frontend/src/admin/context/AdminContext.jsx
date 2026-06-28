@@ -1,7 +1,8 @@
-import React, { createContext, useContext, useMemo, useState } from "react";
+import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { ROLES, adminUsers, adminProducts, adminOrders, adminArticles, adminAttributes, stockMovements as initialMovements, storeSettings as initialSettings } from "../data/mockAdmin";
 import { initialInsumos, initialRecipes, initialProductionOrders, initialPurchases, initialShippingMethods, initialLanguages, initialShippingZones, initialDistrictRules, initialCategoryRules } from "../data/mockErp";
-import { initialPages } from "../data/mockPages";
+import { initialCoupons } from "../data/mockMarketing";
+import { loadPages, savePages } from "../../lib/pages";
 
 const AdminContext = createContext(null);
 
@@ -27,19 +28,26 @@ export const AdminProvider = ({ children }) => {
   const [shippingZones, setShippingZones] = useState(initialShippingZones);
   const [districtRules, setDistrictRules] = useState(initialDistrictRules);
   const [categoryRules, setCategoryRules] = useState(initialCategoryRules);
-  const [pages, setPages] = useState(initialPages);
+  const [pages, setPages] = useState(loadPages);
+  const [coupons, setCoupons] = useState(initialCoupons);
+
+  useEffect(() => { savePages(pages); }, [pages]);
 
   const switchRole = (id) => {
     setRole(id);
     localStorage.setItem(STORAGE_ROLE, id);
   };
 
-  const me = useMemo(() => ({
-    name: "Ana Lopes",
-    email: "ana.lopes@divinarte.pt",
-    role,
-    roleLabel: ROLES.find((r) => r.id === role)?.label || "—",
-  }), [role]);
+  const me = useMemo(() => {
+    const asUser = users.find((u) => u.role === role);
+    return {
+      name: asUser?.name || "Ana Lopes",
+      email: asUser?.email || "ana.lopes@divinarte.pt",
+      affiliateCode: asUser?.affiliateCode,
+      role,
+      roleLabel: ROLES.find((r) => r.id === role)?.label || "—",
+    };
+  }, [role, users]);
 
   const value = {
     me, role, switchRole,
@@ -60,6 +68,7 @@ export const AdminProvider = ({ children }) => {
     districtRules, setDistrictRules,
     categoryRules, setCategoryRules,
     pages, setPages,
+    coupons, setCoupons,
   };
 
   return <AdminContext.Provider value={value}>{children}</AdminContext.Provider>;

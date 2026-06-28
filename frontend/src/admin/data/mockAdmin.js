@@ -7,13 +7,14 @@ export const ROLES = [
   { id: "super_admin", label: "Super Admin", color: "#2E9E44" },
   { id: "admin", label: "Admin", color: "#14532D" },
   { id: "producao", label: "Produção", color: "#B7BD53" },
-  { id: "lojista", label: "Lojista", color: "#2C4A3B" },
+  { id: "afiliado", label: "Afiliado", color: "#2C4A3B" },
 ];
 
 // nav id -> allowed roles
 export const NAV_PERMISSIONS = {
   dashboard: ["super_admin", "admin", "producao"],
   users: ["super_admin", "admin"],
+  affiliates: ["super_admin", "admin"],
   products: ["super_admin", "admin", "producao"],
   categories: ["super_admin", "admin", "producao"],
   attributes: ["super_admin", "admin", "producao"],
@@ -27,12 +28,14 @@ export const NAV_PERMISSIONS = {
   fin_purchases: ["super_admin", "admin"],
   fin_margins: ["super_admin", "admin"],
   blog: ["super_admin", "admin"],
-  pages: ["super_admin", "admin"],
+  pages: ["super_admin"],
+  block_library: ["super_admin"],
+  coupons: ["super_admin", "admin"],
   settings: ["super_admin"],
-  lojista_dashboard: ["lojista"],
-  lojista_products: ["lojista"],
-  lojista_sales: ["lojista"],
-  lojista_links: ["lojista"],
+  afiliado_dashboard: ["afiliado"],
+  afiliado_products: ["afiliado"],
+  afiliado_sales: ["afiliado"],
+  afiliado_links: ["afiliado"],
 };
 
 export const can = (role, navId) => (NAV_PERMISSIONS[navId] || []).includes(role);
@@ -42,12 +45,12 @@ export const adminUsers = [
   { id: "u01", name: "Ana Lopes", email: "ana.lopes@divinarte.pt", role: "super_admin", active: true, createdAt: "2024-08-12" },
   { id: "u02", name: "Pedro Sousa", email: "pedro.sousa@divinarte.pt", role: "admin", active: true, createdAt: "2024-09-21" },
   { id: "u03", name: "Mariana Faria", email: "mariana.faria@divinarte.pt", role: "producao", active: true, createdAt: "2024-10-02" },
-  { id: "u04", name: "André Cardoso", email: "andre.cardoso@parceiro.pt", role: "lojista", active: true, createdAt: "2024-11-08" },
+  { id: "u04", name: "André Cardoso", email: "andre.cardoso@parceiro.pt", role: "afiliado", active: true, createdAt: "2024-11-08" },
   { id: "u05", name: "Sofia Mendes", email: "sofia.mendes@divinarte.pt", role: "producao", active: false, createdAt: "2025-01-15" },
   { id: "u06", name: "Rita Pereira", email: "rita.pereira@example.pt", role: "cliente", active: true, createdAt: "2025-02-20" },
   { id: "u07", name: "Hugo Martins", email: "hugo.martins@example.pt", role: "cliente", active: true, createdAt: "2025-03-04" },
   { id: "u08", name: "Inês Tavares", email: "ines.tavares@divinarte.pt", role: "admin", active: true, createdAt: "2025-04-19" },
-  { id: "u09", name: "João Antunes", email: "joao.antunes@parceiro.pt", role: "lojista", active: false, createdAt: "2025-05-30" },
+  { id: "u09", name: "João Antunes", email: "joao.antunes@parceiro.pt", role: "afiliado", active: false, createdAt: "2025-05-30" },
   { id: "u10", name: "Beatriz Santos", email: "beatriz.santos@example.pt", role: "cliente", active: true, createdAt: "2025-07-11" },
 ];
 
@@ -55,7 +58,7 @@ export const USER_ROLE_OPTIONS = [
   { id: "super_admin", label: "Super Admin" },
   { id: "admin", label: "Admin" },
   { id: "producao", label: "Produção" },
-  { id: "lojista", label: "Lojista" },
+  { id: "afiliado", label: "Afiliado" },
   { id: "cliente", label: "Cliente" },
 ];
 
@@ -73,7 +76,7 @@ export const makeAffiliateCode = (name) =>
   "AC-" + stripDiacritics(name).split(" ")[0].toUpperCase();
 
 adminUsers
-  .filter((u) => u.role === "lojista")
+  .filter((u) => u.role === "afiliado")
   .forEach((u) => { u.affiliateCode = makeAffiliateCode(u.name); u.affiliateActive = u.active; });
 
 // ---------- Catalog (extends storefront products with admin fields) ----------
@@ -146,13 +149,13 @@ const orderItem = (id, qty) => {
 };
 
 export const adminOrders = [
-  { id: "DA-2025-0312", date: "2025-11-02T10:24:00", customer: customers[0], items: [orderItem("p01", 1), orderItem("p04", 1), orderItem("p14", 1)], total: 51.4, payment: "pago", paymentMethod: "Cartão", shipping: "entregue", shippingMethod: "Standard" },
+  { id: "DA-2025-0312", date: "2025-11-02T10:24:00", customer: customers[0], items: [orderItem("p01", 1), orderItem("p04", 1), orderItem("p14", 1)], total: 51.4, payment: "pago", paymentMethod: "Cartão", shipping: "entregue", shippingMethod: "Standard", affiliateCode: "AC-ANDRE" },
   { id: "DA-2025-0311", date: "2025-11-01T14:10:00", customer: customers[1], items: [orderItem("p06", 1), orderItem("p08", 1)], total: 45.9, payment: "pago", paymentMethod: "MB Way", shipping: "em_transito", shippingMethod: "Expresso" },
   { id: "DA-2025-0310", date: "2025-10-30T09:02:00", customer: customers[2], items: [orderItem("p02", 2)], total: 37.8, payment: "pago", paymentMethod: "Multibanco", shipping: "preparacao", shippingMethod: "Standard" },
-  { id: "DA-2025-0309", date: "2025-10-29T18:45:00", customer: customers[3], items: [orderItem("p09", 1), orderItem("p10", 1), orderItem("p12", 1)], total: 57.5, payment: "pendente", paymentMethod: "Multibanco", shipping: "preparacao", shippingMethod: "Standard" },
+  { id: "DA-2025-0309", date: "2025-10-29T18:45:00", customer: customers[3], items: [orderItem("p09", 1), orderItem("p10", 1), orderItem("p12", 1)], total: 57.5, payment: "pendente", paymentMethod: "Multibanco", shipping: "preparacao", shippingMethod: "Standard", affiliateCode: "AC-ANDRE" },
   { id: "DA-2025-0308", date: "2025-10-28T11:30:00", customer: customers[0], items: [orderItem("p07", 1), orderItem("p11", 1)], total: 57.5, payment: "pago", paymentMethod: "Cartão", shipping: "entregue", shippingMethod: "Standard" },
   { id: "DA-2025-0307", date: "2025-10-27T16:12:00", customer: customers[1], items: [orderItem("p15", 1)], total: 21.0, payment: "reembolsado", paymentMethod: "PayPal", shipping: "cancelado", shippingMethod: "Standard" },
-  { id: "DA-2025-0306", date: "2025-10-26T08:55:00", customer: customers[2], items: [orderItem("p03", 1), orderItem("p13", 1)], total: 54.5, payment: "pago", paymentMethod: "Cartão", shipping: "entregue", shippingMethod: "Expresso" },
+  { id: "DA-2025-0306", date: "2025-10-26T08:55:00", customer: customers[2], items: [orderItem("p03", 1), orderItem("p13", 1)], total: 54.5, payment: "pago", paymentMethod: "Cartão", shipping: "entregue", shippingMethod: "Expresso", affiliateCode: "AC-ANDRE" },
   { id: "DA-2025-0305", date: "2025-10-25T19:33:00", customer: customers[3], items: [orderItem("p05", 1), orderItem("p16", 1)], total: 32.5, payment: "pago", paymentMethod: "MB Way", shipping: "em_transito", shippingMethod: "Standard" },
   { id: "DA-2025-0304", date: "2025-10-24T13:08:00", customer: customers[0], items: [orderItem("p01", 1), orderItem("p15", 1)], total: 39.9, payment: "pago", paymentMethod: "Cartão", shipping: "entregue", shippingMethod: "Standard" },
   { id: "DA-2025-0303", date: "2025-10-23T10:48:00", customer: customers[1], items: [orderItem("p04", 2)], total: 48.0, payment: "pago", paymentMethod: "MB Way", shipping: "entregue", shippingMethod: "Standard" },

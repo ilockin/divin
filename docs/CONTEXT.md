@@ -78,7 +78,7 @@ Marca: **DivinArte — Cosmética natural artesanal**. Tom de voz: **cristão pr
 - **super_admin** — controla tudo; gerencia todas as contas, edita campos personalizáveis e até a **senha** de usuários (via Supabase Admin API em Edge Function). **Tudo no sistema é editável por ele.**
 - **admin** — gestão geral da loja e conteúdo.
 - **producao** — produção, insumos, fórmulas, estoque.
-- **lojista** — vendas e pedidos.
+- **afiliado** — vende através de link próprio e ganha comissão (% ou valor fixo) por produto; painel próprio com produtos, vendas e links (`/admin/painel-afiliado`).
 - **cliente** — compra na loja, área do cliente.
 
 **Cadastro:** e-mail/senha + **login com Google** (OAuth via Supabase Auth).

@@ -1,8 +1,21 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { Leaf, Heart, Sparkles, BadgeCheck } from "lucide-react";
+import { getPublishedPage } from "../lib/pages";
+import { BlockRenderer } from "../components/blocks/BlockRenderer";
+import { products as catalogProducts } from "../data/mock";
 
-export const About = () => (
+export const About = () => {
+  const overridePage = getPublishedPage("sobre");
+  if (overridePage) {
+    return (
+      <div data-testid="about-page">
+        <BlockRenderer blocks={overridePage.blocks} products={catalogProducts} />
+      </div>
+    );
+  }
+
+  return (
   <div data-testid="about-page">
     {/* hero */}
     <section className="relative overflow-hidden">
@@ -66,4 +79,5 @@ export const About = () => (
       <Link to="/loja" className="btn-da btn-da-primary mt-8" data-testid="about-cta">Descobrir a loja</Link>
     </section>
   </div>
-);
+  );
+};

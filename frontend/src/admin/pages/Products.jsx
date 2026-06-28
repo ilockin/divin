@@ -116,7 +116,7 @@ export const ProductForm = () => {
     ? { ...existing, benefits: existing.benefits || [""], shippingMode: existing.shippingMode || "inherit", shippingMethodIds: existing.shippingMethodIds || [],
         commissionType: existing.commissionType || "percentage", commissionValue: existing.commissionValue ?? 0 }
     : emptyProduct);
-  const canEditCommission = role !== "lojista";
+  const canEditCommission = role !== "afiliado";
 
   if (!isNew && !existing) return <Navigate to="/admin/produtos" replace />;
 
@@ -268,7 +268,7 @@ export const ProductForm = () => {
                   {COMMISSION_TYPES.map((c) => (<option key={c.id} value={c.id}>{c.label}</option>))}
                 </select>
               </FormRow>
-              <FormRow label={form.commissionType === "percentage" ? "Comissão (%)" : "Comissão (€)"} hint="Valor que o lojista recebe por unidade vendida através do seu link de afiliado.">
+              <FormRow label={form.commissionType === "percentage" ? "Comissão (%)" : "Comissão (€)"} hint="Valor que o afiliado recebe por unidade vendida através do seu link de afiliado.">
                 <input type="number" step="0.1" min="0" className={fieldClass} value={form.commissionValue} onChange={(e) => u("commissionValue", e.target.value)} data-testid="pf-commission-value" />
               </FormRow>
             </div>

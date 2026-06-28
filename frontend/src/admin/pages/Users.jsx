@@ -31,8 +31,8 @@ export const Users = () => {
   const save = () => {
     if (!form.name || !form.email) { toast.error("Preenche nome e e-mail."); return; }
     const payload = { ...form };
-    if (payload.role === "lojista" && !payload.affiliateCode) payload.affiliateCode = makeAffiliateCode(payload.name);
-    if (payload.role === "lojista") payload.affiliateActive = payload.active;
+    if (payload.role === "afiliado" && !payload.affiliateCode) payload.affiliateCode = makeAffiliateCode(payload.name);
+    if (payload.role === "afiliado") payload.affiliateActive = payload.active;
     if (form.id) {
       setUsers((prev) => prev.map((u) => (u.id === form.id ? { ...u, ...payload } : u)));
       toast.success("Utilizador atualizado.");
@@ -162,10 +162,10 @@ export const Users = () => {
           </FormRow>
         </div>
 
-        {form.role === "lojista" && (
+        {form.role === "afiliado" && (
           <div className="mt-6 border-t hairline pt-5" data-testid="user-affiliate">
             <p className="font-body text-xs tracking-[0.18em] uppercase text-[var(--da-forest)] mb-3">Afiliado</p>
-            <FormRow label="Link de afiliado" hint="Gerado automaticamente a partir do nome; usar no link partilhado pelo lojista." testid="user-form-affiliate">
+            <FormRow label="Link de afiliado" hint="Gerado automaticamente a partir do nome; usar no link partilhado pelo afiliado." testid="user-form-affiliate">
               <input
                 readOnly
                 className={fieldClass + " bg-[var(--da-cream-2)]/40 text-[var(--da-muted)]"}

@@ -1,8 +1,12 @@
 import React, { useState } from "react";
 import { Mail, Phone, MapPin } from "lucide-react";
 import { toast } from "sonner";
+import { getPublishedPage } from "../lib/pages";
+import { BlockRenderer } from "../components/blocks/BlockRenderer";
+import { products as catalogProducts } from "../data/mock";
 
 export const Contact = () => {
+  const overridePage = getPublishedPage("contacto");
   const [form, setForm] = useState({ name: "", email: "", subject: "", message: "" });
   const u = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
@@ -11,6 +15,14 @@ export const Contact = () => {
     toast.success("Mensagem enviada", { description: "Responderemos em breve. Obrigada pelo teu cuidado." });
     setForm({ name: "", email: "", subject: "", message: "" });
   };
+
+  if (overridePage) {
+    return (
+      <div data-testid="contact-page">
+        <BlockRenderer blocks={overridePage.blocks} products={catalogProducts} />
+      </div>
+    );
+  }
 
   return (
     <div className="container-da py-12" data-testid="contact-page">

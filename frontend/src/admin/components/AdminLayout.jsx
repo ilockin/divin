@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Users, Package, Tags, SlidersHorizontal,
   Boxes, ShoppingCart, FileText, Settings, ChevronLeft, ChevronRight,
   FlaskConical, ClipboardList, Factory,
-  PieChart, Receipt, Percent, Truck, LayoutPanelTop, Link2,
+  PieChart, Receipt, Percent, Truck, LayoutPanelTop, Link2, Tag, UserCheck, Blocks,
 } from "lucide-react";
 import { useAdmin } from "../context/AdminContext";
 import { can } from "../data/mockAdmin";
@@ -18,12 +18,12 @@ const navGroups = [
     items: [{ id: "dashboard", to: "/admin", label: "Dashboard", icon: LayoutDashboard, end: true }],
   },
   {
-    title: "Painel Lojista",
+    title: "Painel Afiliado",
     items: [
-      { id: "lojista_dashboard", to: "/admin/lojista", label: "Dashboard", icon: LayoutDashboard, end: true },
-      { id: "lojista_products", to: "/admin/lojista/produtos", label: "Meus Produtos", icon: Package },
-      { id: "lojista_sales", to: "/admin/lojista/vendas", label: "Minhas Vendas", icon: Receipt },
-      { id: "lojista_links", to: "/admin/lojista/links", label: "Meus Links", icon: Link2 },
+      { id: "afiliado_dashboard", to: "/admin/painel-afiliado", label: "Dashboard", icon: LayoutDashboard, end: true },
+      { id: "afiliado_products", to: "/admin/painel-afiliado/produtos", label: "Meus Produtos", icon: Package },
+      { id: "afiliado_sales", to: "/admin/painel-afiliado/vendas", label: "Minhas Vendas", icon: Receipt },
+      { id: "afiliado_links", to: "/admin/painel-afiliado/links", label: "Meus Links", icon: Link2 },
     ],
   },
   {
@@ -63,12 +63,20 @@ const navGroups = [
     items: [
       { id: "blog", to: "/admin/blog", label: "Blog / Artigos", icon: FileText },
       { id: "pages", to: "/admin/paginas", label: "Construtor de Páginas", icon: LayoutPanelTop },
+      { id: "block_library", to: "/admin/blocos", label: "Biblioteca de Blocos", icon: Blocks },
+    ],
+  },
+  {
+    title: "Marketing",
+    items: [
+      { id: "coupons", to: "/admin/cupoes", label: "Cupões de Desconto", icon: Tag },
     ],
   },
   {
     title: "Administração",
     items: [
       { id: "users", to: "/admin/utilizadores", label: "Utilizadores", icon: Users },
+      { id: "affiliates", to: "/admin/afiliados", label: "Afiliados", icon: UserCheck },
       { id: "settings", to: "/admin/definicoes", label: "Definições", icon: Settings },
     ],
   },

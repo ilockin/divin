@@ -23,7 +23,7 @@ const UNSPLASH2 = "https://images.unsplash.com/photo-1571781926291-c477ebfd024b?
 const UNSPLASH3 = "https://images.unsplash.com/photo-1612817288484-6f916006741a?auto=format&fit=crop&w=1200&q=70";
 
 // Props por defeito de cada tipo de bloco
-const DEFAULTS = {
+export const DEFAULTS = {
   hero: () => ({ title: "A divina arte de cuidar de si", subtitle: "Cosmética natural artesanal, feita com serenidade.", buttonText: "Ver loja", buttonLink: "/loja", align: "center", bg: "#14532D" }),
   texto: () => ({ text: "Escreva aqui o seu texto. Pode ser uma introdução, uma história da marca ou qualquer conteúdo.", align: "left" }),
   imagem: () => ({ src: UNSPLASH, alt: "Imagem", align: "center" }),

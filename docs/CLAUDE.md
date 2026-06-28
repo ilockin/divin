@@ -64,8 +64,11 @@ Estas são o trabalho da próxima fase — não as atacar de surpresa numa taref
   - `admin/components/` — `AdminLayout` (sidebar+main), `Topbar`, `Breadcrumbs`, `DataTable` (+ `StatusBadge`), `Modal`, `Bits` (`PageHeader`, `SectionTitle`, `FormRow`, `KpiCard`, `fieldClass`).
   - `admin/context/AdminContext.jsx` — provider único com estado de todos os módulos via `useState`; hook `useAdmin()`.
   - `admin/data/mockAdmin.js` — RBAC (`ROLES`, `NAV_PERMISSIONS`, `can(role, navId)`), produtos/encomendas/utilizadores/atributos, séries de KPI, `storeSettings`.
-  - `admin/data/mockErp.js` — **já contém** os mock data de Produção/Financeiro/Envios/Idiomas (insumos, fichas técnicas, ordens, compras, séries financeiras, `initialShippingMethods`, `initialLanguages`). Falta ligá-los e construir as páginas.
-  - `admin/pages/` — uma página por módulo (`Dashboard`, `Products` [+`ProductForm`], `Categories`, `Stock`, `Orders` [+`OrderDetail`], `Blog` [+`ArticleForm`], `Users`, `Settings`).
+  - `admin/data/mockErp.js` — mock data de Produção/Financeiro/Envios/Idiomas (insumos, fichas técnicas, ordens, compras, séries financeiras, `initialShippingMethods`, `initialLanguages`).
+  - `admin/data/mockMarketing.js` — `initialCoupons`, `COUPON_TYPES`, `COUPON_SCOPES` (cupões de desconto).
+  - `admin/pages/` — uma página por módulo: catálogo/operação (`Dashboard`, `Products` [+`ProductForm`], `Categories`, `Stock`, `Orders` [+`OrderDetail`], `Blog` [+`ArticleForm`], `Users`, `Settings`, `Coupons`); painel do afiliado (`AfiliadoDashboard`, `AfiliadoProducts`, `AfiliadoSales`, `AfiliadoLinks`).
+  - `lib/commission.js` — `calcCommission(product, qty)` / `formatCommission(product)` (comissão de afiliado).
+  - `lib/coupons.js` — `validateCoupon(coupon, { subtotal, items })` / `couponToPromo(coupon)` (usados no `CartContext.applyPromo`).
 
 ### Design tokens
 - Definidos como **variáveis CSS** em `src/index.css` (`:root`): `--da-leaf #2E9E44`, `--da-forest #14532D`, `--da-pine`, `--da-olive`, `--da-cream`, `--da-cream-2`, `--da-ink`, `--da-muted`, `--da-line` (hairline).
@@ -87,10 +90,13 @@ Estas são o trabalho da próxima fase — não as atacar de surpresa numa taref
 4. `admin/components/Breadcrumbs.jsx` — adicionar rótulos PT ao mapa `LABELS`.
 5. `admin/context/AdminContext.jsx` — importar do mock e expor `state/setState` se o módulo precisar de estado partilhado.
 
-### Estado de implementação (verificado — sessão 2026-06-28, commit `8407c13`)
-- **Mock data:** ✅ `mockErp.js` (insumos, fichas, ordens, compras, finanças, métodos de envio, idiomas) e `mockPages.js` (construtor de páginas).
+### Estado de implementação (verificado — sessão 2026-06-28)
+- **Mock data:** ✅ `mockErp.js` (insumos, fichas, ordens, compras, finanças, métodos de envio, idiomas), `mockPages.js` (construtor de páginas), `mockMarketing.js` (cupões).
 - **Produção + Financeiro:** ✅ feito — páginas `Insumos`, `FichaTecnica`, `OrdensProducao`/`OrdemProducaoDetail`, `FinanceiroOverview`, `Compras`, `Margens`; grupos na sidebar, rotas em `App.js`, ligação ao `AdminContext`, permissões/breadcrumbs.
 - **Definições (envios + idiomas):** ✅ feito — `Settings.jsx` usa a lista CRUD de modos de envio (`initialShippingMethods`) e tem o gestor de idiomas (`initialLanguages`, `LANGUAGE_CATALOG`).
 - **Gestão de Envios (`/admin/envios`):** ✅ feito — tabs Zonas por País, Distritos PT/ES, Regras por Categoria; secção "Envio" no `ProductForm`.
 - **Construtor de Páginas (`/admin/paginas`):** ✅ feito — editor drag & drop com DnD Kit, paleta de blocos, propriedades, undo/redo, pré-visualização responsiva.
-- **Próximo:** nenhum trabalho de visual em falta. A próxima fase é back-end (Supabase) — ver `docs/CONTEXT.md`.
+- **Afiliados:** ✅ feito (sessão 2026-06-28; papel renomeado de "lojista" para "afiliado" na mesma sessão) — comissão por produto (`commissionType`/`commissionValue` + secção no `ProductForm`, visível só para quem não é `afiliado`); `affiliateCode`/`affiliateActive` nos utilizadores `afiliado` (gerado em `Users.jsx` via `makeAffiliateCode`); `AdminContext.me` deriva do utilizador mock real do papel ativo. Painel próprio em `/admin/painel-afiliado` (+`/produtos`, `/vendas`, `/links`), com grupo de sidebar e `NAV_PERMISSIONS` dedicados (`afiliado_*`) — os outros grupos somem automaticamente para esse papel. Distinto de `/admin/afiliados` (plural), a vista do admin que agrega comissão por afiliado.
+- **Cupões de desconto:** ✅ feito — CRUD em `/admin/cupoes` (grupo "Marketing"); código, tipo (%/€), encomenda mínima, validade, limite de uso, âmbito (loja/categoria/produto). Aplicação real no `CartPage` e no `Checkout` (campo no resumo da encomenda, visível em qualquer passo), via `validateCoupon`/`couponToPromo` → `CartContext.applyPromo` (mecanismo já existia, usado antes só pelo bundle "RITUAL10").
+- **Vista admin "Afiliados" (`/admin/afiliados`):** ✅ feito — agrega, por afiliado, vendas/receita/comissão acumulada (`Affiliates.jsx`); grupo "Administração" da sidebar, permissão `admin`/`super_admin`.
+- **Próximo:** nenhum trabalho de visual pendente. A próxima fase é back-end (Supabase) — ver `docs/CONTEXT.md`.

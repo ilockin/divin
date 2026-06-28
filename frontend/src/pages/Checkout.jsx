@@ -1,16 +1,20 @@
 import React, { useState } from "react";
 import { useNavigate, Link, Navigate } from "react-router-dom";
 import { Check, CreditCard, Smartphone, Wallet, Building2 } from "lucide-react";
+import { toast } from "sonner";
 import { useCart } from "../context/CartContext";
 import { formatEUR } from "../lib/format";
+import { initialCoupons } from "../admin/data/mockMarketing";
+import { validateCoupon, couponToPromo } from "../lib/coupons";
 
 const STEPS = ["Contacto e Envio", "Método de Envio", "Pagamento"];
 
 export const Checkout = () => {
-  const { items, totals, clear, promo } = useCart();
+  const { items, totals, clear, promo, applyPromo, clearPromo } = useCart();
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [submitted, setSubmitted] = useState(false);
+  const [couponCode, setCouponCode] = useState("");
   const [form, setForm] = useState({
     email: "", firstName: "", lastName: "", phone: "",
     address: "", city: "", zip: "", country: "Portugal",
@@ -20,6 +24,19 @@ export const Checkout = () => {
   if (items.length === 0 && !submitted) return <Navigate to="/carrinho" replace />;
 
   const update = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+
+  const applyCoupon = (e) => {
+    e.preventDefault();
+    const code = couponCode.trim().toUpperCase();
+    if (!code) return;
+    const coupon = initialCoupons.find((c) => c.code === code);
+    if (!coupon) { toast.error("Cupão inválido."); return; }
+    const result = validateCoupon(coupon, { subtotal: totals.subtotal, items });
+    if (!result.ok) { toast.error(result.reason); return; }
+    applyPromo(couponToPromo(coupon));
+    toast.success(`Cupão ${coupon.code} aplicado.`);
+    setCouponCode("");
+  };
 
   const afterDiscount = totals.subtotal - totals.discount;
   const shippingPrice = form.shipping === "express" ? 7.9 : afterDiscount >= 49 ? 0 : 4.9;
@@ -136,11 +153,28 @@ export const Checkout = () => {
               </div>
             ))}
           </div>
-          <div className="border-t hairline mt-5 pt-4 space-y-2 font-body text-sm">
+
+          {!promo && (
+            <form onSubmit={applyCoupon} className="border-t hairline mt-5 pt-4 flex gap-2" data-testid="checkout-coupon-form">
+              <input
+                value={couponCode}
+                onChange={(e) => setCouponCode(e.target.value)}
+                placeholder="Cupão de desconto"
+                data-testid="checkout-coupon-input"
+                className="flex-1 bg-white border hairline rounded-lg px-3.5 py-2.5 font-body text-sm focus:outline-none focus:border-[var(--da-leaf)]"
+              />
+              <button type="submit" data-testid="checkout-coupon-apply" className="btn-da btn-da-outline text-xs whitespace-nowrap">Aplicar</button>
+            </form>
+          )}
+
+          <div className="border-t hairline mt-4 pt-4 space-y-2 font-body text-sm">
             <div className="flex justify-between"><span className="text-[var(--da-muted)]">Subtotal</span><span>{formatEUR(totals.subtotal)}</span></div>
             {promo && totals.discount > 0 && (
               <div className="flex justify-between text-[var(--da-leaf)]" data-testid="checkout-discount">
-                <span>{promo.label}</span>
+                <span className="flex items-center gap-2">
+                  {promo.label}
+                  <button onClick={clearPromo} className="text-[var(--da-muted)] hover:text-red-600 text-xs underline" data-testid="checkout-remove-promo">remover</button>
+                </span>
                 <span>− {formatEUR(totals.discount)}</span>
               </div>
             )}
