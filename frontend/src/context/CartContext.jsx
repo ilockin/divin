@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useState, useCallback } from "react";
 import { toast } from "sonner";
 
-const CartContext = createContext(null);
+export const CartContext = createContext(null);
 const STORAGE_KEY = "divinarte-cart-v1";
 const PROMO_KEY = "divinarte-promo-v1";
 

@@ -18,6 +18,7 @@ const LABELS = {
   envios: "Gestão de Envios",
   blog: "Blog / Artigos",
   paginas: "Construtor de Páginas",
+  "conteudo-inicio": "Página Inicial",
   blocos: "Biblioteca de Blocos",
   cupoes: "Cupões de Desconto",
   afiliados: "Afiliados",

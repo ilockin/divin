@@ -46,6 +46,7 @@ import { AfiliadoLinks } from "@/admin/pages/AfiliadoLinks";
 import { Coupons } from "@/admin/pages/Coupons";
 import { Affiliates } from "@/admin/pages/Affiliates";
 import { BlockLibrary } from "@/admin/pages/BlockLibrary";
+import { HomeVisualEditor } from "@/admin/pages/HomeVisualEditor";
 
 const Storefront = () => (
   <CartProvider>
@@ -101,6 +102,7 @@ const Admin = () => (
         <Route path="paginas" element={<Paginas />} />
         <Route path="paginas/:id" element={<PageBuilder />} />
         <Route path="blocos" element={<BlockLibrary />} />
+        <Route path="conteudo-inicio" element={<HomeVisualEditor />} />
         <Route path="painel-afiliado" element={<AfiliadoDashboard />} />
         <Route path="painel-afiliado/produtos" element={<AfiliadoProducts />} />
         <Route path="painel-afiliado/vendas" element={<AfiliadoSales />} />

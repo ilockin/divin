@@ -30,6 +30,7 @@ export const NAV_PERMISSIONS = {
   blog: ["super_admin", "admin"],
   pages: ["super_admin"],
   block_library: ["super_admin"],
+  home_content: ["super_admin"],
   coupons: ["super_admin", "admin"],
   settings: ["super_admin"],
   afiliado_dashboard: ["afiliado"],
