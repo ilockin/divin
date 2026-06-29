@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAdmin } from "../context/AdminContext";
-import { BLOCK_LIBRARY, BLOCK_LABELS, BLOCK_FIELDS, BLOCK_LISTS, makeBlock } from "../data/mockPages";
+import { BLOCK_LIBRARY, BLOCK_LABELS, BLOCK_FIELDS, BLOCK_LISTS, makeBlock, rebalanceColumns } from "../data/mockPages";
 import { FormRow, fieldClass } from "../components/Bits";
 import { BlockView } from "../../components/blocks/BlockRenderer";
 
@@ -64,6 +64,67 @@ const SortableBlock = ({ block, products, selected, onSelect, onRemove, onDuplic
       <span className="absolute z-10 top-2 left-2 text-[10px] uppercase tracking-[0.16em] font-body bg-[var(--da-forest)] text-white px-2 py-0.5 rounded-full opacity-0 group-hover:opacity-100 transition">{BLOCK_LABELS[block.type]}</span>
       <BlockView block={block} products={products} />
     </div>
+  );
+};
+
+// ---------- Campos de propriedades de um bloco (reutilizado para o bloco de topo
+// selecionado e, recursivamente, para o bloco dentro de cada coluna) ----------
+const BlockPropsFields = ({ block, onChangeProp, onSnapStart, onSnapEnd }) => {
+  const listCfg = BLOCK_LISTS[block.type];
+  const listItems = listCfg ? (block.props[listCfg.prop] || []) : [];
+  const setList = (items) => onChangeProp(listCfg.prop, items);
+  const addListItem = () => { onSnapStart(); setList([...listItems, listCfg.newItem()]); setTimeout(onSnapEnd, 0); };
+  const removeListItem = (i) => { onSnapStart(); setList(listItems.filter((_, idx) => idx !== i)); setTimeout(onSnapEnd, 0); };
+  const updateListItem = (i, key, value) => setList(listItems.map((it, idx) => idx === i ? { ...it, [key]: value } : it));
+
+  return (
+    <>
+      {(BLOCK_FIELDS[block.type] || []).map((f) => (
+        <FormRow key={f.key} label={f.label}>
+          {f.type === "textarea" ? (
+            <textarea rows={3} className={fieldClass} value={block.props[f.key] ?? ""} onFocus={onSnapStart} onBlur={onSnapEnd} onChange={(e) => onChangeProp(f.key, e.target.value)} data-testid={`prop-${f.key}`} />
+          ) : f.type === "select" ? (
+            <select className={fieldClass} value={block.props[f.key]} onFocus={onSnapStart} onBlur={onSnapEnd} onChange={(e) => onChangeProp(f.key, e.target.value)} data-testid={`prop-${f.key}`}>
+              {f.options.map((o) => <option key={o} value={o}>{o}</option>)}
+            </select>
+          ) : f.type === "color" ? (
+            <div className="flex items-center gap-2 mt-2">
+              <input type="color" value={block.props[f.key]} onFocus={onSnapStart} onBlur={onSnapEnd} onChange={(e) => onChangeProp(f.key, e.target.value)} data-testid={`prop-${f.key}`} className="w-10 h-9 rounded border hairline" />
+              <input className={fieldClass + " mt-0"} value={block.props[f.key]} onFocus={onSnapStart} onBlur={onSnapEnd} onChange={(e) => onChangeProp(f.key, e.target.value)} />
+            </div>
+          ) : f.type === "number" ? (
+            <input type="number" className={fieldClass} value={block.props[f.key]} onFocus={onSnapStart} onBlur={onSnapEnd} onChange={(e) => onChangeProp(f.key, parseInt(e.target.value, 10) || 0)} data-testid={`prop-${f.key}`} />
+          ) : (
+            <input className={fieldClass} value={block.props[f.key] ?? ""} onFocus={onSnapStart} onBlur={onSnapEnd} onChange={(e) => onChangeProp(f.key, e.target.value)} data-testid={`prop-${f.key}`} />
+          )}
+        </FormRow>
+      ))}
+
+      {listCfg && (
+        <div className="border-t hairline pt-4">
+          <p className="font-body text-xs tracking-[0.18em] uppercase text-[var(--da-forest)] mb-3">{listCfg.label}</p>
+          <div className="space-y-3">
+            {listItems.map((it, i) => (
+              <div key={i} className="border hairline rounded-lg p-3 space-y-2" data-testid={`list-item-${i}`}>
+                <div className="flex justify-end">
+                  <button onClick={() => removeListItem(i)} className="text-[var(--da-muted)] hover:text-red-600" aria-label="Remover item" data-testid={`list-remove-${i}`}><Trash2 size={13} /></button>
+                </div>
+                {listCfg.fields.map((lf) => (
+                  <FormRow key={lf.key} label={lf.label}>
+                    {lf.type === "textarea" ? (
+                      <textarea rows={2} className={fieldClass} value={it[lf.key] ?? ""} onFocus={onSnapStart} onBlur={onSnapEnd} onChange={(e) => updateListItem(i, lf.key, e.target.value)} />
+                    ) : (
+                      <input className={fieldClass} value={it[lf.key] ?? ""} onFocus={onSnapStart} onBlur={onSnapEnd} onChange={(e) => updateListItem(i, lf.key, e.target.value)} />
+                    )}
+                  </FormRow>
+                ))}
+              </div>
+            ))}
+          </div>
+          <button onClick={addListItem} data-testid="list-add" className="mt-3 inline-flex items-center gap-1 text-xs font-body uppercase tracking-[0.18em] text-[var(--da-forest)] hover:text-[var(--da-leaf)]"><Plus size={13} /> Adicionar</button>
+        </div>
+      )}
+    </>
   );
 };
 
@@ -121,13 +182,27 @@ export const PageBuilder = () => {
   const updateProp = (key, value) =>
     setBlocks((prev) => prev.map((b) => b.id === selectedId ? { ...b, props: { ...b.props, [key]: value } } : b));
 
-  // listas dentro de um bloco
-  const listCfg = selected ? BLOCK_LISTS[selected.type] : null;
-  const listItems = listCfg ? (selected.props[listCfg.prop] || []) : [];
-  const setList = (items) => updateProp(listCfg.prop, items);
-  const addListItem = () => { snapStart(); setList([...listItems, listCfg.newItem()]); setTimeout(snapEnd, 0); };
-  const removeListItem = (i) => { snapStart(); setList(listItems.filter((_, idx) => idx !== i)); setTimeout(snapEnd, 0); };
-  const updateListItem = (i, key, value) => setList(listItems.map((it, idx) => idx === i ? { ...it, [key]: value } : it));
+  // bloco "colunas" — cada coluna tem o seu próprio bloco aninhado (sem caso especial no BlockView)
+  const updateColumns = (updater) =>
+    setBlocks((prev) => prev.map((b) => b.id !== selectedId ? b : { ...b, props: { ...b.props, columns: updater(b.props.columns) } }));
+  const updateColumnBlockProp = (colId, key, value) =>
+    updateColumns((cols) => cols.map((c) => c.id === colId ? { ...c, block: { ...c.block, props: { ...c.block.props, [key]: value } } } : c));
+  const changeColumnType = (colId, type) =>
+    updateColumns((cols) => cols.map((c) => c.id === colId ? { ...c, block: { ...makeBlock(type) } } : c));
+  const changeColumnWidth = (colId, width) =>
+    updateColumns((cols) => cols.map((c) => c.id === colId ? { ...c, width } : c));
+  const changeColumnUnit = (colId, widthUnit) =>
+    updateColumns((cols) => cols.map((c) => c.id === colId ? { ...c, widthUnit } : c));
+  const addColumn = () => {
+    snapStart();
+    updateColumns((cols) => rebalanceColumns([...cols, { id: `col-${Date.now()}`, width: 50, widthUnit: "%", block: makeBlock("texto") }]));
+    setTimeout(snapEnd, 0);
+  };
+  const removeColumn = (colId) => {
+    snapStart();
+    updateColumns((cols) => rebalanceColumns(cols.filter((c) => c.id !== colId)));
+    setTimeout(snapEnd, 0);
+  };
 
   // ações estruturais
   const addBlock = (type, index = blocks.length) => {
@@ -262,51 +337,44 @@ export const PageBuilder = () => {
                     <button onClick={() => removeBlock(selected.id)} className="text-red-700 hover:bg-red-50 w-7 h-7 rounded-md flex items-center justify-center" aria-label="Remover bloco"><Trash2 size={14} /></button>
                   </div>
 
-                  {(BLOCK_FIELDS[selected.type] || []).map((f) => (
-                    <FormRow key={f.key} label={f.label}>
-                      {f.type === "textarea" ? (
-                        <textarea rows={3} className={fieldClass} value={selected.props[f.key] ?? ""} onFocus={snapStart} onBlur={snapEnd} onChange={(e) => updateProp(f.key, e.target.value)} data-testid={`prop-${f.key}`} />
-                      ) : f.type === "select" ? (
-                        <select className={fieldClass} value={selected.props[f.key]} onFocus={snapStart} onBlur={snapEnd} onChange={(e) => updateProp(f.key, e.target.value)} data-testid={`prop-${f.key}`}>
-                          {f.options.map((o) => <option key={o} value={o}>{o}</option>)}
-                        </select>
-                      ) : f.type === "color" ? (
-                        <div className="flex items-center gap-2 mt-2">
-                          <input type="color" value={selected.props[f.key]} onFocus={snapStart} onBlur={snapEnd} onChange={(e) => updateProp(f.key, e.target.value)} data-testid={`prop-${f.key}`} className="w-10 h-9 rounded border hairline" />
-                          <input className={fieldClass + " mt-0"} value={selected.props[f.key]} onFocus={snapStart} onBlur={snapEnd} onChange={(e) => updateProp(f.key, e.target.value)} />
-                        </div>
-                      ) : f.type === "number" ? (
-                        <input type="number" className={fieldClass} value={selected.props[f.key]} onFocus={snapStart} onBlur={snapEnd} onChange={(e) => updateProp(f.key, parseInt(e.target.value, 10) || 0)} data-testid={`prop-${f.key}`} />
-                      ) : (
-                        <input className={fieldClass} value={selected.props[f.key] ?? ""} onFocus={snapStart} onBlur={snapEnd} onChange={(e) => updateProp(f.key, e.target.value)} data-testid={`prop-${f.key}`} />
-                      )}
-                    </FormRow>
-                  ))}
-
-                  {/* listas (galeria / testemunhos / faq) */}
-                  {listCfg && (
-                    <div className="border-t hairline pt-4">
-                      <p className="font-body text-xs tracking-[0.18em] uppercase text-[var(--da-forest)] mb-3">{listCfg.label}</p>
-                      <div className="space-y-3">
-                        {listItems.map((it, i) => (
-                          <div key={i} className="border hairline rounded-lg p-3 space-y-2" data-testid={`list-item-${i}`}>
-                            <div className="flex justify-end">
-                              <button onClick={() => removeListItem(i)} className="text-[var(--da-muted)] hover:text-red-600" aria-label="Remover item" data-testid={`list-remove-${i}`}><Trash2 size={13} /></button>
-                            </div>
-                            {listCfg.fields.map((lf) => (
-                              <FormRow key={lf.key} label={lf.label}>
-                                {lf.type === "textarea" ? (
-                                  <textarea rows={2} className={fieldClass} value={it[lf.key] ?? ""} onFocus={snapStart} onBlur={snapEnd} onChange={(e) => updateListItem(i, lf.key, e.target.value)} />
-                                ) : (
-                                  <input className={fieldClass} value={it[lf.key] ?? ""} onFocus={snapStart} onBlur={snapEnd} onChange={(e) => updateListItem(i, lf.key, e.target.value)} />
-                                )}
-                              </FormRow>
-                            ))}
+                  {selected.type === "colunas" ? (
+                    <div className="space-y-4">
+                      {selected.props.columns.map((col, i) => (
+                        <div key={col.id} className="border hairline rounded-lg p-3 space-y-3" data-testid={`column-${col.id}`}>
+                          <div className="flex items-center justify-between">
+                            <p className="font-body text-xs tracking-[0.18em] uppercase text-[var(--da-forest)]">Coluna {i + 1}</p>
+                            <button onClick={() => removeColumn(col.id)} disabled={selected.props.columns.length <= 1} className="text-[var(--da-muted)] hover:text-red-600 disabled:opacity-30" aria-label="Remover coluna" data-testid={`column-remove-${col.id}`}><Trash2 size={13} /></button>
                           </div>
-                        ))}
-                      </div>
-                      <button onClick={addListItem} data-testid="list-add" className="mt-3 inline-flex items-center gap-1 text-xs font-body uppercase tracking-[0.18em] text-[var(--da-forest)] hover:text-[var(--da-leaf)]"><Plus size={13} /> Adicionar</button>
+                          <div className="grid grid-cols-2 gap-2">
+                            <FormRow label="Largura">
+                              <input type="number" min="1" className={fieldClass} value={col.width} onChange={(e) => changeColumnWidth(col.id, parseInt(e.target.value, 10) || 0)} data-testid={`column-${col.id}-width`} />
+                            </FormRow>
+                            <FormRow label="Unidade">
+                              <select className={fieldClass} value={col.widthUnit} onChange={(e) => changeColumnUnit(col.id, e.target.value)} data-testid={`column-${col.id}-unit`}>
+                                <option value="%">%</option>
+                                <option value="px">px</option>
+                              </select>
+                            </FormRow>
+                          </div>
+                          <FormRow label="Tipo de bloco">
+                            <select className={fieldClass} value={col.block.type} onChange={(e) => changeColumnType(col.id, e.target.value)} data-testid={`column-${col.id}-type`}>
+                              {BLOCK_LIBRARY.filter((b) => b.type !== "colunas").map((b) => (<option key={b.type} value={b.type}>{b.label}</option>))}
+                            </select>
+                          </FormRow>
+                          <div className="border-t hairline pt-3 space-y-3">
+                            <BlockPropsFields
+                              block={col.block}
+                              onChangeProp={(key, value) => updateColumnBlockProp(col.id, key, value)}
+                              onSnapStart={snapStart}
+                              onSnapEnd={snapEnd}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                      <button onClick={addColumn} data-testid="column-add" className="inline-flex items-center gap-1 text-xs font-body uppercase tracking-[0.18em] text-[var(--da-forest)] hover:text-[var(--da-leaf)]"><Plus size={13} /> Adicionar coluna</button>
                     </div>
+                  ) : (
+                    <BlockPropsFields block={selected} onChangeProp={updateProp} onSnapStart={snapStart} onSnapEnd={snapEnd} />
                   )}
                 </div>
               )}

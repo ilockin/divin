@@ -144,9 +144,12 @@ export const BlockView = ({ block, products = [] }) => {
       );
     case "colunas":
       return (
-        <div className="px-8 py-8 grid sm:grid-cols-2 gap-6 font-body text-[var(--da-ink)] leading-relaxed">
-          <div>{p.col1}</div>
-          <div>{p.col2}</div>
+        <div className="px-8 py-8 flex flex-wrap gap-6">
+          {(p.columns || []).map((col) => (
+            <div key={col.id} style={{ width: `${col.width}${col.widthUnit || "%"}`, minWidth: 0, flexShrink: 0 }}>
+              <BlockView block={col.block} products={products} />
+            </div>
+          ))}
         </div>
       );
     case "espacador":

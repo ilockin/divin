@@ -36,8 +36,22 @@ export const DEFAULTS = {
   testemunhos: () => ({ title: "O que dizem de nós", items: [{ name: "Mariana F.", text: "Produtos maravilhosos, sinto a diferença na pele." }, { name: "João P.", text: "Aromas suaves e naturais. Recomendo!" }] }),
   faq: () => ({ title: "Perguntas frequentes", items: [{ q: "Os produtos são veganos?", a: "A maioria da nossa linha é vegana e indicamo-lo em cada produto." }, { q: "Qual o prazo de entrega?", a: "Entre 2 a 3 dias úteis em Portugal Continental." }] }),
   newsletter: () => ({ title: "Subscreva a nossa newsletter", text: "Receba novidades e rituais de bem-estar.", buttonText: "Subscrever" }),
-  colunas: () => ({ col1: "Texto da coluna da esquerda.", col2: "Texto da coluna da direita." }),
+  colunas: () => ({
+    columns: [
+      { id: `col-${Date.now()}-1`, width: 50, widthUnit: "%", block: makeBlock("texto") },
+      { id: `col-${Date.now()}-2`, width: 50, widthUnit: "%", block: makeBlock("texto") },
+    ],
+  }),
   espacador: () => ({ height: 48 }),
+};
+
+// Redistribui a largura (%) igualmente pelas colunas que estão em "%" — chamado ao
+// adicionar/remover uma coluna. Colunas em "px" mantêm o valor manual.
+export const rebalanceColumns = (columns) => {
+  const percentCols = columns.filter((c) => c.widthUnit === "%");
+  if (percentCols.length === 0) return columns;
+  const equalShare = Math.round(100 / percentCols.length);
+  return columns.map((c) => (c.widthUnit === "%" ? { ...c, width: equalShare } : c));
 };
 
 // Campos escalares editáveis no painel de propriedades
@@ -82,10 +96,6 @@ export const BLOCK_FIELDS = {
     { key: "title", label: "Título", type: "text" },
     { key: "text", label: "Texto", type: "textarea" },
     { key: "buttonText", label: "Texto do botão", type: "text" },
-  ],
-  colunas: [
-    { key: "col1", label: "Coluna esquerda", type: "textarea" },
-    { key: "col2", label: "Coluna direita", type: "textarea" },
   ],
   espacador: [{ key: "height", label: "Altura (px)", type: "number" }],
 };
