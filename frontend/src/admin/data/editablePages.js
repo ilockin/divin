@@ -5,4 +5,5 @@ export const EDITABLE_PAGES = [
   { label: "Página Sobre", path: "/admin/conteudo-sobre" },
   { label: "Página Contacto", path: "/admin/conteudo-contacto" },
   { label: "Página Blog", path: "/admin/conteudo-blog" },
+  { label: "Rodapé", path: "/admin/conteudo-rodape" },
 ];

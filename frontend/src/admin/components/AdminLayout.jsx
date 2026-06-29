@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Users, Package, Tags, SlidersHorizontal,
   Boxes, ShoppingCart, FileText, Settings, ChevronLeft, ChevronRight,
   FlaskConical, ClipboardList, Factory,
-  PieChart, Receipt, Percent, Truck, LayoutPanelTop, Link2, Tag, UserCheck, Blocks, Home, BookHeart, Inbox, MailPlus, ListTree,
+  PieChart, Receipt, Percent, Truck, LayoutPanelTop, Link2, Tag, UserCheck, Blocks, Home, BookHeart, Inbox, MailPlus, ListTree, Star, MessageSquare, Users2, PanelBottom,
 } from "lucide-react";
 import { useAdmin } from "../context/AdminContext";
 import { can } from "../data/mockAdmin";
@@ -48,6 +48,7 @@ const navGroups = [
     items: [
       { id: "orders", to: "/admin/pedidos", label: "Pedidos", icon: ShoppingCart },
       { id: "leads", to: "/admin/leads", label: "Mensagens de Contacto", icon: Inbox },
+      { id: "reviews", to: "/admin/avaliacoes", label: "Avaliações de Produtos", icon: Star },
       { id: "shipping", to: "/admin/envios", label: "Gestão de Envios", icon: Truck },
     ],
   },
@@ -68,6 +69,7 @@ const navGroups = [
       { id: "contact_content", to: "/admin/conteudo-contacto", label: "Página Contacto", icon: MailPlus },
       { id: "blog_content", to: "/admin/conteudo-blog", label: "Página Blog", icon: FileText },
       { id: "menu", to: "/admin/menu", label: "Menu Principal", icon: ListTree },
+      { id: "footer_content", to: "/admin/conteudo-rodape", label: "Rodapé", icon: PanelBottom },
       { id: "pages", to: "/admin/paginas", label: "Construtor de Páginas", icon: LayoutPanelTop },
       { id: "block_library", to: "/admin/blocos", label: "Biblioteca de Blocos", icon: Blocks },
     ],
@@ -76,6 +78,8 @@ const navGroups = [
     title: "Marketing",
     items: [
       { id: "coupons", to: "/admin/cupoes", label: "Cupões de Desconto", icon: Tag },
+      { id: "popups", to: "/admin/popups", label: "Pop-ups", icon: MessageSquare },
+      { id: "newsletter_subscribers", to: "/admin/newsletter", label: "Subscritores Newsletter", icon: Users2 },
     ],
   },
   {

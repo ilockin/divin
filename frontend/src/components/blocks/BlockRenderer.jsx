@@ -1,11 +1,43 @@
-import React from "react";
+import React, { useState } from "react";
 import { Video as VideoIcon } from "lucide-react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Pagination } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
+import { toast } from "sonner";
 import { formatEUR } from "../../lib/format";
+import { addSubscriber } from "../../lib/newsletter";
+
+const NewsletterBlock = ({ props: p }) => {
+  const [email, setEmail] = useState("");
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!email) return;
+    addSubscriber(email, "bloco");
+    toast.success("Subscrição registada", { description: "Obrigado por te juntares ao nosso círculo." });
+    setEmail("");
+  };
+
+  return (
+    <div className="px-8 py-12 bg-[var(--da-cream-2)]/60 text-center">
+      <h3 className="font-serif-display text-2xl text-[var(--da-forest)] tracking-[0.06em]">{p.title}</h3>
+      {p.text && <p className="font-body mt-2 text-[var(--da-muted)]">{p.text}</p>}
+      <form onSubmit={handleSubmit} className="mt-5 flex items-center gap-2 justify-center flex-wrap">
+        <input
+          type="email"
+          required
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="o-seu@email.pt"
+          className="px-4 py-2.5 rounded-full border hairline bg-white font-body text-sm text-[var(--da-ink)] focus:outline-none focus:border-[var(--da-leaf)]"
+        />
+        <button type="submit" className="px-6 py-2.5 rounded-full bg-[var(--da-leaf)] text-white font-body text-sm">{p.buttonText}</button>
+      </form>
+    </div>
+  );
+};
 
 const alignClass = (a) => (a === "center" ? "text-center" : a === "right" ? "text-right" : "text-left");
 const imgAlign = (a) => (a === "center" ? "mx-auto" : a === "right" ? "ml-auto" : "mr-auto");
@@ -132,16 +164,7 @@ export const BlockView = ({ block, products = [] }) => {
         </div>
       );
     case "newsletter":
-      return (
-        <div className="px-8 py-12 bg-[var(--da-cream-2)]/60 text-center">
-          <h3 className="font-serif-display text-2xl text-[var(--da-forest)] tracking-[0.06em]">{p.title}</h3>
-          {p.text && <p className="font-body mt-2 text-[var(--da-muted)]">{p.text}</p>}
-          <div className="mt-5 flex items-center gap-2 justify-center">
-            <span className="px-4 py-2.5 rounded-full border hairline bg-white font-body text-sm text-[var(--da-muted)]">o-seu@email.pt</span>
-            <span className="px-6 py-2.5 rounded-full bg-[var(--da-leaf)] text-white font-body text-sm">{p.buttonText}</span>
-          </div>
-        </div>
-      );
+      return <NewsletterBlock props={p} />;
     case "colunas":
       return (
         <div className="px-8 py-8 flex flex-wrap gap-6">

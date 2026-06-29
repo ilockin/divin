@@ -44,11 +44,16 @@ import { AfiliadoProducts } from "@/admin/pages/AfiliadoProducts";
 import { AfiliadoSales } from "@/admin/pages/AfiliadoSales";
 import { AfiliadoLinks } from "@/admin/pages/AfiliadoLinks";
 import { Coupons } from "@/admin/pages/Coupons";
+import { Popups } from "@/admin/pages/Popups";
+import { PopupBuilder } from "@/admin/pages/PopupBuilder";
+import { NewsletterSubscribers } from "@/admin/pages/NewsletterSubscribers";
 import { Affiliates } from "@/admin/pages/Affiliates";
 import { BlockLibrary } from "@/admin/pages/BlockLibrary";
 import { HomeVisualEditor } from "@/admin/pages/HomeVisualEditor";
 import { AboutVisualEditor } from "@/admin/pages/AboutVisualEditor";
+import { FooterVisualEditor } from "@/admin/pages/FooterVisualEditor";
 import { Leads } from "@/admin/pages/Leads";
+import { Reviews } from "@/admin/pages/Reviews";
 import { ContactVisualEditor } from "@/admin/pages/ContactVisualEditor";
 import { BlogVisualEditor } from "@/admin/pages/BlogVisualEditor";
 import { MenuVisualEditor } from "@/admin/pages/MenuVisualEditor";
@@ -102,6 +107,7 @@ const Admin = () => (
         <Route path="pedidos" element={<AdminOrders />} />
         <Route path="pedidos/:id" element={<OrderDetail />} />
         <Route path="leads" element={<Leads />} />
+        <Route path="avaliacoes" element={<Reviews />} />
         <Route path="envios" element={<Envios />} />
         <Route path="blog" element={<AdminBlog />} />
         <Route path="blog/:slug" element={<ArticleForm />} />
@@ -110,6 +116,7 @@ const Admin = () => (
         <Route path="blocos" element={<BlockLibrary />} />
         <Route path="conteudo-inicio" element={<HomeVisualEditor />} />
         <Route path="conteudo-sobre" element={<AboutVisualEditor />} />
+        <Route path="conteudo-rodape" element={<FooterVisualEditor />} />
         <Route path="conteudo-contacto" element={<ContactVisualEditor />} />
         <Route path="conteudo-blog" element={<BlogVisualEditor />} />
         <Route path="menu" element={<MenuVisualEditor />} />
@@ -118,6 +125,9 @@ const Admin = () => (
         <Route path="painel-afiliado/vendas" element={<AfiliadoSales />} />
         <Route path="painel-afiliado/links" element={<AfiliadoLinks />} />
         <Route path="cupoes" element={<Coupons />} />
+        <Route path="popups" element={<Popups />} />
+        <Route path="popups/:id" element={<PopupBuilder />} />
+        <Route path="newsletter" element={<NewsletterSubscribers />} />
         <Route path="afiliados" element={<Affiliates />} />
         <Route path="definicoes" element={<AdminSettings />} />
       </Route>

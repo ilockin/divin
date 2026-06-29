@@ -317,6 +317,29 @@ export const Settings = () => {
           <FormRow label="Google Search Console — código de verificação" hint='O valor do atributo "content" da meta tag que o Search Console pede.'>
             <input className={fieldClass} value={intForm.searchConsoleVerification} onChange={(e) => ui("searchConsoleVerification", e.target.value)} data-testid="set-search-console" />
           </FormRow>
+          <FormRow label="reCAPTCHA — Site Key" hint="Guardado para quando ligarmos a validação no back-end — por agora não é exibido nem valida nada nos formulários.">
+            <input className={fieldClass} value={intForm.recaptchaSiteKey} onChange={(e) => ui("recaptchaSiteKey", e.target.value)} data-testid="set-recaptcha-key" />
+          </FormRow>
+          <FormRow label="Cookiebot — Domain Group ID" hint="Insere o script oficial da Cookiebot no cabeçalho do site (sem segredos de servidor) — o banner de consentimento é o widget deles.">
+            <input className={fieldClass} value={intForm.cookiebotId} onChange={(e) => ui("cookiebotId", e.target.value)} data-testid="set-cookiebot-id" />
+          </FormRow>
+
+          <div className="border-t hairline pt-4 space-y-4">
+            <p className="font-body text-xs tracking-[0.18em] uppercase text-[var(--da-forest)]">Newsletter / E-mail marketing</p>
+            <p className="font-body text-xs text-[var(--da-muted)]">Guardado para quando ligarmos o envio real (fase de back-end) — por agora a subscrição fica guardada apenas neste navegador e não é enviada a nenhuma plataforma externa.</p>
+            <FormRow label="Mailchimp — URL do formulário embutido" hint="A URL de ação (action) do formulário embutido da tua Audience no Mailchimp.">
+              <input className={fieldClass} value={intForm.mailchimpFormUrl} onChange={(e) => ui("mailchimpFormUrl", e.target.value)} data-testid="set-mailchimp-url" />
+            </FormRow>
+            <FormRow label="ActiveCampaign — URL do formulário embutido" hint="A URL de ação do formulário embutido criado no ActiveCampaign.">
+              <input className={fieldClass} value={intForm.activeCampaignFormUrl} onChange={(e) => ui("activeCampaignFormUrl", e.target.value)} data-testid="set-activecampaign-url" />
+            </FormRow>
+            <FormRow label="LeadLovers — URL do Webhook" hint="O Webhook de captação da tua máquina de sequência no LeadLovers.">
+              <input className={fieldClass} value={intForm.leadloversWebhookUrl} onChange={(e) => ui("leadloversWebhookUrl", e.target.value)} data-testid="set-leadlovers-url" />
+            </FormRow>
+            <FormRow label="Webhook genérico" hint="Serve para RD Station, Zapier, Make ou qualquer outra ferramenta com um endpoint de webhook.">
+              <input className={fieldClass} value={intForm.genericWebhookUrl} onChange={(e) => ui("genericWebhookUrl", e.target.value)} data-testid="set-generic-webhook-url" />
+            </FormRow>
+          </div>
 
           <div className="border-t hairline pt-4 space-y-4">
             <p className="font-body text-xs tracking-[0.18em] uppercase text-[var(--da-forest)]">Código avançado</p>

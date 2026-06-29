@@ -4,9 +4,13 @@ import { loadArticles, saveArticles } from "../../lib/articles";
 import { initialInsumos, initialRecipes, initialProductionOrders, initialPurchases, initialShippingMethods, initialLanguages, initialShippingZones, initialDistrictRules, initialCategoryRules } from "../data/mockErp";
 import { initialCoupons } from "../data/mockMarketing";
 import { loadPages, savePages } from "../../lib/pages";
+import { loadPopups, savePopups } from "../../lib/popups";
+import { loadSubscribers, saveSubscribers } from "../../lib/newsletter";
 import { loadHomeContent, saveHomeContent } from "../../lib/homeContent";
 import { loadAboutContent, saveAboutContent } from "../../lib/aboutContent";
+import { loadFooterContent, saveFooterContent } from "../../lib/footerContent";
 import { loadLeads, saveLeads } from "../../lib/leads";
+import { loadReviews, saveReviews } from "../../lib/reviews";
 import { loadContactContent, saveContactContent } from "../../lib/contactContent";
 import { loadIntegrations, saveIntegrations } from "../../lib/integrations";
 import { loadBlogContent, saveBlogContent } from "../../lib/blogContent";
@@ -37,19 +41,27 @@ export const AdminProvider = ({ children }) => {
   const [districtRules, setDistrictRules] = useState(initialDistrictRules);
   const [categoryRules, setCategoryRules] = useState(initialCategoryRules);
   const [pages, setPages] = useState(loadPages);
+  const [popups, setPopups] = useState(loadPopups);
+  const [subscribers, setSubscribers] = useState(loadSubscribers);
   const [coupons, setCoupons] = useState(initialCoupons);
   const [homeContent, setHomeContent] = useState(loadHomeContent);
   const [aboutContent, setAboutContent] = useState(loadAboutContent);
+  const [footerContent, setFooterContent] = useState(loadFooterContent);
   const [leads, setLeads] = useState(loadLeads);
+  const [reviews, setReviews] = useState(loadReviews);
   const [contactContent, setContactContent] = useState(loadContactContent);
   const [integrations, setIntegrations] = useState(loadIntegrations);
   const [blogContent, setBlogContent] = useState(loadBlogContent);
   const [menuContent, setMenuContent] = useState(loadMenuContent);
 
   useEffect(() => { savePages(pages); }, [pages]);
+  useEffect(() => { savePopups(popups); }, [popups]);
+  useEffect(() => { saveSubscribers(subscribers); }, [subscribers]);
   useEffect(() => { saveHomeContent(homeContent); }, [homeContent]);
   useEffect(() => { saveAboutContent(aboutContent); }, [aboutContent]);
+  useEffect(() => { saveFooterContent(footerContent); }, [footerContent]);
   useEffect(() => { saveLeads(leads); }, [leads]);
+  useEffect(() => { saveReviews(reviews); }, [reviews]);
   useEffect(() => { saveContactContent(contactContent); }, [contactContent]);
   useEffect(() => { saveIntegrations(integrations); }, [integrations]);
   useEffect(() => { saveBlogContent(blogContent); }, [blogContent]);
@@ -91,10 +103,14 @@ export const AdminProvider = ({ children }) => {
     districtRules, setDistrictRules,
     categoryRules, setCategoryRules,
     pages, setPages,
+    popups, setPopups,
+    subscribers, setSubscribers,
     coupons, setCoupons,
     homeContent, setHomeContent,
     aboutContent, setAboutContent,
+    footerContent, setFooterContent,
     leads, setLeads,
+    reviews, setReviews,
     contactContent, setContactContent,
     integrations, setIntegrations,
     blogContent, setBlogContent,

@@ -6,6 +6,7 @@ import { useCart } from "../context/CartContext";
 import { formatEUR } from "../lib/format";
 import { ProductCard } from "../components/ProductCard";
 import { RitualBundle } from "../components/RitualBundle";
+import { ProductReviews } from "../components/ProductReviews";
 
 export const ProductDetail = () => {
   const { slug } = useParams();
@@ -128,6 +129,8 @@ export const ProductDetail = () => {
           </div>
         </section>
       )}
+
+      <ProductReviews productId={product.id} />
     </div>
   );
 };

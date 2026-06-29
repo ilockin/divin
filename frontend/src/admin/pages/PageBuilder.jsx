@@ -69,7 +69,7 @@ const SortableBlock = ({ block, products, selected, onSelect, onRemove, onDuplic
 
 // ---------- Campos de propriedades de um bloco (reutilizado para o bloco de topo
 // selecionado e, recursivamente, para o bloco dentro de cada coluna) ----------
-const BlockPropsFields = ({ block, onChangeProp, onSnapStart, onSnapEnd }) => {
+export const BlockPropsFields = ({ block, onChangeProp, onSnapStart, onSnapEnd }) => {
   const listCfg = BLOCK_LISTS[block.type];
   const listItems = listCfg ? (block.props[listCfg.prop] || []) : [];
   const setList = (items) => onChangeProp(listCfg.prop, items);

@@ -64,6 +64,17 @@ export const applyIntegrations = () => {
     document.head.appendChild(meta);
   }
 
+  if (cfg.cookiebotId) {
+    // Tem de ser o primeiro script do <head> para a Cookiebot funcionar corretamente.
+    const cookiebot = document.createElement("script");
+    cookiebot.id = "Cookiebot";
+    cookiebot.src = "https://consent.cookiebot.com/uc.js";
+    cookiebot.setAttribute("data-cbid", cfg.cookiebotId);
+    cookiebot.setAttribute("data-blockingmode", "auto");
+    cookiebot.type = "text/javascript";
+    document.head.insertBefore(cookiebot, document.head.firstChild);
+  }
+
   injectHtml(document.head, cfg.headerCode);
   injectHtml(document.body, cfg.bodyCode, true);
   injectHtml(document.body, cfg.footerCode);
