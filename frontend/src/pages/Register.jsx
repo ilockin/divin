@@ -1,11 +1,36 @@
-import React from "react";
+import React, { useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { useAuth } from "../context/AuthContext";
 
 export const Register = () => {
+  const firstRef = useRef();
+  const lastRef = useRef();
+  const emailRef = useRef();
+  const pwRef = useRef();
+  const [submitting, setSubmitting] = useState(false);
+  const { signUp } = useAuth();
   const navigate = useNavigate();
-  const submit = (e) => {
+
+  const submit = async (e) => {
     e.preventDefault();
+    const name = `${firstRef.current.value.trim()} ${lastRef.current.value.trim()}`.trim();
+    const email = emailRef.current.value.trim();
+    const password = pwRef.current.value;
+
+    setSubmitting(true);
+    const { error } = await signUp(email, password, name);
+    setSubmitting(false);
+
+    if (error) {
+      if (error.message?.toLowerCase().includes("already registered")) {
+        toast.error("E-mail já registado", { description: "Tenta iniciar sessão." });
+      } else {
+        toast.error("Erro ao criar conta", { description: error.message });
+      }
+      return;
+    }
+
     toast.success("Conta criada", { description: "Bem-vinda à DivinArte." });
     navigate("/conta");
   };
@@ -19,22 +44,24 @@ export const Register = () => {
         <div className="grid grid-cols-2 gap-3">
           <label className="block">
             <span className="font-body text-xs uppercase tracking-[0.18em] text-[var(--da-forest)]">Nome</span>
-            <input required data-testid="reg-first-name" className="mt-2 w-full bg-white border hairline rounded-lg px-4 py-3 font-body text-sm focus:outline-none focus:border-[var(--da-leaf)]" />
+            <input ref={firstRef} required data-testid="reg-first-name" className="mt-2 w-full bg-white border hairline rounded-lg px-4 py-3 font-body text-sm focus:outline-none focus:border-[var(--da-leaf)]" />
           </label>
           <label className="block">
             <span className="font-body text-xs uppercase tracking-[0.18em] text-[var(--da-forest)]">Apelido</span>
-            <input required data-testid="reg-last-name" className="mt-2 w-full bg-white border hairline rounded-lg px-4 py-3 font-body text-sm focus:outline-none focus:border-[var(--da-leaf)]" />
+            <input ref={lastRef} required data-testid="reg-last-name" className="mt-2 w-full bg-white border hairline rounded-lg px-4 py-3 font-body text-sm focus:outline-none focus:border-[var(--da-leaf)]" />
           </label>
         </div>
         <label className="block">
           <span className="font-body text-xs uppercase tracking-[0.18em] text-[var(--da-forest)]">E-mail</span>
-          <input type="email" required data-testid="reg-email" className="mt-2 w-full bg-white border hairline rounded-lg px-4 py-3 font-body text-sm focus:outline-none focus:border-[var(--da-leaf)]" />
+          <input ref={emailRef} type="email" required data-testid="reg-email" className="mt-2 w-full bg-white border hairline rounded-lg px-4 py-3 font-body text-sm focus:outline-none focus:border-[var(--da-leaf)]" />
         </label>
         <label className="block">
           <span className="font-body text-xs uppercase tracking-[0.18em] text-[var(--da-forest)]">Palavra-passe</span>
-          <input type="password" required minLength={6} data-testid="reg-password" className="mt-2 w-full bg-white border hairline rounded-lg px-4 py-3 font-body text-sm focus:outline-none focus:border-[var(--da-leaf)]" />
+          <input ref={pwRef} type="password" required minLength={6} data-testid="reg-password" className="mt-2 w-full bg-white border hairline rounded-lg px-4 py-3 font-body text-sm focus:outline-none focus:border-[var(--da-leaf)]" />
         </label>
-        <button type="submit" className="btn-da btn-da-primary w-full" data-testid="reg-submit">Criar conta</button>
+        <button type="submit" disabled={submitting} className="btn-da btn-da-primary w-full disabled:opacity-60" data-testid="reg-submit">
+          {submitting ? "A criar conta…" : "Criar conta"}
+        </button>
       </form>
 
       <p className="font-body text-sm text-[var(--da-muted)] text-center mt-6">

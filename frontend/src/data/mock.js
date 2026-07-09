@@ -295,20 +295,6 @@ export const testimonials = [
   },
 ];
 
-export const demoUser = {
-  name: "Ana Lopes",
-  email: "ana.lopes@example.pt",
-  phone: "+351 912 345 678",
-  addresses: [
-    { id: "a1", label: "Casa", line1: "Rua das Camélias, 12", city: "Porto", zip: "4100-100", country: "Portugal", default: true },
-    { id: "a2", label: "Trabalho", line1: "Av. da Liberdade, 250", city: "Lisboa", zip: "1250-096", country: "Portugal", default: false },
-  ],
-  orders: [
-    { id: "DA-2025-0312", date: "2025-11-02", total: 56.40, status: "Entregue", items: 3 },
-    { id: "DA-2025-0298", date: "2025-10-14", total: 24.00, status: "Entregue", items: 1 },
-    { id: "DA-2025-0271", date: "2025-09-21", total: 41.40, status: "Em trânsito", items: 2 },
-  ],
-};
 
 export const findProduct = (slug) => products.find((p) => p.slug === slug);
 export const findCategory = (slug) => categories.find((c) => c.slug === slug);

@@ -1,8 +1,7 @@
 import React from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { LogOut, User, Package, MapPin } from "lucide-react";
-import { demoUser } from "../data/mock";
-import { toast } from "sonner";
+import { useAuth } from "../context/AuthContext";
 
 const links = [
   { to: "/conta", label: "Visão geral", end: true, icon: User },
@@ -12,10 +11,19 @@ const links = [
 ];
 
 export const AccountLayout = () => {
+  const { profile, signOut } = useAuth();
   const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate("/");
+  };
+
   return (
     <div className="container-da py-12" data-testid="account-layout">
-      <p className="font-script text-[var(--da-leaf)] text-2xl">olá, {demoUser.name.split(" ")[0].toLowerCase()}</p>
+      <p className="font-script text-[var(--da-leaf)] text-2xl">
+        olá, {profile?.name?.split(" ")[0]?.toLowerCase() || "…"}
+      </p>
       <h1 className="text-3xl sm:text-4xl mt-1">A tua conta</h1>
 
       <div className="grid lg:grid-cols-[240px_1fr] gap-10 mt-10">
@@ -36,7 +44,7 @@ export const AccountLayout = () => {
             </NavLink>
           ))}
           <button
-            onClick={() => { toast("Sessão terminada"); navigate("/"); }}
+            onClick={handleLogout}
             data-testid="acc-logout"
             className="flex items-center gap-3 px-4 py-3 rounded-lg font-body text-sm text-[var(--da-muted)] hover:bg-[var(--da-cream-2)] w-full"
           >
@@ -52,19 +60,23 @@ export const AccountLayout = () => {
   );
 };
 
-export const AccountOverview = () => (
-  <div data-testid="account-overview">
-    <h2 className="text-2xl">Olá, {demoUser.name} 👋</h2>
-    <p className="font-body text-sm text-[var(--da-muted)] mt-2">
-      Aqui podes acompanhar as tuas encomendas, atualizar os teus dados e gerir as moradas de envio.
-    </p>
-    <div className="grid sm:grid-cols-3 gap-4 mt-8">
-      <Stat label="Encomendas" value={demoUser.orders.length} />
-      <Stat label="Moradas" value={demoUser.addresses.length} />
-      <Stat label="Pontos de cuidado" value="120" />
+export const AccountOverview = () => {
+  const { profile } = useAuth();
+
+  return (
+    <div data-testid="account-overview">
+      <h2 className="text-2xl">Olá, {profile?.name || "…"} 👋</h2>
+      <p className="font-body text-sm text-[var(--da-muted)] mt-2">
+        Aqui podes acompanhar as tuas encomendas, atualizar os teus dados e gerir as moradas de envio.
+      </p>
+      <div className="grid sm:grid-cols-3 gap-4 mt-8">
+        <Stat label="Encomendas" value="0" />
+        <Stat label="Moradas" value="—" />
+        <Stat label="Pontos de cuidado" value="0" />
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 const Stat = ({ label, value }) => (
   <div className="bg-[var(--da-cream-2)]/60 rounded-xl p-5">

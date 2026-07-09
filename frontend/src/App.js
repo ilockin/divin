@@ -2,6 +2,8 @@ import React from "react";
 import "@/App.css";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { CartProvider } from "@/context/CartContext";
+import { AuthProvider } from "@/context/AuthContext";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { Layout } from "@/components/Layout";
 import { Home } from "@/pages/Home";
 import { Shop } from "@/pages/Shop";
@@ -59,31 +61,33 @@ import { BlogVisualEditor } from "@/admin/pages/BlogVisualEditor";
 import { MenuVisualEditor } from "@/admin/pages/MenuVisualEditor";
 
 const Storefront = () => (
-  <CartProvider>
-    <Layout>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/loja" element={<Shop />} />
-        <Route path="/produto/:slug" element={<ProductDetail />} />
-        <Route path="/carrinho" element={<CartPage />} />
-        <Route path="/checkout" element={<Checkout />} />
-        <Route path="/checkout/sucesso" element={<OrderSuccess />} />
-        <Route path="/conta/login" element={<Login />} />
-        <Route path="/conta/registar" element={<Register />} />
-        <Route path="/conta" element={<AccountLayout />}>
-          <Route index element={<AccountOverview />} />
-          <Route path="encomendas" element={<AccountOrders />} />
-          <Route path="perfil" element={<Profile />} />
-          <Route path="moradas" element={<Addresses />} />
-        </Route>
-        <Route path="/blog" element={<Blog />} />
-        <Route path="/blog/:slug" element={<BlogPost />} />
-        <Route path="/sobre" element={<About />} />
-        <Route path="/contacto" element={<Contact />} />
-        <Route path="/:slug" element={<DynamicPage />} />
-      </Routes>
-    </Layout>
-  </CartProvider>
+  <AuthProvider>
+    <CartProvider>
+      <Layout>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/loja" element={<Shop />} />
+          <Route path="/produto/:slug" element={<ProductDetail />} />
+          <Route path="/carrinho" element={<CartPage />} />
+          <Route path="/checkout" element={<Checkout />} />
+          <Route path="/checkout/sucesso" element={<OrderSuccess />} />
+          <Route path="/conta/login" element={<Login />} />
+          <Route path="/conta/registar" element={<Register />} />
+          <Route path="/conta" element={<ProtectedRoute><AccountLayout /></ProtectedRoute>}>
+            <Route index element={<AccountOverview />} />
+            <Route path="encomendas" element={<AccountOrders />} />
+            <Route path="perfil" element={<Profile />} />
+            <Route path="moradas" element={<Addresses />} />
+          </Route>
+          <Route path="/blog" element={<Blog />} />
+          <Route path="/blog/:slug" element={<BlogPost />} />
+          <Route path="/sobre" element={<About />} />
+          <Route path="/contacto" element={<Contact />} />
+          <Route path="/:slug" element={<DynamicPage />} />
+        </Routes>
+      </Layout>
+    </CartProvider>
+  </AuthProvider>
 );
 
 const Admin = () => (
