@@ -1,17 +1,87 @@
 import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "../context/AuthContext";
 import { supabase } from "../lib/supabaseClient";
 import { loadAddresses, addAddress, removeAddress, setDefaultAddress } from "../lib/addresses";
+import { loadOrders, getStatusInfo } from "../lib/orders";
+import { formatEUR } from "../lib/format";
 
-export const Orders = () => (
-  <div data-testid="orders-page">
-    <h2 className="text-2xl mb-6">Os meus pedidos</h2>
-    <p className="font-body text-sm text-[var(--da-muted)]">
-      Ainda não tens encomendas. As tuas compras vão aparecer aqui assim que finalizares o checkout.
-    </p>
-  </div>
-);
+export const Orders = () => {
+  const { user } = useAuth();
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user) return;
+    loadOrders(user.id)
+      .then(setOrders)
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [user]);
+
+  if (loading) return (
+    <div data-testid="orders-page">
+      <h2 className="text-2xl mb-6">Os meus pedidos</h2>
+      <p className="font-body text-sm text-[var(--da-muted)]">A carregar…</p>
+    </div>
+  );
+
+  return (
+    <div data-testid="orders-page">
+      <h2 className="text-2xl mb-6">Os meus pedidos</h2>
+      {orders.length === 0 ? (
+        <div className="py-12 border hairline rounded-xl text-center">
+          <p className="font-body text-sm text-[var(--da-muted)]">Ainda não tens encomendas.</p>
+          <Link to="/loja" className="btn-da btn-da-primary mt-4 inline-block">Ir à loja</Link>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {orders.map((o) => {
+            const { label, color } = getStatusInfo(o.status);
+            return (
+              <div key={o.id} className="border hairline rounded-xl p-5 bg-white" data-testid={`order-${o.order_number}`}>
+                <div className="flex items-center justify-between flex-wrap gap-3">
+                  <div>
+                    <p className="font-serif-display tracking-[0.1em] text-[var(--da-forest)]">{o.order_number}</p>
+                    <p className="font-body text-xs text-[var(--da-muted)] mt-0.5">
+                      {new Date(o.created_at).toLocaleDateString("pt-PT", { day: "2-digit", month: "long", year: "numeric" })}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <span
+                      className="text-[10px] tracking-[0.18em] uppercase px-3 py-1 rounded-full font-semibold"
+                      style={{ backgroundColor: `${color}22`, color }}
+                    >
+                      {label}
+                    </span>
+                    <span className="font-body text-sm font-semibold">{formatEUR(o.total)}</span>
+                  </div>
+                </div>
+                {o.order_items?.length > 0 && (
+                  <ul className="mt-4 space-y-2 border-t hairline pt-4">
+                    {o.order_items.map((item) => (
+                      <li key={item.id} className="flex items-center gap-3">
+                        {item.image_url && (
+                          <img src={item.image_url} alt="" className="w-10 h-12 object-cover rounded bg-[var(--da-cream-2)]" />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-body text-xs truncate">{item.name}</p>
+                          <p className="font-body text-[11px] text-[var(--da-muted)]">x{item.qty} · {item.size || "—"}</p>
+                        </div>
+                        <span className="font-body text-xs font-semibold">{formatEUR(item.price * item.qty)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+};
 
 export const Profile = () => {
   const { user, profile, refreshProfile } = useAuth();

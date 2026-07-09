@@ -1,0 +1,247 @@
+-- Migration_2 — Catálogo: categorias + produtos
+-- Correr no Supabase SQL Editor
+
+-- ── CATEGORIAS ──────────────────────────────────────────────────────────────
+create table public.categories (
+  slug       text primary key,
+  name       text not null,
+  description text,
+  image_url  text,
+  parent_slug text references public.categories(slug),
+  sort_order int not null default 0,
+  active     boolean not null default true
+);
+
+alter table public.categories enable row level security;
+create policy "Categorias públicas" on public.categories for select using (active = true);
+
+-- seed categorias principais
+insert into public.categories (slug, name, description, image_url, sort_order) values
+('faciais',   'Faciais',                    'Rituais de cuidado para o rosto, com fórmulas suaves e botânicas.',       'https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&w=1400&q=70', 1),
+('corporais', 'Corporais',                  'Manteigas, esfoliantes e óleos que nutrem profundamente.',                'https://images.unsplash.com/photo-1570194065650-d99fb4bedf0a?auto=format&fit=crop&w=1400&q=70', 2),
+('capilares', 'Capilares',                  'Cuidado capilar artesanal de raiz natural.',                              'https://images.unsplash.com/photo-1631730486572-226d1f595b68?auto=format&fit=crop&w=1400&q=70', 3),
+('bem-estar', 'Bem-estar / Aromaterapia',   'Sprays, bálsamos e roll-ons para momentos de pausa e cuidado.',          'https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&w=1400&q=70', 4);
+
+-- seed subcategorias
+insert into public.categories (slug, name, parent_slug, sort_order) values
+('cremes-faciais', 'Cremes faciais',      'faciais',   1),
+('seruns',         'Séruns',              'faciais',   2),
+('aguas-florais',  'Águas florais',       'faciais',   3),
+('manteigas',      'Manteigas corporais', 'corporais', 1),
+('esfoliantes',    'Esfoliantes',         'corporais', 2),
+('oleos',          'Óleos corporais',     'corporais', 3),
+('champos',        'Champôs sólidos',     'capilares', 1),
+('mascaras',       'Máscaras',            'capilares', 2),
+('sprays',         'Sprays aromáticos',   'bem-estar', 1),
+('balsamos',       'Bálsamos',            'bem-estar', 2),
+('roll-ons',       'Roll-ons',            'bem-estar', 3);
+
+-- ── PRODUTOS ─────────────────────────────────────────────────────────────────
+create table public.products (
+  id               uuid primary key default gen_random_uuid(),
+  slug             text not null unique,
+  name             text not null,
+  short            text,
+  description      text,
+  price            numeric(10,2) not null,
+  compare_price    numeric(10,2),
+  category_slug    text references public.categories(slug),
+  subcategory_slug text references public.categories(slug),
+  images           text[]  not null default '{}',
+  benefits         text[]  not null default '{}',
+  skin_types       text[]  not null default '{todos}',
+  purposes         text[]  not null default '{}',
+  usage_notes      text,
+  size             text,
+  vegan            boolean not null default false,
+  bio              boolean not null default false,
+  is_new           boolean not null default false,
+  featured         boolean not null default false,
+  active           boolean not null default true,
+  stock_qty        int     not null default 0,
+  created_at       timestamptz not null default now()
+);
+
+alter table public.products enable row level security;
+create policy "Produtos públicos" on public.products for select using (active = true);
+
+-- ── SEED PRODUTOS (16) ───────────────────────────────────────────────────────
+insert into public.products
+  (slug, name, short, description, price, category_slug, subcategory_slug, images, benefits, skin_types, purposes, usage_notes, size, vegan, bio, is_new, stock_qty)
+values
+
+('spray-sono-ansiedade',
+ 'Spray Sono e Ansiedade',
+ 'Auxilia no relaxamento e numa noite mais serena.',
+ 'Uma fórmula floral pensada para acompanhar momentos de pausa, com lavanda dos Alpes e camomila romana. Auxilia no relaxamento e prepara o corpo e a mente para o descanso.',
+ 18.90, 'bem-estar', 'sprays',
+ array['https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&w=1200&q=70','https://images.unsplash.com/photo-1571781926291-c477ebfd024b?auto=format&fit=crop&w=1200&q=70','https://images.unsplash.com/photo-1556228852-80b6e5eeff06?auto=format&fit=crop&w=1200&q=70'],
+ array['Promove uma sensação de calma','Notas florais suaves de lavanda e camomila','Ideal para a almofada e ambiente'],
+ array['todos'], array['relaxamento'],
+ 'Borrifar sobre a almofada ou no ar do quarto, 15 minutos antes de deitar. Agitar antes de usar.',
+ '100ml', true, true, true, 50),
+
+('spray-concentracao-mindfulness',
+ 'Spray Concentração / Mindfulness',
+ 'Frescura herbal que acompanha momentos de foco.',
+ 'Uma composição herbal viva, com hortelã-pimenta, alecrim e eucalipto, criada para acompanhar momentos de foco e respiração consciente.',
+ 18.90, 'bem-estar', 'sprays',
+ array['https://images.unsplash.com/photo-1571781926291-c477ebfd024b?auto=format&fit=crop&w=1200&q=70','https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&w=1200&q=70'],
+ array['Notas de hortelã, alecrim e eucalipto','Promove sensação de clareza','Acompanha rituais de respiração'],
+ array['todos'], array['foco'],
+ 'Borrifar no ar antes de momentos de estudo, meditação ou trabalho focado.',
+ '100ml', true, true, true, 40),
+
+('balsamo-analgesico',
+ 'Bálsamo Analgésico',
+ 'Sensação de alívio e conforto muscular.',
+ 'Um bálsamo denso, com cera de abelha pura e óleos essenciais de hortelã, gaultéria e cânfora, para momentos de conforto após o esforço.',
+ 22.50, 'bem-estar', 'balsamos',
+ array['https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&w=1200&q=70','https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&w=1200&q=70'],
+ array['Cera de abelha e óleos botânicos','Sensação de calor reconfortante','Para usar após esforço físico'],
+ array['todos'], array['conforto'],
+ 'Aplicar com massagem circular nas zonas pretendidas. Evitar contacto com olhos e mucosas.',
+ '50ml', false, true, false, 30),
+
+('manteiga-corporal-vegana',
+ 'Manteiga Corporal Vegana',
+ 'Hidrata profundamente, sem aroma artificial.',
+ 'Uma manteiga rica em karité bio e óleo de murumuru, que envolve a pele numa hidratação profunda e prolongada.',
+ 24.00, 'corporais', 'manteigas',
+ array['https://images.unsplash.com/photo-1570194065650-d99fb4bedf0a?auto=format&fit=crop&w=1200&q=70','https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&w=1200&q=70'],
+ array['Manteiga de karité e murumuru','Textura aveludada','Hidratação prolongada'],
+ array['seca','sensivel'], array['hidratacao'],
+ 'Aplicar diariamente sobre a pele seca ou ligeiramente húmida, com massagem suave.',
+ '100ml', true, true, false, 45),
+
+('champo-solido-fortalecedor',
+ 'Champô Sólido Fortalecedor',
+ 'Cuida do couro cabeludo e dá corpo ao cabelo.',
+ 'Um champô sólido artesanal com argilas naturais e óleos essenciais de bergamota e laranja-doce.',
+ 15.00, 'capilares', 'champos',
+ array['https://images.unsplash.com/photo-1631730486572-226d1f595b68?auto=format&fit=crop&w=1200&q=70','https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&w=1200&q=70'],
+ array['Sem sulfatos agressivos','Argila branca e rhassoul','Aroma fresco de citrinos'],
+ array['todos'], array['fortalecimento'],
+ 'Passar o sabonete diretamente no cabelo molhado e massajar com as mãos. Enxaguar bem.',
+ '70g', true, true, false, 60),
+
+('creme-facial-calming',
+ 'Creme Facial Calmante',
+ 'Conforto imediato para peles reativas.',
+ 'Uma fórmula calmante com calêndula bio e aveia coloidal, formulada para devolver conforto às peles mais sensíveis.',
+ 29.90, 'faciais', 'cremes-faciais',
+ array['https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&w=1200&q=70','https://images.unsplash.com/photo-1570194065650-d99fb4bedf0a?auto=format&fit=crop&w=1200&q=70'],
+ array['Extrato de calêndula e aveia coloidal','Textura leve e absorção rápida','Reduz a sensação de pele tensa'],
+ array['sensivel','seca'], array['calmante'],
+ 'Aplicar de manhã e à noite sobre o rosto e pescoço limpos, com toques suaves.',
+ '50ml', true, true, true, 35),
+
+('serum-facial-revigorante',
+ 'Sérum Facial Revigorante',
+ 'Luminosidade e viço, dia após dia.',
+ 'Um sérum que combina vitamina C e rosa-mosqueta para promover uma pele mais luminosa e uniforme.',
+ 34.50, 'faciais', 'seruns',
+ array['https://images.unsplash.com/photo-1571781926291-c477ebfd024b?auto=format&fit=crop&w=1200&q=70','https://images.unsplash.com/photo-1556228852-80b6e5eeff06?auto=format&fit=crop&w=1200&q=70'],
+ array['Vitamina C estabilizada','Óleo de rosa-mosqueta','Sensação leve e sedosa'],
+ array['todos'], array['luminosidade'],
+ 'Aplicar 3-4 gotas de manhã, antes do creme hidratante. Evitar contorno dos olhos.',
+ '30ml', true, false, false, 25),
+
+('agua-floral-rosa',
+ 'Água Floral de Rosa',
+ 'Toque suave de frescura e equilíbrio.',
+ 'Um hidrolato puro de rosa damascena, obtido por destilação a vapor — um clássico botânico.',
+ 16.00, 'faciais', 'aguas-florais',
+ array['https://images.unsplash.com/photo-1556228852-80b6e5eeff06?auto=format&fit=crop&w=1200&q=70','https://images.unsplash.com/photo-1570194065650-d99fb4bedf0a?auto=format&fit=crop&w=1200&q=70'],
+ array['100% hidrolato de rosa damascena','Tonifica e refresca','Pode ser usada como bruma'],
+ array['todos'], array['tonificante'],
+ 'Borrifar no rosto após a limpeza ou ao longo do dia para uma sensação de frescura.',
+ '150ml', true, true, false, 55),
+
+('oleo-corporal-flora-cedro',
+ 'Óleo Corporal Flora & Cedro',
+ 'Pele nutrida, com toque seco e aroma quente.',
+ 'Um óleo corporal multi-uso, com aroma envolvente de cedro e baunilha-bourbon.',
+ 26.50, 'corporais', 'oleos',
+ array['https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&w=1200&q=70','https://images.unsplash.com/photo-1570194065650-d99fb4bedf0a?auto=format&fit=crop&w=1200&q=70'],
+ array['Óleos de jojoba, amêndoa e abacate','Aroma de cedro e baunilha','Toque seco e elegante'],
+ array['todos'], array['nutricao'],
+ 'Aplicar com massagem suave após o banho, com a pele ligeiramente húmida.',
+ '100ml', true, false, false, 40),
+
+('esfoliante-corporal-cafe',
+ 'Esfoliante Corporal de Café',
+ 'Pele macia e sentidos despertos.',
+ 'Um esfoliante artesanal com café arábica, açúcar mascavado e óleo de coco para uma pele macia e renovada.',
+ 19.00, 'corporais', 'esfoliantes',
+ array['https://images.unsplash.com/photo-1570194065650-d99fb4bedf0a?auto=format&fit=crop&w=1200&q=70','https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&w=1200&q=70'],
+ array['Café arábica moído','Óleo de coco e açúcar mascavado','Promove pele renovada'],
+ array['todos'], array['renovacao'],
+ 'Aplicar com massagem circular sobre a pele húmida. Enxaguar e secar.',
+ '200g', true, false, false, 38),
+
+('mascara-capilar-argan',
+ 'Máscara Capilar Argan',
+ 'Reparação intensa para cabelos secos.',
+ 'Uma máscara rica em argan e cacau, criada para devolver brilho a cabelos secos ou trabalhados.',
+ 23.00, 'capilares', 'mascaras',
+ array['https://images.unsplash.com/photo-1631730486572-226d1f595b68?auto=format&fit=crop&w=1200&q=70','https://images.unsplash.com/photo-1571781926291-c477ebfd024b?auto=format&fit=crop&w=1200&q=70'],
+ array['Óleo de argan puro','Manteiga de cacau','Devolve brilho e maciez'],
+ array['todos'], array['reparacao'],
+ 'Aplicar nos comprimentos e pontas após a lavagem. Deixar atuar 5-10 minutos e enxaguar.',
+ '150ml', true, false, false, 30),
+
+('roll-on-respiracao',
+ 'Roll-on Respiração',
+ 'Pequeno gesto, grande pausa.',
+ 'Um pequeno roll-on com base em jojoba e óleos essenciais de eucalipto e menta, para acompanhar o teu dia.',
+ 12.00, 'bem-estar', 'roll-ons',
+ array['https://images.unsplash.com/photo-1556228852-80b6e5eeff06?auto=format&fit=crop&w=1200&q=70','https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&w=1200&q=70'],
+ array['Eucalipto e menta','Formato bolso','Para momentos de pausa'],
+ array['todos'], array['respiracao'],
+ 'Aplicar nos pulsos e nas têmporas e respirar fundo durante alguns segundos.',
+ '10ml', true, true, false, 80),
+
+('creme-facial-noite',
+ 'Creme Facial de Noite',
+ 'Repouso e reconforto enquanto dormes.',
+ 'Uma fórmula rica de noite com cupuaçu e ácido hialurónico vegetal, para uma pele nutrida ao acordar.',
+ 32.00, 'faciais', 'cremes-faciais',
+ array['https://images.unsplash.com/photo-1570194065650-d99fb4bedf0a?auto=format&fit=crop&w=1200&q=70','https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&w=1200&q=70'],
+ array['Manteiga de cupuaçu','Ácido hialurónico vegetal','Pele nutrida ao acordar'],
+ array['seca'], array['nutricao'],
+ 'Aplicar à noite, sobre o rosto limpo, com toques suaves.',
+ '50ml', true, true, false, 28),
+
+('balsamo-labial-mel',
+ 'Bálsamo Labial Mel',
+ 'Conforto e brilho subtil.',
+ 'Um bálsamo simples e nutritivo, com mel de produtor local e cera de abelha.',
+ 8.50, 'corporais', 'manteigas',
+ array['https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&w=1200&q=70','https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&w=1200&q=70'],
+ array['Mel de produtor local','Cera de abelha','Brilho suave'],
+ array['todos'], array['hidratacao'],
+ 'Aplicar nos lábios sempre que sentir necessidade.',
+ '15ml', false, true, false, 100),
+
+('spray-ambiente-cedro-laranja',
+ 'Spray Ambiente Cedro & Laranja',
+ 'Aroma quente que envolve a casa.',
+ 'Um spray ambiente quente, com cedro do Atlas e laranja-doce, para envolver a casa numa pausa serena.',
+ 21.00, 'bem-estar', 'sprays',
+ array['https://images.unsplash.com/photo-1571781926291-c477ebfd024b?auto=format&fit=crop&w=1200&q=70','https://images.unsplash.com/photo-1556228852-80b6e5eeff06?auto=format&fit=crop&w=1200&q=70'],
+ array['Cedro do Atlas e laranja-doce','Sem álcool sintético','Para sala, quarto e têxteis'],
+ array['todos'], array['ambiente'],
+ 'Borrifar no ar ou sobre os têxteis a uma distância de 30 cm.',
+ '100ml', true, true, false, 45),
+
+('champo-liquido-suave',
+ 'Champô Líquido Suave',
+ 'Limpeza delicada para uso frequente.',
+ 'Um champô líquido suave, formulado com aloé vera e camomila para limpezas frequentes e delicadas.',
+ 17.50, 'capilares', 'champos',
+ array['https://images.unsplash.com/photo-1631730486572-226d1f595b68?auto=format&fit=crop&w=1200&q=70','https://images.unsplash.com/photo-1570194065650-d99fb4bedf0a?auto=format&fit=crop&w=1200&q=70'],
+ array['Tensioativos suaves','Aloé vera e camomila','Para couro cabeludo sensível'],
+ array['sensivel'], array['limpeza'],
+ 'Aplicar no cabelo molhado, massajar e enxaguar. Repetir se necessário.',
+ '250ml', true, true, false, 50);

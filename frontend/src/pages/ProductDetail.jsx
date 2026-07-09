@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, Link, Navigate } from "react-router-dom";
 import { Leaf, Heart, BadgeCheck, Truck, Minus, Plus } from "lucide-react";
-import { findProduct, products } from "../data/mock";
+import { loadProduct, loadProducts } from "../lib/products";
 import { useCart } from "../context/CartContext";
 import { formatEUR } from "../lib/format";
 import { ProductCard } from "../components/ProductCard";
@@ -10,17 +10,35 @@ import { ProductReviews } from "../components/ProductReviews";
 
 export const ProductDetail = () => {
   const { slug } = useParams();
-  const product = findProduct(slug);
   const { addItem } = useCart();
+  const [product, setProduct] = useState(null);
+  const [related, setRelated] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
   const [activeImg, setActiveImg] = useState(0);
   const [qty, setQty] = useState(1);
-  const [variant, setVariant] = useState(product?.size);
+  const [variant, setVariant] = useState(null);
 
-  if (!product) return <Navigate to="/loja" replace />;
+  useEffect(() => {
+    setLoading(true);
+    setNotFound(false);
+    setActiveImg(0);
+    setQty(1);
+    loadProduct(slug)
+      .then((p) => {
+        setProduct(p);
+        setVariant(p.size);
+        return loadProducts({ category: p.category });
+      })
+      .then((all) => setRelated(all.filter((p) => p.slug !== slug).slice(0, 4)))
+      .catch(() => setNotFound(true))
+      .finally(() => setLoading(false));
+  }, [slug]);
 
-  const related = products
-    .filter((p) => p.category === product.category && p.id !== product.id)
-    .slice(0, 4);
+  if (loading) return (
+    <div className="container-da py-32 text-center font-body text-sm text-[var(--da-muted)]">A carregar produto…</div>
+  );
+  if (notFound || !product) return <Navigate to="/loja" replace />;
 
   return (
     <div className="container-da py-12" data-testid="product-detail-page">

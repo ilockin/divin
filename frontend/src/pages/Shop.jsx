@@ -1,7 +1,7 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { ProductCard } from "../components/ProductCard";
-import { products, categories } from "../data/mock";
+import { loadProducts, loadCategories } from "../lib/products";
 import { ChevronDown } from "lucide-react";
 
 const SKIN = [
@@ -36,11 +36,22 @@ export const Shop = () => {
   const [purpose, setPurpose] = useState("");
   const [veganOnly, setVeganOnly] = useState(false);
   const [page, setPage] = useState(1);
+  const [allProducts, setAllProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [loadingCatalog, setLoadingCatalog] = useState(true);
+
+  useEffect(() => {
+    setLoadingCatalog(true);
+    Promise.all([loadProducts(), loadCategories()])
+      .then(([prods, cats]) => { setAllProducts(prods); setCategories(cats); })
+      .catch(() => {})
+      .finally(() => setLoadingCatalog(false));
+  }, []);
 
   useEffect(() => { setPage(1); }, [categoryParam, subcatParam, queryParam, skin, purpose, veganOnly, sort]);
 
   const filtered = useMemo(() => {
-    let list = [...products];
+    let list = [...allProducts];
     if (categoryParam) list = list.filter((p) => p.category === categoryParam);
     if (subcatParam) list = list.filter((p) => p.sub === subcatParam);
     if (queryParam) {
@@ -57,7 +68,7 @@ export const Shop = () => {
     else if (sort === "preco-desc") list.sort((a, b) => b.price - a.price);
     else if (sort === "novidades") list.sort((a, b) => (b.isNew ? 1 : 0) - (a.isNew ? 1 : 0));
     return list;
-  }, [categoryParam, subcatParam, queryParam, skin, purpose, veganOnly, sort]);
+  }, [allProducts, categoryParam, subcatParam, queryParam, skin, purpose, veganOnly, sort]);
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -74,6 +85,10 @@ export const Shop = () => {
     next.set("categoria", cat); next.set("sub", sub);
     setParams(next, { replace: true });
   };
+
+  if (loadingCatalog) return (
+    <div className="container-da py-32 text-center font-body text-sm text-[var(--da-muted)]">A carregar catálogo…</div>
+  );
 
   return (
     <div className="container-da py-12" data-testid="shop-page">

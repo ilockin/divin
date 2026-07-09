@@ -3,7 +3,9 @@ import { useNavigate, Link, Navigate } from "react-router-dom";
 import { Check, CreditCard, Smartphone, Wallet, Building2 } from "lucide-react";
 import { toast } from "sonner";
 import { useCart } from "../context/CartContext";
+import { useAuth } from "../context/AuthContext";
 import { formatEUR } from "../lib/format";
+import { createOrder } from "../lib/orders";
 import { initialCoupons } from "../admin/data/mockMarketing";
 import { validateCoupon, couponToPromo } from "../lib/coupons";
 
@@ -14,12 +16,15 @@ export const Checkout = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [submitted, setSubmitted] = useState(false);
+  const [finishing, setFinishing] = useState(false);
   const [couponCode, setCouponCode] = useState("");
   const [form, setForm] = useState({
     email: "", firstName: "", lastName: "", phone: "",
     address: "", city: "", zip: "", country: "Portugal",
     shipping: "standard", payment: "card",
   });
+
+  const { user } = useAuth();
 
   if (items.length === 0 && !submitted) return <Navigate to="/carrinho" replace />;
 
@@ -45,13 +50,29 @@ export const Checkout = () => {
   const next = () => setStep((s) => Math.min(STEPS.length - 1, s + 1));
   const prev = () => setStep((s) => Math.max(0, s - 1));
 
-  const finish = () => {
-    const orderId = "DA-" + new Date().getFullYear() + "-" + Math.floor(1000 + Math.random() * 9000);
-    const order = { id: orderId, items, total, form };
-    sessionStorage.setItem("divinarte-last-order", JSON.stringify(order));
-    setSubmitted(true);
-    clear();
-    navigate("/checkout/sucesso?order=" + orderId, { replace: true });
+  const finish = async () => {
+    if (!user) {
+      toast.error("Inicia sessão para finalizar a compra", { description: "Serás redireccionado para o login." });
+      navigate("/conta/login?redirect=/checkout");
+      return;
+    }
+    setFinishing(true);
+    try {
+      const order = await createOrder({
+        items,
+        form: { ...form, name: `${form.firstName} ${form.lastName}`.trim() },
+        shippingCost: shippingPrice,
+        discountAmount: totals.discount,
+        userId: user?.id || null,
+      });
+      setSubmitted(true);
+      clear();
+      navigate("/checkout/sucesso?order=" + order.order_number, { replace: true });
+    } catch (err) {
+      toast.error("Erro ao registar encomenda", { description: err.message });
+    } finally {
+      setFinishing(false);
+    }
   };
 
   return (
@@ -134,7 +155,7 @@ export const Checkout = () => {
             {step < STEPS.length - 1 ? (
               <button type="button" onClick={next} className="btn-da btn-da-primary" data-testid="step-next">Continuar</button>
             ) : (
-              <button type="button" onClick={finish} className="btn-da btn-da-primary" data-testid="checkout-finish">Finalizar compra</button>
+              <button type="button" onClick={finish} disabled={finishing} className="btn-da btn-da-primary disabled:opacity-60" data-testid="checkout-finish">{finishing ? "A registar…" : "Finalizar compra"}</button>
             )}
           </div>
         </div>
