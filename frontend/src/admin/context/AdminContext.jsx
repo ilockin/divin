@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { ROLES, adminUsers, adminProducts, adminOrders, adminAttributes, stockMovements as initialMovements, storeSettings as initialSettings } from "../data/mockAdmin";
+import { useAuth } from "../../context/AuthContext";
 import { loadArticles, saveArticles } from "../../lib/articles";
 import { initialInsumos, initialRecipes, initialProductionOrders, initialPurchases, initialShippingMethods, initialLanguages, initialShippingZones, initialDistrictRules, initialCategoryRules } from "../data/mockErp";
 import { initialCoupons } from "../data/mockMarketing";
@@ -18,10 +19,10 @@ import { loadMenuContent, saveMenuContent } from "../../lib/menuContent";
 
 const AdminContext = createContext(null);
 
-const STORAGE_ROLE = "divinarte-admin-role-v1";
-
 export const AdminProvider = ({ children }) => {
-  const [role, setRole] = useState(() => localStorage.getItem(STORAGE_ROLE) || "super_admin");
+  const { user: authUser, profile: authProfile } = useAuth();
+  const realRole = authProfile?.role || "admin";
+  const [viewAsRole, setViewAsRole] = useState(null);
   const [users, setUsers] = useState(adminUsers);
   const [productsList, setProductsList] = useState(adminProducts);
   const [orders, setOrders] = useState(adminOrders);
@@ -68,24 +69,23 @@ export const AdminProvider = ({ children }) => {
   useEffect(() => { saveArticles(articles); }, [articles]);
   useEffect(() => { saveMenuContent(menuContent); }, [menuContent]);
 
+  const role = (realRole === "super_admin" && viewAsRole) ? viewAsRole : realRole;
+
   const switchRole = (id) => {
-    setRole(id);
-    localStorage.setItem(STORAGE_ROLE, id);
+    if (realRole !== "super_admin") return;
+    setViewAsRole(id === realRole ? null : id);
   };
 
-  const me = useMemo(() => {
-    const asUser = users.find((u) => u.role === role);
-    return {
-      name: asUser?.name || "Ana Lopes",
-      email: asUser?.email || "ana.lopes@divinarte.pt",
-      affiliateCode: asUser?.affiliateCode,
-      role,
-      roleLabel: ROLES.find((r) => r.id === role)?.label || "—",
-    };
-  }, [role, users]);
+  const me = useMemo(() => ({
+    name: authProfile?.name || authUser?.email?.split("@")[0] || "Admin",
+    email: authUser?.email || "—",
+    role,
+    roleLabel: ROLES.find((r) => r.id === role)?.label || "—",
+    affiliateCode: role === "afiliado" ? "DA-AFIL-001" : undefined,
+  }), [authProfile, authUser, role]);
 
   const value = {
-    me, role, switchRole,
+    me, role, switchRole, canSwitchRole: realRole === "super_admin",
     users, setUsers,
     products: productsList, setProducts: setProductsList,
     orders, setOrders,

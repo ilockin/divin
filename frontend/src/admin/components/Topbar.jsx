@@ -1,12 +1,14 @@
 import React, { useState } from "react";
 import { Search, Bell, ChevronDown, LogOut, ExternalLink } from "lucide-react";
 import { useAdmin } from "../context/AdminContext";
+import { useAuth } from "../../context/AuthContext";
 import { ROLES, adminNotifications } from "../data/mockAdmin";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 export const Topbar = () => {
-  const { me, role, switchRole } = useAdmin();
+  const { me, role, switchRole, canSwitchRole } = useAdmin();
+  const { signOut } = useAuth();
   const [showRoles, setShowRoles] = useState(false);
   const [showNotif, setShowNotif] = useState(false);
   const [showUser, setShowUser] = useState(false);
@@ -36,8 +38,8 @@ export const Topbar = () => {
       </form>
 
       <div className="flex items-center gap-2 ml-auto">
-        {/* role switcher */}
-        <div className="relative">
+        {/* role switcher — só para super_admin */}
+        {canSwitchRole && <div className="relative">
           <button
             onClick={() => { setShowRoles(!showRoles); setShowNotif(false); setShowUser(false); }}
             data-testid="role-switcher-btn"
@@ -64,7 +66,7 @@ export const Topbar = () => {
               ))}
             </div>
           )}
-        </div>
+        </div>}
 
         {/* notifications */}
         <div className="relative">
@@ -128,7 +130,11 @@ export const Topbar = () => {
               <button onClick={() => { navigate("/"); }} className="w-full text-left px-3 py-2 rounded-lg font-body text-sm hover:bg-[var(--da-cream-2)]/60 flex items-center gap-2">
                 <ExternalLink size={14} /> Ver loja pública
               </button>
-              <button onClick={() => { toast("Sessão terminada"); navigate("/"); }} data-testid="topbar-logout" className="w-full text-left px-3 py-2 rounded-lg font-body text-sm hover:bg-[var(--da-cream-2)]/60 flex items-center gap-2 text-red-700">
+              <button
+                onClick={async () => { await signOut(); navigate("/"); }}
+                data-testid="topbar-logout"
+                className="w-full text-left px-3 py-2 rounded-lg font-body text-sm hover:bg-[var(--da-cream-2)]/60 flex items-center gap-2 text-red-700"
+              >
                 <LogOut size={14} /> Terminar sessão
               </button>
             </div>

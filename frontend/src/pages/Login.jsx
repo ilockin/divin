@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "../context/AuthContext";
 
@@ -16,8 +16,10 @@ export const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const { signIn } = useAuth();
+  const { signIn, signInWithGoogle } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirect = searchParams.get("redirect") || "/conta";
 
   const submit = async (e) => {
     e.preventDefault();
@@ -28,8 +30,12 @@ export const Login = () => {
       toast.error("Credenciais inválidas", { description: "Verifica o e-mail e a palavra-passe." });
       return;
     }
-    toast.success("Sessão iniciada", { description: "Bem-vinda de volta." });
-    navigate("/conta");
+    navigate(redirect);
+  };
+
+  const handleGoogle = async () => {
+    const { error } = await signInWithGoogle(redirect);
+    if (error) toast.error("Erro ao iniciar sessão com Google", { description: error.message });
   };
 
   return (
@@ -37,7 +43,12 @@ export const Login = () => {
       <p className="font-script text-[var(--da-leaf)] text-2xl text-center">olá de novo</p>
       <h1 className="text-3xl sm:text-4xl text-center mt-1">Iniciar sessão</h1>
 
-      <button type="button" className="mt-8 w-full flex items-center justify-center gap-3 border hairline rounded-full py-3 font-body text-sm hover:bg-[var(--da-cream-2)]" data-testid="login-google" onClick={() => toast("Continuar com Google", { description: "Brevemente disponível." })}>
+      <button
+        type="button"
+        onClick={handleGoogle}
+        className="mt-8 w-full flex items-center justify-center gap-3 border hairline rounded-full py-3 font-body text-sm hover:bg-[var(--da-cream-2)]"
+        data-testid="login-google"
+      >
         <GoogleIcon /> Continuar com Google
       </button>
 
@@ -55,6 +66,11 @@ export const Login = () => {
         <label className="block">
           <span className="font-body text-xs uppercase tracking-[0.18em] text-[var(--da-forest)]">Palavra-passe</span>
           <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} data-testid="login-password" className="mt-2 w-full bg-white border hairline rounded-lg px-4 py-3 font-body text-sm focus:outline-none focus:border-[var(--da-leaf)]" />
+          <div className="text-right mt-1">
+            <Link to="/conta/esqueceu-senha" className="font-body text-xs text-[var(--da-muted)] hover:text-[var(--da-forest)] underline">
+              Esqueceste a palavra-passe?
+            </Link>
+          </div>
         </label>
         <button type="submit" disabled={submitting} className="btn-da btn-da-primary w-full disabled:opacity-60" data-testid="login-submit">
           {submitting ? "A entrar…" : "Entrar"}
