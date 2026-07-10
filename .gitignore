@@ -1,5 +1,4 @@
-﻿# Ignorar tudo que não é do build
-frontend/
+﻿frontend/
 migrations/
 node_modules/
 .claude/
