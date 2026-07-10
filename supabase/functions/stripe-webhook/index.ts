@@ -2,16 +2,27 @@ import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 serve(async (req) => {
-  const STRIPE_WEBHOOK_SECRET = Deno.env.get("STRIPE_WEBHOOK_SECRET")!;
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL")!,
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
 
+  // Ler webhook secret guardado pelo admin
+  const { data: secretRow } = await supabase
+    .from("store_settings")
+    .select("value")
+    .eq("key", "stripe_webhook_secret")
+    .single();
+
+  const STRIPE_WEBHOOK_SECRET = secretRow?.value;
+  if (!STRIPE_WEBHOOK_SECRET) {
+    return new Response("Webhook secret não configurado", { status: 503 });
+  }
+
   const signature = req.headers.get("stripe-signature") ?? "";
   const body = await req.text();
 
-  // Verificação HMAC da assinatura Stripe
+  // Verificação HMAC
   try {
     const parts: Record<string, string> = Object.fromEntries(
       signature.split(",").map((p) => p.split("=") as [string, string])
@@ -39,10 +50,7 @@ serve(async (req) => {
     const session = event.data.object;
     const orderId = session.metadata?.order_id;
     if (orderId) {
-      await supabase
-        .from("orders")
-        .update({ status: "pago", stripe_session_id: session.id })
-        .eq("id", orderId);
+      await supabase.from("orders").update({ status: "pago", stripe_session_id: session.id }).eq("id", orderId);
     }
   }
 

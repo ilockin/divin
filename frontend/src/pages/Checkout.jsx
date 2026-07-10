@@ -7,6 +7,7 @@ import { useAuth } from "../context/AuthContext";
 import { formatEUR } from "../lib/format";
 import { createOrder } from "../lib/orders";
 import { supabase } from "../lib/supabaseClient";
+import { getSettings } from "../lib/storeSettings";
 import { initialCoupons } from "../admin/data/mockMarketing";
 import { validateCoupon, couponToPromo } from "../lib/coupons";
 
@@ -18,6 +19,13 @@ export const Checkout = () => {
   const [step, setStep] = useState(0);
   const [submitted, setSubmitted] = useState(false);
   const [finishing, setFinishing] = useState(false);
+  const [stripeConfig, setStripeConfig] = useState({ enabled: false, publishableKey: "" });
+
+  useEffect(() => {
+    getSettings(["stripe_enabled", "stripe_publishable_key"])
+      .then((s) => setStripeConfig({ enabled: s.stripe_enabled === "true", publishableKey: s.stripe_publishable_key || "" }))
+      .catch(() => {});
+  }, []);
   const [couponCode, setCouponCode] = useState("");
   const [form, setForm] = useState({
     email: "", firstName: "", lastName: "", phone: "",
@@ -67,8 +75,8 @@ export const Checkout = () => {
         userId: user?.id || null,
       });
 
-      // Redirecionar para Stripe se a chave estiver configurada
-      if (process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY) {
+      // Redirecionar para Stripe se activado no painel de definições
+      if (stripeConfig.enabled && stripeConfig.publishableKey) {
         const { data: stripe, error: stripeErr } = await supabase.functions.invoke("create-checkout-session", {
           body: { order_id: order.id, origin: window.location.origin },
         });

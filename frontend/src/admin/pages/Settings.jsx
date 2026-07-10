@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Save, CreditCard, Smartphone, Wallet, Building2, Plus, Truck, Pencil, Trash2, Star, Banknote, Landmark, Wallet2 } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Save, CreditCard, Smartphone, Wallet, Building2, Plus, Truck, Pencil, Trash2, Star, Banknote, Landmark, Wallet2, Copy, Check, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, FormRow, fieldClass, SectionTitle } from "../components/Bits";
 import { StatusBadge } from "../components/DataTable";
@@ -7,6 +7,60 @@ import { Modal } from "../components/Modal";
 import { useAdmin } from "../context/AdminContext";
 import { LANGUAGE_CATALOG } from "../data/mockErp";
 import { formatEUR } from "../../lib/format";
+import { getSettings, saveSettings } from "../../lib/storeSettings";
+
+const SUPABASE_PROJECT_REF = "hyaxzywkftqnizbhzbug";
+const WEBHOOK_URL = `https://${SUPABASE_PROJECT_REF}.supabase.co/functions/v1/stripe-webhook`;
+
+const SecretInput = ({ value, onChange, testid, placeholder }) => {
+  const [show, setShow] = useState(false);
+  return (
+    <div className="relative">
+      <input
+        type={show ? "text" : "password"}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        data-testid={testid}
+        placeholder={placeholder}
+        className={`mt-2 w-full bg-white border hairline rounded-lg px-4 py-3 pr-10 font-body text-sm focus:outline-none focus:border-[var(--da-leaf)] font-mono`}
+      />
+      <button
+        type="button"
+        onClick={() => setShow((s) => !s)}
+        className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--da-muted)] hover:text-[var(--da-forest)]"
+        tabIndex={-1}
+      >
+        {show ? <EyeOff size={15} /> : <Eye size={15} />}
+      </button>
+    </div>
+  );
+};
+
+const CopyField = ({ value }) => {
+  const [copied, setCopied] = useState(false);
+  const copy = () => {
+    navigator.clipboard.writeText(value);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+  return (
+    <div className="flex items-center gap-2 mt-2">
+      <input
+        readOnly
+        value={value}
+        className="flex-1 bg-[var(--da-cream-2)]/60 border hairline rounded-lg px-4 py-3 font-body text-xs font-mono focus:outline-none text-[var(--da-muted)]"
+      />
+      <button
+        type="button"
+        onClick={copy}
+        className="shrink-0 w-9 h-9 rounded-lg border hairline flex items-center justify-center hover:bg-[var(--da-cream-2)]/60 text-[var(--da-forest)]"
+        title="Copiar"
+      >
+        {copied ? <Check size={14} className="text-[var(--da-leaf)]" /> : <Copy size={14} />}
+      </button>
+    </div>
+  );
+};
 
 const Toggle = ({ checked, onChange, testid, disabled }) => (
   <button
@@ -24,11 +78,38 @@ const Toggle = ({ checked, onChange, testid, disabled }) => (
 
 const emptyMethod = { id: null, name: "", description: "", cost: 0, eta: "", zones: "", active: true };
 
+const EMPTY_STRIPE = { stripe_enabled: "false", stripe_test_mode: "true", stripe_publishable_key: "", stripe_secret_key: "", stripe_webhook_secret: "" };
+
 export const Settings = () => {
   const { settings, setSettings, role, shippingMethods, setShippingMethods, languages, setLanguages, integrations, setIntegrations } = useAdmin();
   const [form, setForm] = useState(settings);
   const [intForm, setIntForm] = useState(integrations);
   const ui = (key, value) => setIntForm((prev) => ({ ...prev, [key]: value }));
+
+  // ── Stripe ──────────────────────────────────────────────────────────────────
+  const [stripe, setStripe] = useState(EMPTY_STRIPE);
+  const [stripeLoading, setStripeLoading] = useState(true);
+  const [stripeSaving, setStripeSaving] = useState(false);
+  const us = (key, value) => setStripe((prev) => ({ ...prev, [key]: value }));
+
+  useEffect(() => {
+    getSettings(Object.keys(EMPTY_STRIPE))
+      .then((s) => setStripe((prev) => ({ ...prev, ...s })))
+      .catch(() => {})
+      .finally(() => setStripeLoading(false));
+  }, []);
+
+  const saveStripe = async () => {
+    setStripeSaving(true);
+    try {
+      await saveSettings(stripe);
+      toast.success("Configuração Stripe guardada.");
+    } catch (err) {
+      toast.error("Erro ao guardar", { description: err.message });
+    } finally {
+      setStripeSaving(false);
+    }
+  };
 
   // modais/estado de envios
   const [methodOpen, setMethodOpen] = useState(false);
@@ -299,6 +380,119 @@ export const Settings = () => {
             </p>
           </section>
         </div>
+
+        {/* ── STRIPE ─────────────────────────────────────────────────────── */}
+        <section className="bg-white border hairline rounded-2xl p-6 space-y-5" data-testid="set-stripe">
+          <div className="flex items-center justify-between">
+            <SectionTitle eyebrow="pagamentos" title="Stripe" />
+            <button
+              onClick={saveStripe}
+              disabled={stripeSaving || stripeLoading}
+              data-testid="stripe-save"
+              className="btn-da btn-da-primary text-xs disabled:opacity-60"
+            >
+              <Save size={14} /> {stripeSaving ? "A guardar…" : "Guardar Stripe"}
+            </button>
+          </div>
+
+          {stripeLoading ? (
+            <p className="font-body text-sm text-[var(--da-muted)]">A carregar configuração…</p>
+          ) : (
+            <>
+              {/* toggle activar */}
+              <div className="flex items-center justify-between py-3 border-b hairline">
+                <div>
+                  <p className="font-body text-sm font-semibold">Activar Stripe</p>
+                  <p className="font-body text-xs text-[var(--da-muted)] mt-0.5">
+                    Quando activo, o checkout redireciona para o Stripe antes de confirmar a encomenda.
+                  </p>
+                </div>
+                <Toggle
+                  checked={stripe.stripe_enabled === "true"}
+                  onChange={(v) => us("stripe_enabled", v ? "true" : "false")}
+                  testid="stripe-enabled-toggle"
+                />
+              </div>
+
+              {/* modo teste / produção */}
+              <div className="flex items-center justify-between py-3 border-b hairline">
+                <div>
+                  <p className="font-body text-sm font-semibold">Modo de teste</p>
+                  <p className="font-body text-xs text-[var(--da-muted)] mt-0.5">
+                    Em modo de teste usa chaves <span className="font-mono">sk_test_</span> / <span className="font-mono">pk_test_</span>. Desactiva para produção.
+                  </p>
+                </div>
+                <Toggle
+                  checked={stripe.stripe_test_mode === "true"}
+                  onChange={(v) => us("stripe_test_mode", v ? "true" : "false")}
+                  testid="stripe-test-toggle"
+                />
+              </div>
+
+              {/* chave pública */}
+              <FormRow
+                label="Chave pública (Publishable Key)"
+                hint={`Começa com ${stripe.stripe_test_mode === "true" ? "pk_test_" : "pk_live_"} — pode ficar visível no browser.`}
+              >
+                <input
+                  value={stripe.stripe_publishable_key}
+                  onChange={(e) => us("stripe_publishable_key", e.target.value)}
+                  data-testid="stripe-pk"
+                  placeholder={stripe.stripe_test_mode === "true" ? "pk_test_…" : "pk_live_…"}
+                  className="mt-2 w-full bg-white border hairline rounded-lg px-4 py-3 font-body text-sm font-mono focus:outline-none focus:border-[var(--da-leaf)]"
+                />
+              </FormRow>
+
+              {/* chave secreta */}
+              <FormRow
+                label="Chave secreta (Secret Key)"
+                hint={`Começa com ${stripe.stripe_test_mode === "true" ? "sk_test_" : "sk_live_"} — nunca partilhes esta chave.`}
+              >
+                <SecretInput
+                  value={stripe.stripe_secret_key}
+                  onChange={(v) => us("stripe_secret_key", v)}
+                  testid="stripe-sk"
+                  placeholder={stripe.stripe_test_mode === "true" ? "sk_test_…" : "sk_live_…"}
+                />
+              </FormRow>
+
+              {/* webhook secret */}
+              <FormRow
+                label="Webhook Secret"
+                hint='Começa com "whsec_" — obtém no Stripe Dashboard após criar o endpoint.'
+              >
+                <SecretInput
+                  value={stripe.stripe_webhook_secret}
+                  onChange={(v) => us("stripe_webhook_secret", v)}
+                  testid="stripe-ws"
+                  placeholder="whsec_…"
+                />
+              </FormRow>
+
+              {/* URL do webhook (só leitura + copiar) */}
+              <div className="pt-2 border-t hairline">
+                <p className="font-body text-xs uppercase tracking-[0.18em] text-[var(--da-forest)]">URL do Webhook</p>
+                <p className="font-body text-[11px] text-[var(--da-muted)] mt-1 mb-1">
+                  Copia este endereço e adiciona-o no Stripe Dashboard → Developers → Webhooks → Add endpoint.
+                  Eventos necessários: <span className="font-mono">checkout.session.completed</span> e <span className="font-mono">checkout.session.expired</span>.
+                </p>
+                <CopyField value={WEBHOOK_URL} />
+              </div>
+
+              {/* instrução deploy */}
+              <div className="bg-[var(--da-cream-2)]/60 rounded-xl p-4 font-body text-xs text-[var(--da-muted)] space-y-1 border hairline">
+                <p className="font-semibold text-[var(--da-forest)]">Primeiro deploy (único, feito pelo programador)</p>
+                <p>Instala a <a href="https://supabase.com/docs/guides/cli" target="_blank" rel="noreferrer" className="underline hover:text-[var(--da-leaf)]">Supabase CLI</a>, faz login e corre no terminal:</p>
+                <pre className="bg-[var(--da-forest)] text-white rounded-lg p-3 mt-2 overflow-x-auto text-[11px] leading-relaxed">
+{`supabase login
+supabase functions deploy create-checkout-session --project-ref ${SUPABASE_PROJECT_REF}
+supabase functions deploy stripe-webhook --project-ref ${SUPABASE_PROJECT_REF}`}
+                </pre>
+                <p className="mt-2">Após este passo, todas as configurações (chaves, modo de teste, activar/desactivar) ficam aqui nesta página — sem mais CLI.</p>
+              </div>
+            </>
+          )}
+        </section>
 
         {/* integrações Google */}
         <section className="bg-white border hairline rounded-2xl p-6 space-y-4" data-testid="set-integrations">

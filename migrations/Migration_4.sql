@@ -31,12 +31,21 @@ create policy "Admin lê todos os itens" on public.order_items
     )
   );
 
+-- Função auxiliar que lê o role sem RLS (security definer evita recursão infinita
+-- quando a política precisa de consultar a própria tabela profiles)
+create or replace function public.get_my_role()
+returns text
+language sql
+security definer
+stable
+set search_path = public
+as $$
+  select role::text from public.profiles where id = auth.uid();
+$$;
+
 -- Admin lê todos os perfis (necessário para a listagem de utilizadores)
+-- Usa get_my_role() em vez de subquery directa para evitar recursão infinita no RLS
 create policy "Admin lê todos os perfis" on public.profiles
   for select using (
-    exists (
-      select 1 from public.profiles p2
-      where p2.id = auth.uid()
-        and p2.role in ('super_admin', 'admin')
-    )
+    public.get_my_role() in ('super_admin', 'admin')
   );

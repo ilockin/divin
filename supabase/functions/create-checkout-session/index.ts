@@ -9,11 +9,26 @@ const cors = {
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
 
-  const STRIPE_SECRET = Deno.env.get("STRIPE_SECRET_KEY")!;
+  // service_role — injected automatically by Supabase, bypasses RLS
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL")!,
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
+
+  // Ler chave secreta do Stripe guardada pelo admin no painel
+  const { data: secretRow } = await supabase
+    .from("store_settings")
+    .select("value")
+    .eq("key", "stripe_secret_key")
+    .single();
+
+  const STRIPE_SECRET = secretRow?.value;
+  if (!STRIPE_SECRET) {
+    return new Response(JSON.stringify({ error: "Stripe não configurado. Adiciona a chave secreta em Definições → Stripe." }), {
+      status: 503,
+      headers: { ...cors, "Content-Type": "application/json" },
+    });
+  }
 
   const { order_id, origin } = await req.json();
 
@@ -30,7 +45,6 @@ serve(async (req) => {
     });
   }
 
-  // Montar linha de itens para o Stripe
   const params = new URLSearchParams({
     mode: "payment",
     customer_email: order.email,
@@ -59,11 +73,7 @@ serve(async (req) => {
     const couponRes = await fetch("https://api.stripe.com/v1/coupons", {
       method: "POST",
       headers: { Authorization: `Bearer ${STRIPE_SECRET}`, "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({
-        amount_off: String(Math.round(order.discount_amount * 100)),
-        currency: "eur",
-        duration: "once",
-      }),
+      body: new URLSearchParams({ amount_off: String(Math.round(order.discount_amount * 100)), currency: "eur", duration: "once" }),
     });
     const coupon = await couponRes.json();
     if (coupon.id) params.set("discounts[0][coupon]", coupon.id);
