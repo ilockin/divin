@@ -6,6 +6,7 @@ import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { formatEUR } from "../lib/format";
 import { createOrder } from "../lib/orders";
+import { supabase } from "../lib/supabaseClient";
 import { initialCoupons } from "../admin/data/mockMarketing";
 import { validateCoupon, couponToPromo } from "../lib/coupons";
 
@@ -65,6 +66,19 @@ export const Checkout = () => {
         discountAmount: totals.discount,
         userId: user?.id || null,
       });
+
+      // Redirecionar para Stripe se a chave estiver configurada
+      if (process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY) {
+        const { data: stripe, error: stripeErr } = await supabase.functions.invoke("create-checkout-session", {
+          body: { order_id: order.id, origin: window.location.origin },
+        });
+        if (!stripeErr && stripe?.url) {
+          clear();
+          window.location.href = stripe.url;
+          return;
+        }
+      }
+
       setSubmitted(true);
       clear();
       navigate("/checkout/sucesso?order=" + order.order_number, { replace: true });
