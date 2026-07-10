@@ -1,28 +1,30 @@
-import React, { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import React, { useMemo, useState, useEffect } from "react";
 import { Check, Sparkles } from "lucide-react";
-import { products } from "../data/mock";
+import { loadProducts } from "../lib/products";
 import { useCart } from "../context/CartContext";
 import { formatEUR } from "../lib/format";
 import { toast } from "sonner";
 
 const BUNDLE_DISCOUNT = 0.1; // 10% off no ritual
 
-// Curated companion: 2 produtos da mesma categoria + 1 da categoria de bem-estar
-const buildRitual = (currentProduct) => {
-  const sameCat = products.filter((p) => p.category === currentProduct.category && p.id !== currentProduct.id);
-  const fromWellness = products.filter((p) => p.category === "bem-estar" && p.id !== currentProduct.id);
-  const pool = [...sameCat, ...fromWellness].filter(
-    (p, i, arr) => arr.findIndex((x) => x.id === p.id) === i
-  );
-  // pega 2 itens complementares distintos
-  return pool.slice(0, 2);
-};
-
 export const RitualBundle = ({ product }) => {
-  const companions = useMemo(() => buildRitual(product), [product]);
-  const [selected, setSelected] = useState(() => new Set([product.id, ...companions.map((c) => c.id)]));
+  const [companions, setCompanions] = useState([]);
+  const [selected, setSelected] = useState(() => new Set([product.id]));
   const { addItem, applyPromo } = useCart();
+
+  useEffect(() => {
+    Promise.all([
+      loadProducts({ category: product.category }),
+      product.category !== "bem-estar" ? loadProducts({ category: "bem-estar" }) : Promise.resolve([]),
+    ]).then(([sameCat, wellness]) => {
+      const pool = [...sameCat, ...wellness]
+        .filter((p) => p.id !== product.id)
+        .filter((p, i, arr) => arr.findIndex((x) => x.id === p.id) === i)
+        .slice(0, 2);
+      setCompanions(pool);
+      setSelected(new Set([product.id, ...pool.map((c) => c.id)]));
+    }).catch(() => {});
+  }, [product.id, product.category]);
 
   if (companions.length === 0) return null;
 

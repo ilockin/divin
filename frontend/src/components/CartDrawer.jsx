@@ -1,23 +1,28 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { X, Minus, Plus, Trash2, Plus as PlusIcon, X as XIcon } from "lucide-react";
 import { useCart } from "../context/CartContext";
 import { formatEUR } from "../lib/format";
-import { products } from "../data/mock";
+import { loadProducts } from "../lib/products";
 
 const FREE_SHIPPING = 49;
 
 export const CartDrawer = () => {
   const { items, totals, drawerOpen, setDrawerOpen, updateQty, removeItem, promo, clearPromo, addItem } = useCart();
+  const [cheapPool, setCheapPool] = useState([]);
+
+  useEffect(() => {
+    loadProducts().then((all) => setCheapPool(all.filter((p) => p.price <= 20))).catch(() => {});
+  }, []);
 
   // pick a small upsell — cheapest item not already in the cart
   const upsell = useMemo(() => {
     if (items.length === 0) return null;
     const inCart = new Set(items.map((i) => i.id));
-    return products
-      .filter((p) => !inCart.has(p.id) && p.price <= 20)
+    return cheapPool
+      .filter((p) => !inCart.has(p.id))
       .sort((a, b) => a.price - b.price)[0];
-  }, [items]);
+  }, [items, cheapPool]);
 
   const remaining = Math.max(0, FREE_SHIPPING - (totals.subtotal - totals.discount));
   const progress = Math.min(100, ((totals.subtotal - totals.discount) / FREE_SHIPPING) * 100);

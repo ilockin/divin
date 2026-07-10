@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Sparkles, Leaf, Heart, BadgeCheck } from "lucide-react";
 import { ProductCard } from "../ProductCard";
-import { products, categories, testimonials } from "../../data/mock";
+import { testimonials } from "../../data/mock";
+import { loadProducts, loadCategories } from "../../lib/products";
 import { loadPublishedArticles } from "../../lib/articles";
 import {
   titleClassFor as titleClass, titleStyleFor as titleStyle, buttonStyleFor as buttonStyle,
@@ -58,7 +59,10 @@ export const TrustSection = ({ content }) => (
 );
 
 export const FeaturedSection = ({ content }) => {
-  const featured = products.filter((p) => p.isNew).slice(0, 4);
+  const [featured, setFeatured] = useState([]);
+  useEffect(() => {
+    loadProducts().then((all) => setFeatured(all.filter((p) => p.isNew).slice(0, 4))).catch(() => {});
+  }, []);
   return (
     <section className="container-da py-24">
       <div className="flex items-end justify-between mb-12 flex-wrap gap-4">
@@ -77,7 +81,12 @@ export const FeaturedSection = ({ content }) => {
   );
 };
 
-export const CategoriesSection = ({ content }) => (
+export const CategoriesSection = ({ content }) => {
+  const [categories, setCategories] = useState([]);
+  useEffect(() => {
+    loadCategories().then(setCategories).catch(() => {});
+  }, []);
+  return (
   <section className="container-da pb-24">
     <div className="text-center mb-12">
       <p className={eyebrowClass(content)} style={eyebrowStyle(content)}>{content.eyebrow}</p>
@@ -101,7 +110,8 @@ export const CategoriesSection = ({ content }) => (
       ))}
     </div>
   </section>
-);
+  );
+};
 
 export const StorySection = ({ content }) => (
   <section className="bg-[var(--da-pine)] text-white">
