@@ -1,33 +1,71 @@
-import React, { useMemo, useState } from "react";
-import { Link, useNavigate, useParams, Navigate } from "react-router-dom";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { Plus, X, Image as ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import { DataTable, StatusBadge } from "../components/DataTable";
 import { PageHeader, FormRow, fieldClass, SectionTitle } from "../components/Bits";
 import { useAdmin } from "../context/AdminContext";
-import { adminCategories, COMMISSION_TYPES } from "../data/mockAdmin";
+import { COMMISSION_TYPES } from "../data/mockAdmin";
+import { loadCategories } from "../../lib/products";
+import { listAllProducts, getProduct, createProduct, updateProduct, deleteProduct, setProductActive, uploadProductImage } from "../../lib/adminProducts";
 import { formatEUR } from "../../lib/format";
 
+// slug -> nome (categorias reais, incluindo subcategorias)
+const useCategoryMap = () => {
+  const [cats, setCats] = useState([]);
+  useEffect(() => { loadCategories().then(setCats).catch(() => {}); }, []);
+  const nameBySlug = useMemo(() => {
+    const map = {};
+    cats.forEach((c) => { map[c.slug] = c.name; (c.subcategories || []).forEach((s) => { map[s.slug] = s.name; }); });
+    return map;
+  }, [cats]);
+  return { cats, nameBySlug };
+};
+
 export const Products = () => {
-  const { products, setProducts } = useAdmin();
   const navigate = useNavigate();
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [catFilter, setCatFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const { cats, nameBySlug } = useCategoryMap();
+
+  useEffect(() => {
+    let alive = true;
+    setLoading(true);
+    listAllProducts()
+      .then((rows) => { if (alive) setProducts(rows); })
+      .catch((e) => toast.error("Erro ao carregar produtos", { description: e.message }))
+      .finally(() => { if (alive) setLoading(false); });
+    return () => { alive = false; };
+  }, []);
 
   const filtered = useMemo(() => products
     .filter((p) => (catFilter ? p.category === catFilter : true))
     .filter((p) => (statusFilter ? p.status === statusFilter : true)),
     [products, catFilter, statusFilter]);
 
-  const remove = (p) => {
+  const remove = async (p) => {
     if (!window.confirm(`Remover ${p.name}?`)) return;
-    setProducts((prev) => prev.filter((x) => x.id !== p.id));
-    toast.success("Produto removido.");
+    try { await deleteProduct(p.id); setProducts((prev) => prev.filter((x) => x.id !== p.id)); toast.success("Produto removido."); }
+    catch (e) { toast.error("Erro ao remover", { description: e.message }); }
   };
 
-  const toggleStatus = (p) => {
-    setProducts((prev) => prev.map((x) => x.id === p.id ? { ...x, status: x.status === "publicado" ? "rascunho" : "publicado" } : x));
-    toast.success(p.status === "publicado" ? "Movido para rascunho." : "Publicado.");
+  const toggleStatus = async (p) => {
+    const active = p.status !== "publicado";
+    try {
+      await setProductActive(p.id, active);
+      setProducts((prev) => prev.map((x) => x.id === p.id ? { ...x, status: active ? "publicado" : "rascunho" } : x));
+      toast.success(active ? "Publicado." : "Movido para rascunho.");
+    } catch (e) { toast.error("Erro ao atualizar", { description: e.message }); }
+  };
+
+  const bulkSetActive = async (ids, active) => {
+    try {
+      await Promise.all(ids.map((id) => setProductActive(id, active)));
+      setProducts((prev) => prev.map((p) => ids.includes(p.id) ? { ...p, status: active ? "publicado" : "rascunho" } : p));
+      toast.success(`${ids.length} produto(s) ${active ? "publicados" : "em rascunho"}.`);
+    } catch (e) { toast.error("Erro na operação em massa", { description: e.message }); }
   };
 
   const columns = [
@@ -41,7 +79,7 @@ export const Products = () => {
         </Link>
       ) },
     { key: "category", label: "Categoria",
-      render: (p) => <span className="text-[var(--da-muted)]">{adminCategories.find((c) => c.slug === p.category)?.name || p.category}</span> },
+      render: (p) => <span className="text-[var(--da-muted)]">{nameBySlug[p.category] || p.category}</span> },
     { key: "price", label: "Preço", sortable: true,
       render: (p) => formatEUR(p.price) },
     { key: "stock", label: "Stock", sortable: true,
@@ -69,11 +107,12 @@ export const Products = () => {
         getRowId={(p) => p.id}
         searchKeys={["name", "short", "category"]}
         pageSize={10}
+        emptyMessage={loading ? "A carregar…" : "Sem produtos."}
         filters={(
           <>
             <select value={catFilter} onChange={(e) => setCatFilter(e.target.value)} data-testid="products-filter-cat" className="border hairline rounded-lg px-3 py-2 font-body text-sm bg-white">
               <option value="">Todas as categorias</option>
-              {adminCategories.map((c) => (<option key={c.slug} value={c.slug}>{c.name}</option>))}
+              {cats.map((c) => (<option key={c.slug} value={c.slug}>{c.name}</option>))}
             </select>
             <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} data-testid="products-filter-status" className="border hairline rounded-lg px-3 py-2 font-body text-sm bg-white">
               <option value="">Todos os estados</option>
@@ -83,13 +122,13 @@ export const Products = () => {
           </>
         )}
         bulkActions={[
-          { label: "Publicar", onClick: (ids) => { setProducts((prev) => prev.map((p) => ids.includes(p.id) ? { ...p, status: "publicado" } : p)); toast.success(`${ids.length} produtos publicados.`); } },
-          { label: "Rascunho", onClick: (ids) => { setProducts((prev) => prev.map((p) => ids.includes(p.id) ? { ...p, status: "rascunho" } : p)); toast.success(`${ids.length} produtos em rascunho.`); } },
+          { label: "Publicar", onClick: (ids) => bulkSetActive(ids, true) },
+          { label: "Rascunho", onClick: (ids) => bulkSetActive(ids, false) },
         ]}
         rowActions={(p) => [
           { label: "Editar", onClick: () => navigate(`/admin/produtos/${p.id}`) },
-          { label: p.status === "publicado" ? "Mover para rascunho" : "Publicar", onClick: toggleStatus },
-          { label: "Remover", onClick: remove, danger: true },
+          { label: p.status === "publicado" ? "Mover para rascunho" : "Publicar", onClick: () => toggleStatus(p) },
+          { label: "Remover", onClick: () => remove(p), danger: true },
         ]}
       />
     </div>
@@ -100,25 +139,31 @@ export const Products = () => {
 
 const emptyProduct = {
   id: null, name: "", slug: "", short: "", description: "", usage: "",
-  benefits: [""], price: 0, category: "faciais", size: "100ml",
-  images: [], status: "rascunho", vegan: true, bio: true, stock: 0, minStock: 5,
+  benefits: [""], price: 0, comparePrice: "", category: "", sub: "", size: "100ml",
+  images: [], status: "rascunho", vegan: true, bio: true, isNew: false, featured: false,
+  skinType: [], purpose: [], stock: 0, minStock: 5,
   shippingMode: "inherit", shippingMethodIds: [],
   commissionType: "percentage", commissionValue: 0,
 };
 
 export const ProductForm = () => {
   const { id } = useParams();
-  const { products, setProducts, shippingMethods, role } = useAdmin();
+  const { shippingMethods, role } = useAdmin();
   const navigate = useNavigate();
   const isNew = id === "novo";
-  const existing = !isNew && products.find((p) => p.id === id);
-  const [form, setForm] = useState(() => existing
-    ? { ...existing, benefits: existing.benefits || [""], shippingMode: existing.shippingMode || "inherit", shippingMethodIds: existing.shippingMethodIds || [],
-        commissionType: existing.commissionType || "percentage", commissionValue: existing.commissionValue ?? 0 }
-    : emptyProduct);
+  const { cats } = useCategoryMap();
+  const fileRef = useRef();
+
+  const [form, setForm] = useState(emptyProduct);
+  const [loading, setLoading] = useState(!isNew);
+  const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const canEditCommission = role !== "afiliado";
 
-  if (!isNew && !existing) return <Navigate to="/admin/produtos" replace />;
+  useEffect(() => {
+    if (isNew) return;
+    getProduct(id).then(setForm).catch(() => { toast.error("Produto não encontrado."); navigate("/admin/produtos"); }).finally(() => setLoading(false));
+  }, [id, isNew, navigate]);
 
   const u = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
@@ -126,37 +171,44 @@ export const ProductForm = () => {
   const updateBenefit = (i, v) => u("benefits", form.benefits.map((b, idx) => idx === i ? v : b));
   const removeBenefit = (i) => u("benefits", form.benefits.filter((_, idx) => idx !== i));
 
-  const addImage = () => {
-    const url = window.prompt("URL da imagem (mock):", "https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&w=1200&q=70");
-    if (url) u("images", [...form.images, url]);
+  const onPickImage = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setUploading(true);
+    try { const url = await uploadProductImage(file); u("images", [...form.images, url]); toast.success("Imagem carregada."); }
+    catch (err) { toast.error("Erro no upload", { description: err.message }); }
+    finally { setUploading(false); }
   };
   const removeImage = (i) => u("images", form.images.filter((_, idx) => idx !== i));
 
-  const save = (e) => {
+  const save = async (e) => {
     e?.preventDefault();
     if (!form.name || !form.price) { toast.error("Preenche nome e preço."); return; }
-    const slug = form.slug || form.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
-    const payload = { ...form, slug, price: parseFloat(form.price), stock: parseInt(form.stock, 10) || 0, commissionValue: parseFloat(form.commissionValue) || 0 };
-    if (isNew) {
-      const newId = "p" + String(products.length + 1).padStart(2, "0");
-      setProducts((prev) => [...prev, { ...payload, id: newId, images: payload.images.length ? payload.images : ["https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&w=1200&q=70"] }]);
-      toast.success("Produto criado.");
-    } else {
-      setProducts((prev) => prev.map((p) => p.id === form.id ? payload : p));
-      toast.success("Produto atualizado.");
-    }
-    navigate("/admin/produtos");
+    const slug = form.slug || form.name.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+    setSaving(true);
+    try {
+      if (isNew) { await createProduct({ ...form, slug }); toast.success("Produto criado."); }
+      else { await updateProduct(id, { ...form, slug }); toast.success("Produto atualizado."); }
+      navigate("/admin/produtos");
+    } catch (err) {
+      toast.error("Erro ao guardar", { description: err.message });
+    } finally { setSaving(false); }
   };
+
+  if (loading) {
+    return <div data-testid="admin-product-form"><PageHeader title="Editar produto" /><div className="bg-white border hairline rounded-2xl p-10 text-center font-body text-sm text-[var(--da-muted)]">A carregar…</div></div>;
+  }
 
   return (
     <div data-testid="admin-product-form">
       <PageHeader
-        title={isNew ? "Novo produto" : `Editar: ${existing?.name}`}
+        title={isNew ? "Novo produto" : `Editar: ${form.name}`}
         subtitle={isNew ? "Adiciona um novo produto ao catálogo." : "Atualiza os dados do produto."}
         actions={(
           <>
             <Link to="/admin/produtos" className="btn-da btn-da-ghost text-xs">Cancelar</Link>
-            <button onClick={save} data-testid="product-save" className="btn-da btn-da-primary text-xs">{isNew ? "Criar" : "Guardar"}</button>
+            <button onClick={save} disabled={saving} data-testid="product-save" className="btn-da btn-da-primary text-xs disabled:opacity-60">{saving ? "A guardar…" : (isNew ? "Criar" : "Guardar")}</button>
           </>
         )}
       />
@@ -197,6 +249,7 @@ export const ProductForm = () => {
 
           <div className="border-t hairline pt-6">
             <p className="font-body text-xs tracking-[0.18em] uppercase text-[var(--da-forest)] mb-3">Galeria</p>
+            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onPickImage} data-testid="pf-image-input" />
             <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
               {form.images.map((src, i) => (
                 <div key={i} className="relative aspect-square rounded-lg overflow-hidden border hairline">
@@ -204,8 +257,8 @@ export const ProductForm = () => {
                   <button onClick={() => removeImage(i)} data-testid={`pf-image-remove-${i}`} className="absolute top-1 right-1 bg-white/95 w-6 h-6 rounded-full flex items-center justify-center hover:bg-red-100"><X size={12} /></button>
                 </div>
               ))}
-              <button onClick={addImage} data-testid="pf-image-add" className="aspect-square rounded-lg border-2 border-dashed hairline flex flex-col items-center justify-center text-[var(--da-muted)] hover:text-[var(--da-forest)] hover:border-[var(--da-forest)] gap-1 text-xs">
-                <ImageIcon size={18} /> Adicionar
+              <button onClick={() => fileRef.current?.click()} disabled={uploading} data-testid="pf-image-add" className="aspect-square rounded-lg border-2 border-dashed hairline flex flex-col items-center justify-center text-[var(--da-muted)] hover:text-[var(--da-forest)] hover:border-[var(--da-forest)] gap-1 text-xs disabled:opacity-50">
+                <ImageIcon size={18} /> {uploading ? "A carregar…" : "Adicionar"}
               </button>
             </div>
           </div>
@@ -222,7 +275,13 @@ export const ProductForm = () => {
             </FormRow>
             <FormRow label="Categoria">
               <select className={fieldClass} value={form.category} onChange={(e) => u("category", e.target.value)} data-testid="pf-category">
-                {adminCategories.map((c) => (<option key={c.slug} value={c.slug}>{c.name}</option>))}
+                <option value="">— escolher —</option>
+                {cats.map((c) => (
+                  <React.Fragment key={c.slug}>
+                    <option value={c.slug}>{c.name}</option>
+                    {(c.subcategories || []).map((s) => (<option key={s.slug} value={s.slug}>&nbsp;&nbsp;{s.name}</option>))}
+                  </React.Fragment>
+                ))}
               </select>
             </FormRow>
           </div>
@@ -231,6 +290,9 @@ export const ProductForm = () => {
             <SectionTitle eyebrow="preço & variante" title="Comercial" />
             <FormRow label="Preço (€)" required>
               <input type="number" step="0.1" min="0" className={fieldClass} value={form.price} onChange={(e) => u("price", e.target.value)} data-testid="pf-price" />
+            </FormRow>
+            <FormRow label="Preço comparativo (€)" hint="Opcional — preço riscado / antes de desconto.">
+              <input type="number" step="0.1" min="0" className={fieldClass} value={form.comparePrice} onChange={(e) => u("comparePrice", e.target.value)} data-testid="pf-compare-price" />
             </FormRow>
             <FormRow label="Variante / formato">
               <input className={fieldClass} value={form.size} onChange={(e) => u("size", e.target.value)} data-testid="pf-size" />
@@ -255,8 +317,11 @@ export const ProductForm = () => {
             <label className="flex items-center gap-2 font-body text-sm">
               <input type="checkbox" checked={form.bio} onChange={(e) => u("bio", e.target.checked)} data-testid="pf-bio" /> BIO
             </label>
-            <label className="flex items-center gap-2 font-body text-sm opacity-70">
-              <input type="checkbox" checked readOnly /> Natural
+            <label className="flex items-center gap-2 font-body text-sm">
+              <input type="checkbox" checked={form.isNew} onChange={(e) => u("isNew", e.target.checked)} data-testid="pf-is-new" /> Novidade
+            </label>
+            <label className="flex items-center gap-2 font-body text-sm">
+              <input type="checkbox" checked={form.featured} onChange={(e) => u("featured", e.target.checked)} data-testid="pf-featured" /> Destaque
             </label>
           </div>
 
