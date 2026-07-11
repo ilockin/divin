@@ -2,6 +2,7 @@ import React, { useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "../context/AuthContext";
+import { GoogleButton } from "../components/GoogleButton";
 
 export const Register = () => {
   const firstRef = useRef();
@@ -9,8 +10,13 @@ export const Register = () => {
   const emailRef = useRef();
   const pwRef = useRef();
   const [submitting, setSubmitting] = useState(false);
-  const { signUp } = useAuth();
+  const { signUp, signInWithGoogle } = useAuth();
   const navigate = useNavigate();
+
+  const handleGoogle = async () => {
+    const { error } = await signInWithGoogle("/conta");
+    if (error) toast.error("Erro ao iniciar sessão com Google", { description: error.message });
+  };
 
   const submit = async (e) => {
     e.preventDefault();
@@ -40,7 +46,17 @@ export const Register = () => {
       <p className="font-script text-[var(--da-leaf)] text-2xl text-center">junta-te a nós</p>
       <h1 className="text-3xl sm:text-4xl text-center mt-1">Criar conta</h1>
 
-      <form onSubmit={submit} className="space-y-4 mt-8" data-testid="register-form">
+      <div className="mt-8">
+        <GoogleButton onClick={handleGoogle} testid="register-google" />
+      </div>
+
+      <div className="flex items-center gap-3 my-6">
+        <div className="flex-1 h-px bg-[var(--da-line)]" />
+        <span className="font-body text-xs uppercase tracking-[0.2em] text-[var(--da-muted)]">ou</span>
+        <div className="flex-1 h-px bg-[var(--da-line)]" />
+      </div>
+
+      <form onSubmit={submit} className="space-y-4" data-testid="register-form">
         <div className="grid grid-cols-2 gap-3">
           <label className="block">
             <span className="font-body text-xs uppercase tracking-[0.18em] text-[var(--da-forest)]">Nome</span>
