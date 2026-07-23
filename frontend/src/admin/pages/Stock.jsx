@@ -1,29 +1,50 @@
-import React, { useState } from "react";
-import { Plus, Minus, ArrowDownUp } from "lucide-react";
+import React, { useCallback, useEffect, useState } from "react";
+import { ArrowDownUp } from "lucide-react";
 import { toast } from "sonner";
 import { DataTable, StatusBadge } from "../components/DataTable";
 import { PageHeader, FormRow, fieldClass, SectionTitle } from "../components/Bits";
 import { Modal } from "../components/Modal";
-import { useAdmin } from "../context/AdminContext";
+import { listAllProducts } from "../../lib/adminProducts";
+import { listMovements, adjustStock } from "../../lib/adminStock";
 
 export const Stock = () => {
-  const { products, setProducts, movements, setMovements } = useAdmin();
+  const [products, setProducts] = useState([]);
+  const [movements, setMovements] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [target, setTarget] = useState(null);
   const [form, setForm] = useState({ type: "entrada", qty: 1, reason: "" });
 
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [prods, moves] = await Promise.all([listAllProducts(), listMovements()]);
+      setProducts(prods);
+      setMovements(moves);
+    } catch (e) {
+      toast.error("Erro ao carregar stock", { description: e.message });
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+  useEffect(() => { load(); }, [load]);
+
   const openAdjust = (p) => { setTarget(p); setForm({ type: "entrada", qty: 1, reason: "" }); setModal(true); };
 
-  const save = () => {
+  const save = async () => {
     if (!form.qty || form.qty <= 0) { toast.error("Quantidade inválida."); return; }
-    const delta = form.type === "entrada" ? form.qty : -form.qty;
-    setProducts((prev) => prev.map((p) => p.id === target.id ? { ...p, stock: Math.max(0, p.stock + delta) } : p));
-    setMovements((prev) => [
-      { id: "m" + Math.random().toString(36).slice(2, 6), productId: target.id, productName: target.name, qty: delta, reason: form.reason || (form.type === "entrada" ? "Entrada manual" : "Saída manual"), date: new Date().toISOString(), type: form.type },
-      ...prev,
-    ]);
-    toast.success("Stock ajustado.");
-    setModal(false);
+    setSaving(true);
+    try {
+      const novoStock = await adjustStock({ productId: target.id, qty: form.qty, type: form.type, reason: form.reason });
+      toast.success(`Stock ajustado — novo saldo: ${novoStock}`);
+      setModal(false);
+      await load();
+    } catch (e) {
+      toast.error("Erro ao ajustar stock", { description: e.message });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const stockState = (p) => {
@@ -76,6 +97,7 @@ export const Stock = () => {
         columns={cols}
         getRowId={(p) => p.id}
         searchKeys={["name"]}
+        emptyMessage={loading ? "A carregar…" : "Sem produtos."}
         rowActions={(p) => [
           { label: "Ajustar stock", onClick: openAdjust },
         ]}
@@ -95,6 +117,7 @@ export const Stock = () => {
           getRowId={(m) => m.id}
           searchKeys={["productName", "reason"]}
           pageSize={8}
+          emptyMessage={loading ? "A carregar…" : "Sem movimentos registados."}
         />
       </div>
 
@@ -106,7 +129,7 @@ export const Stock = () => {
         footer={(
           <>
             <button onClick={() => setModal(false)} className="btn-da btn-da-ghost text-xs">Cancelar</button>
-            <button onClick={save} data-testid="stock-save" className="btn-da btn-da-primary text-xs">Aplicar</button>
+            <button onClick={save} disabled={saving} data-testid="stock-save" className="btn-da btn-da-primary text-xs disabled:opacity-60">{saving ? "A aplicar…" : "Aplicar"}</button>
           </>
         )}
       >
