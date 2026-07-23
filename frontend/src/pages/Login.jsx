@@ -1,17 +1,34 @@
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "../context/AuthContext";
 import { GoogleButton } from "../components/GoogleButton";
+import { supabase } from "../lib/supabaseClient";
 
 export const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const { signIn, signInWithGoogle } = useAuth();
+  const { signIn, signInWithGoogle, user, loading } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const redirect = searchParams.get("redirect") || "/conta";
+  const explicitRedirect = searchParams.get("redirect");
+
+  // Para onde mandar depois do login: um ?redirect= explícito manda sempre;
+  // caso contrário o super_admin vai direto para o painel (Dashboard).
+  const destinationFor = useCallback(async (userId) => {
+    if (explicitRedirect) return explicitRedirect;
+    const { data } = await supabase.from("profiles").select("role").eq("id", userId).single();
+    return data?.role === "super_admin" ? "/admin" : "/conta";
+  }, [explicitRedirect]);
+
+  // Cobre os dois fluxos: e-mail/palavra-passe e o regresso do Google OAuth.
+  useEffect(() => {
+    if (loading || !user) return;
+    let alive = true;
+    destinationFor(user.id).then((dest) => { if (alive) navigate(dest, { replace: true }); });
+    return () => { alive = false; };
+  }, [loading, user, destinationFor, navigate]);
 
   const submit = async (e) => {
     e.preventDefault();
@@ -22,11 +39,12 @@ export const Login = () => {
       toast.error("Credenciais inválidas", { description: "Verifica o e-mail e a palavra-passe." });
       return;
     }
-    navigate(redirect);
+    // a navegação é feita pelo useEffect acima, assim que a sessão fica ativa
   };
 
   const handleGoogle = async () => {
-    const { error } = await signInWithGoogle(redirect);
+    // sem redirect explícito, volta para o login para decidir o destino pelo papel
+    const { error } = await signInWithGoogle(explicitRedirect || "/conta/login");
     if (error) toast.error("Erro ao iniciar sessão com Google", { description: error.message });
   };
 
