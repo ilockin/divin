@@ -8,6 +8,7 @@ import { useAdmin } from "../context/AdminContext";
 import { LANGUAGE_CATALOG } from "../data/mockErp";
 import { formatEUR } from "../../lib/format";
 import { getSettings, saveSettings } from "../../lib/storeSettings";
+import { createMethod, updateMethod, deleteMethod, setMethodActive } from "../../lib/adminShipping";
 
 const SUPABASE_PROJECT_REF = "hyaxzywkftqnizbhzbug";
 const WEBHOOK_URL = `https://${SUPABASE_PROJECT_REF}.supabase.co/functions/v1/stripe-webhook`;
@@ -136,26 +137,35 @@ export const Settings = () => {
   // ---- modos de envio (CRUD) ----
   const startNewMethod = () => { setMethodForm(emptyMethod); setMethodOpen(true); };
   const startEditMethod = (m) => { setMethodForm({ ...m }); setMethodOpen(true); };
-  const removeMethod = (m) => {
+  const removeMethod = async (m) => {
     if (!window.confirm(`Remover o modo de envio "${m.name}"?`)) return;
-    setShippingMethods((prev) => prev.filter((x) => x.id !== m.id));
-    toast.success("Modo de envio removido.");
+    try {
+      await deleteMethod(m.id);
+      setShippingMethods((prev) => prev.filter((x) => x.id !== m.id));
+      toast.success("Modo de envio removido.");
+    } catch (e) { toast.error("Erro ao remover", { description: e.message }); }
   };
-  const toggleMethod = (m) => {
-    setShippingMethods((prev) => prev.map((x) => x.id === m.id ? { ...x, active: !x.active } : x));
+  const toggleMethod = async (m) => {
+    try {
+      await setMethodActive(m.id, !m.active);
+      setShippingMethods((prev) => prev.map((x) => x.id === m.id ? { ...x, active: !x.active } : x));
+    } catch (e) { toast.error("Erro ao atualizar", { description: e.message }); }
   };
-  const saveMethod = () => {
+  const saveMethod = async () => {
     if (!methodForm.name.trim()) { toast.error("Indica o nome do modo de envio."); return; }
     const payload = { ...methodForm, cost: parseFloat(methodForm.cost) || 0 };
-    if (methodForm.id) {
-      setShippingMethods((prev) => prev.map((x) => x.id === methodForm.id ? payload : x));
-      toast.success("Modo de envio atualizado.");
-    } else {
-      const newId = "sm" + (shippingMethods.length + 1);
-      setShippingMethods((prev) => [...prev, { ...payload, id: newId }]);
-      toast.success("Modo de envio criado.");
-    }
-    setMethodOpen(false);
+    try {
+      if (methodForm.id) {
+        await updateMethod(methodForm.id, payload);
+        setShippingMethods((prev) => prev.map((x) => x.id === methodForm.id ? payload : x));
+        toast.success("Modo de envio atualizado.");
+      } else {
+        const newId = await createMethod(payload);
+        setShippingMethods((prev) => [...prev, { ...payload, id: newId }]);
+        toast.success("Modo de envio criado.");
+      }
+      setMethodOpen(false);
+    } catch (e) { toast.error("Erro ao guardar", { description: e.message }); }
   };
 
   // ---- idiomas ----

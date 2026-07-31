@@ -2,7 +2,8 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from "
 import { ROLES, adminUsers, adminProducts, adminOrders, adminAttributes, stockMovements as initialMovements, storeSettings as initialSettings } from "../data/mockAdmin";
 import { useAuth } from "../../context/AuthContext";
 import { loadArticles, saveArticles } from "../../lib/articles";
-import { initialInsumos, initialRecipes, initialProductionOrders, initialPurchases, initialShippingMethods, initialLanguages, initialShippingZones, initialDistrictRules, initialCategoryRules } from "../data/mockErp";
+import { initialInsumos, initialRecipes, initialProductionOrders, initialPurchases, initialLanguages, initialShippingZones, initialDistrictRules, initialCategoryRules } from "../data/mockErp";
+import { listAllMethods } from "../../lib/adminShipping";
 import { initialCoupons } from "../data/mockMarketing";
 import { loadPages, savePages } from "../../lib/pages";
 import { loadPopups, savePopups } from "../../lib/popups";
@@ -36,7 +37,8 @@ export const AdminProvider = ({ children }) => {
   const [productionOrders, setProductionOrders] = useState(initialProductionOrders);
   const [purchases, setPurchases] = useState(initialPurchases);
   // Envios & idiomas (partilhados com /admin/envios)
-  const [shippingMethods, setShippingMethods] = useState(initialShippingMethods);
+  const [shippingMethods, setShippingMethods] = useState([]);
+  useEffect(() => { listAllMethods().then(setShippingMethods).catch(() => {}); }, []);
   const [languages, setLanguages] = useState(initialLanguages);
   const [shippingZones, setShippingZones] = useState(initialShippingZones);
   const [districtRules, setDistrictRules] = useState(initialDistrictRules);

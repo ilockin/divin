@@ -8,6 +8,7 @@ import { formatEUR } from "../lib/format";
 import { createOrder } from "../lib/orders";
 import { supabase } from "../lib/supabaseClient";
 import { getSettings } from "../lib/storeSettings";
+import { listActiveMethods } from "../lib/adminShipping";
 import { getCouponByCode } from "../lib/adminCoupons";
 import { validateCoupon, couponToPromo } from "../lib/coupons";
 
@@ -27,11 +28,22 @@ export const Checkout = () => {
       .catch(() => {});
   }, []);
   const [couponCode, setCouponCode] = useState("");
+  const [shipMethods, setShipMethods] = useState([]);
   const [form, setForm] = useState({
     email: "", firstName: "", lastName: "", phone: "",
     address: "", city: "", zip: "", country: "Portugal",
-    shipping: "standard", payment: "card",
+    shipping: "", payment: "card",
   });
+
+  // Modos de envio ativos (geridos no admin). Seleciona o primeiro por defeito.
+  useEffect(() => {
+    listActiveMethods()
+      .then((methods) => {
+        setShipMethods(methods);
+        setForm((f) => (f.shipping ? f : { ...f, shipping: methods[0]?.id || "" }));
+      })
+      .catch(() => {});
+  }, []);
 
   const { user } = useAuth();
 
@@ -57,7 +69,8 @@ export const Checkout = () => {
   };
 
   const afterDiscount = totals.subtotal - totals.discount;
-  const shippingPrice = form.shipping === "express" ? 7.9 : afterDiscount >= 49 ? 0 : 4.9;
+  const selectedMethod = shipMethods.find((m) => m.id === form.shipping);
+  const shippingPrice = selectedMethod ? selectedMethod.cost : 0;
   const total = afterDiscount + shippingPrice;
 
   const next = () => setStep((s) => Math.min(STEPS.length - 1, s + 1));
@@ -144,22 +157,19 @@ export const Checkout = () => {
           {step === 1 && (
             <section className="space-y-3" data-testid="step-shipping">
               <h2 className="text-xl mb-4">Método de envio</h2>
-              <RadioCard
-                checked={form.shipping === "standard"}
-                onChange={() => update("shipping", "standard")}
-                title="Envio Standard"
-                desc="2-4 dias úteis"
-                price={afterDiscount >= 49 ? "Grátis" : formatEUR(4.9)}
-                testid="ship-standard"
-              />
-              <RadioCard
-                checked={form.shipping === "express"}
-                onChange={() => update("shipping", "express")}
-                title="Envio Expresso"
-                desc="24h em Portugal Continental"
-                price={formatEUR(7.9)}
-                testid="ship-express"
-              />
+              {shipMethods.length === 0 ? (
+                <p className="font-body text-sm text-[var(--da-muted)]">Sem métodos de envio disponíveis de momento.</p>
+              ) : shipMethods.map((m) => (
+                <RadioCard
+                  key={m.id}
+                  checked={form.shipping === m.id}
+                  onChange={() => update("shipping", m.id)}
+                  title={m.name}
+                  desc={m.eta || m.description}
+                  price={m.cost === 0 ? "Grátis" : formatEUR(m.cost)}
+                  testid={`ship-${m.id}`}
+                />
+              ))}
             </section>
           )}
 
