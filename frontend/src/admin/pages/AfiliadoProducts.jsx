@@ -1,14 +1,31 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { toast } from "sonner";
 import { DataTable } from "../components/DataTable";
 import { PageHeader } from "../components/Bits";
-import { useAdmin } from "../context/AdminContext";
-import { adminCategories } from "../data/mockAdmin";
+import { listAllProducts } from "../../lib/adminProducts";
+import { loadCategories } from "../../lib/products";
 import { formatEUR } from "../../lib/format";
 import { formatCommission, calcCommission } from "../../lib/commission";
 
 export const AfiliadoProducts = () => {
-  const { products } = useAdmin();
+  const [products, setProducts] = useState([]);
+  const [cats, setCats] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    listAllProducts()
+      .then(setProducts)
+      .catch((e) => toast.error("Erro ao carregar produtos", { description: e.message }))
+      .finally(() => setLoading(false));
+    loadCategories().then(setCats).catch(() => {});
+  }, []);
+
+  const nameBySlug = useMemo(() => {
+    const map = {};
+    cats.forEach((c) => { map[c.slug] = c.name; (c.subcategories || []).forEach((s) => { map[s.slug] = s.name; }); });
+    return map;
+  }, [cats]);
 
   const eligible = useMemo(
     () => products.filter((p) => p.status === "publicado" && p.commissionValue > 0),
@@ -23,7 +40,7 @@ export const AfiliadoProducts = () => {
         <Link to={`/produto/${p.slug}`} className="font-semibold text-[var(--da-forest)] hover:text-[var(--da-leaf)]">{p.name}</Link>
       ) },
     { key: "category", label: "Categoria",
-      render: (p) => <span className="text-[var(--da-muted)]">{adminCategories.find((c) => c.slug === p.category)?.name || p.category}</span> },
+      render: (p) => <span className="text-[var(--da-muted)]">{nameBySlug[p.category] || p.category}</span> },
     { key: "price", label: "Preço", sortable: true, render: (p) => formatEUR(p.price) },
     { key: "commissionValue", label: "Comissão", sortable: true, render: (p) => formatCommission(p) },
     { key: "commissionPerUnit", label: "Ganhas por unidade", render: (p) => formatEUR(calcCommission(p, 1)) },
@@ -39,7 +56,7 @@ export const AfiliadoProducts = () => {
         getRowId={(p) => p.id}
         searchKeys={["name", "category"]}
         pageSize={10}
-        emptyMessage="Sem produtos com comissão ativa."
+        emptyMessage={loading ? "A carregar…" : "Sem produtos com comissão ativa."}
       />
     </div>
   );
