@@ -1,22 +1,16 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import { DataTable, StatusBadge } from "../components/DataTable";
 import { Modal } from "../components/Modal";
 import { PageHeader, FormRow, fieldClass } from "../components/Bits";
 import { useAdmin } from "../context/AdminContext";
-import { SUPPLIERS, PURCHASE_STATES, getInsumo, purchaseTotal } from "../data/mockErp";
+import { PURCHASE_STATES, getInsumo, purchaseTotal } from "../data/mockErp";
+import { listSuppliers } from "../../lib/adminProduction";
+import { createPurchase, updatePurchase, deletePurchase } from "../../lib/adminPurchases";
 import { formatEUR, formatEUR3 } from "../../lib/format";
 
-const supplierName = (id) => SUPPLIERS.find((s) => s.id === id)?.name || "—";
 const stateOf = (id) => PURCHASE_STATES.find((s) => s.id === id);
-
-const nextPurchaseId = (purchases) => {
-  const year = new Date().getFullYear();
-  const nums = purchases.map((p) => parseInt(String(p.id).split("-").pop(), 10)).filter((n) => !Number.isNaN(n));
-  const next = (nums.length ? Math.max(...nums) : 0) + 1;
-  return `CP-${year}-${String(next).padStart(3, "0")}`;
-};
 
 let lineSeq = 0;
 const newLine = (insumos) => {
@@ -27,7 +21,7 @@ const newLine = (insumos) => {
 
 const emptyPurchase = (insumos) => ({
   id: null,
-  supplierId: SUPPLIERS[0].id,
+  supplierId: "",
   date: new Date().toISOString().slice(0, 10),
   status: "rascunho",
   lines: [newLine(insumos)],
@@ -36,7 +30,12 @@ const emptyPurchase = (insumos) => ({
 export const Compras = () => {
   const { purchases, setPurchases, insumos } = useAdmin();
   const [open, setOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [suppliers, setSuppliers] = useState([]);
   const [form, setForm] = useState(() => emptyPurchase(insumos));
+
+  useEffect(() => { listSuppliers().then(setSuppliers).catch(() => {}); }, []);
+  const supplierName = (id) => suppliers.find((s) => s.id === id)?.name || "—";
 
   const startNew = () => { setForm(emptyPurchase(insumos)); setOpen(true); };
   const startEdit = (row) => {
@@ -44,10 +43,13 @@ export const Compras = () => {
     setOpen(true);
   };
 
-  const remove = (row) => {
-    if (!window.confirm(`Remover a compra ${row.id}?`)) return;
-    setPurchases((prev) => prev.filter((x) => x.id !== row.id));
-    toast.success("Compra removida.");
+  const remove = async (row) => {
+    if (!window.confirm(`Remover a compra ${row.code}?`)) return;
+    try {
+      await deletePurchase(row.id);
+      setPurchases((prev) => prev.filter((x) => x.id !== row.id));
+      toast.success("Compra removida.");
+    } catch (e) { toast.error("Erro ao remover", { description: e.message }); }
   };
 
   const u = (k, v) => setForm((f) => ({ ...f, [k]: v }));
@@ -65,26 +67,27 @@ export const Compras = () => {
 
   const formTotal = purchaseTotal(form);
 
-  const save = () => {
+  const save = async () => {
     if (form.lines.length === 0) { toast.error("Adiciona pelo menos uma linha de insumo."); return; }
-    const payload = {
-      ...form,
-      lines: form.lines.map(({ insumoId, qty, cost }) => ({ insumoId, qty: parseFloat(qty) || 0, cost: parseFloat(cost) || 0 })),
-    };
-    if (form.id) {
-      setPurchases((prev) => prev.map((x) => x.id === form.id ? payload : x));
-      toast.success("Compra atualizada.");
-    } else {
-      const id = nextPurchaseId(purchases);
-      setPurchases((prev) => [{ ...payload, id }, ...prev]);
-      toast.success(`Compra ${id} registada.`);
-    }
-    setOpen(false);
+    setSaving(true);
+    try {
+      if (form.id) {
+        const updated = await updatePurchase(form.id, form);
+        setPurchases((prev) => prev.map((x) => x.id === form.id ? updated : x));
+        toast.success("Compra atualizada.");
+      } else {
+        const created = await createPurchase(form);
+        setPurchases((prev) => [created, ...prev]);
+        toast.success(`Compra ${created.code} registada.`);
+      }
+      setOpen(false);
+    } catch (e) { toast.error("Erro ao guardar", { description: e.message }); }
+    finally { setSaving(false); }
   };
 
   const columns = [
-    { key: "id", label: "Nº", sortable: true,
-      render: (p) => <span className="font-semibold text-[var(--da-forest)]">{p.id}</span> },
+    { key: "code", label: "Nº", sortable: true,
+      render: (p) => <span className="font-semibold text-[var(--da-forest)]">{p.code}</span> },
     { key: "supplierId", label: "Fornecedor",
       render: (p) => supplierName(p.supplierId) },
     { key: "date", label: "Data", sortable: true,
@@ -112,7 +115,7 @@ export const Compras = () => {
         data={purchases}
         columns={columns}
         getRowId={(p) => p.id}
-        searchKeys={["id"]}
+        searchKeys={["code"]}
         pageSize={10}
         rowActions={(p) => [
           { label: "Editar", onClick: () => startEdit(p) },
@@ -123,13 +126,13 @@ export const Compras = () => {
       <Modal
         open={open}
         onClose={() => setOpen(false)}
-        title={form.id ? `Editar compra ${form.id}` : "Nova compra"}
+        title={form.id ? `Editar compra ${form.code}` : "Nova compra"}
         size="xl"
         testid="compra-modal"
         footer={(
           <>
             <button onClick={() => setOpen(false)} className="btn-da btn-da-ghost text-xs">Cancelar</button>
-            <button onClick={save} data-testid="compra-save" className="btn-da btn-da-primary text-xs">{form.id ? "Guardar" : "Registar"}</button>
+            <button onClick={save} disabled={saving} data-testid="compra-save" className="btn-da btn-da-primary text-xs disabled:opacity-60">{saving ? "A guardar…" : (form.id ? "Guardar" : "Registar")}</button>
           </>
         )}
       >
@@ -137,7 +140,8 @@ export const Compras = () => {
           <div className="grid sm:grid-cols-3 gap-4">
             <FormRow label="Fornecedor">
               <select className={fieldClass} value={form.supplierId} onChange={(e) => u("supplierId", e.target.value)} data-testid="compra-supplier">
-                {SUPPLIERS.map((s) => (<option key={s.id} value={s.id}>{s.name}</option>))}
+                <option value="">— sem fornecedor —</option>
+                {suppliers.map((s) => (<option key={s.id} value={s.id}>{s.name}</option>))}
               </select>
             </FormRow>
             <FormRow label="Data">

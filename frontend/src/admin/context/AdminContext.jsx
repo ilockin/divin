@@ -2,7 +2,8 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from "
 import { ROLES, adminUsers, adminOrders, adminAttributes, stockMovements as initialMovements, storeSettings as initialSettings } from "../data/mockAdmin";
 import { useAuth } from "../../context/AuthContext";
 import { loadArticles, saveArticles } from "../../lib/articles";
-import { initialPurchases, initialLanguages, initialShippingZones, initialDistrictRules, initialCategoryRules } from "../data/mockErp";
+import { initialLanguages, initialShippingZones, initialDistrictRules, initialCategoryRules } from "../data/mockErp";
+import { listPurchases } from "../../lib/adminPurchases";
 import { listAllMethods } from "../../lib/adminShipping";
 import { listInsumos, loadRecipes, listProductionOrders } from "../../lib/adminProduction";
 import { listAllProducts } from "../../lib/adminProducts";
@@ -41,7 +42,8 @@ export const AdminProvider = ({ children }) => {
   useEffect(() => { listInsumos().then(setInsumos).catch(() => {}); }, []);
   useEffect(() => { loadRecipes().then(setRecipes).catch(() => {}); }, []);
   useEffect(() => { listProductionOrders().then(setProductionOrders).catch(() => {}); }, []);
-  const [purchases, setPurchases] = useState(initialPurchases);
+  const [purchases, setPurchases] = useState([]);
+  useEffect(() => { listPurchases().then(setPurchases).catch(() => {}); }, []);
   // Envios & idiomas (partilhados com /admin/envios)
   const [shippingMethods, setShippingMethods] = useState([]);
   useEffect(() => { listAllMethods().then(setShippingMethods).catch(() => {}); }, []);
