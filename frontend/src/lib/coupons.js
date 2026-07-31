@@ -1,5 +1,3 @@
-import { products as catalogProducts } from "../data/mock";
-
 export const validateCoupon = (coupon, { subtotal, items = [] }) => {
   if (!coupon.active) return { ok: false, reason: "Este cupão não está ativo." };
   const today = new Date().toISOString().slice(0, 10);
@@ -8,8 +6,9 @@ export const validateCoupon = (coupon, { subtotal, items = [] }) => {
   if (coupon.usageLimit > 0 && coupon.usedCount >= coupon.usageLimit) return { ok: false, reason: "Este cupão atingiu o limite de utilizações." };
   if (coupon.minOrder > 0 && subtotal < coupon.minOrder) return { ok: false, reason: `Encomenda mínima de ${coupon.minOrder} € para usar este cupão.` };
 
+  // Âmbito por categoria/produto — os itens do carrinho já carregam category e id.
   if (coupon.scope === "category") {
-    const itemCategories = items.map((i) => catalogProducts.find((p) => p.id === i.id)?.category);
+    const itemCategories = items.map((i) => i.category);
     if (!itemCategories.some((c) => coupon.scopeIds.includes(c))) {
       return { ok: false, reason: "Este cupão não se aplica aos produtos no carrinho." };
     }

@@ -1,12 +1,13 @@
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
 import { DataTable, StatusBadge } from "../components/DataTable";
 import { Modal } from "../components/Modal";
 import { PageHeader, FormRow, fieldClass } from "../components/Bits";
-import { useAdmin } from "../context/AdminContext";
-import { adminCategories, adminProducts } from "../data/mockAdmin";
 import { COUPON_TYPES, COUPON_SCOPES } from "../data/mockMarketing";
+import { listAllCoupons, createCoupon, updateCoupon, deleteCoupon, setCouponActive } from "../../lib/adminCoupons";
+import { loadCategories } from "../../lib/products";
+import { listAllProducts } from "../../lib/adminProducts";
 import { formatEUR } from "../../lib/format";
 
 const emptyCoupon = {
@@ -18,46 +19,60 @@ const emptyCoupon = {
 const isExpired = (c) => c.validUntil && c.validUntil < new Date().toISOString().slice(0, 10);
 
 export const Coupons = () => {
-  const { coupons, setCoupons } = useAdmin();
+  const [coupons, setCoupons] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [cats, setCats] = useState([]);
+  const [products, setProducts] = useState([]);
   const [open, setOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(emptyCoupon);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try { setCoupons(await listAllCoupons()); }
+    catch (e) { toast.error("Erro ao carregar cupões", { description: e.message }); }
+    finally { setLoading(false); }
+  }, []);
+  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    loadCategories().then(setCats).catch(() => {});
+    listAllProducts().then(setProducts).catch(() => {});
+  }, []);
 
   const u = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
   const startNew = () => { setForm(emptyCoupon); setOpen(true); };
   const startEdit = (row) => { setForm({ ...row }); setOpen(true); };
 
-  const remove = (row) => {
+  const remove = async (row) => {
     if (!window.confirm(`Remover o cupão "${row.code}"?`)) return;
-    setCoupons((prev) => prev.filter((x) => x.id !== row.id));
-    toast.success("Cupão removido.");
+    try { await deleteCoupon(row.id); setCoupons((prev) => prev.filter((x) => x.id !== row.id)); toast.success("Cupão removido."); }
+    catch (e) { toast.error("Erro ao remover", { description: e.message }); }
   };
 
-  const toggleActive = (row) => {
-    setCoupons((prev) => prev.map((x) => x.id === row.id ? { ...x, active: !x.active } : x));
-    toast.success(row.active ? "Cupão desativado." : "Cupão ativado.");
+  const toggleActive = async (row) => {
+    try {
+      await setCouponActive(row.id, !row.active);
+      setCoupons((prev) => prev.map((x) => x.id === row.id ? { ...x, active: !x.active } : x));
+      toast.success(row.active ? "Cupão desativado." : "Cupão ativado.");
+    } catch (e) { toast.error("Erro ao atualizar", { description: e.message }); }
   };
 
-  const save = () => {
+  const save = async () => {
     if (!form.code.trim()) { toast.error("Indica o código do cupão."); return; }
     const code = form.code.trim().toUpperCase();
     const duplicate = coupons.some((c) => c.code === code && c.id !== form.id);
     if (duplicate) { toast.error("Já existe um cupão com esse código."); return; }
-    const payload = {
-      ...form, code,
-      value: parseFloat(form.value) || 0,
-      minOrder: parseFloat(form.minOrder) || 0,
-      usageLimit: parseInt(form.usageLimit, 10) || 0,
-    };
-    if (form.id) {
-      setCoupons((prev) => prev.map((x) => x.id === form.id ? payload : x));
-      toast.success("Cupão atualizado.");
-    } else {
-      const newId = "cp" + String(coupons.length + 1).padStart(2, "0");
-      setCoupons((prev) => [...prev, { ...payload, id: newId, usedCount: 0 }]);
-      toast.success("Cupão criado.");
-    }
-    setOpen(false);
+    const payload = { ...form, code };
+    setSaving(true);
+    try {
+      if (form.id) { await updateCoupon(form.id, payload); toast.success("Cupão atualizado."); }
+      else { await createCoupon(payload); toast.success("Cupão criado."); }
+      setOpen(false);
+      await load();
+    } catch (e) {
+      toast.error("Erro ao guardar", { description: e.message });
+    } finally { setSaving(false); }
   };
 
   const columns = [
@@ -100,6 +115,7 @@ export const Coupons = () => {
         getRowId={(c) => c.id}
         searchKeys={["code"]}
         pageSize={10}
+        emptyMessage={loading ? "A carregar…" : "Sem cupões."}
         rowActions={(c) => [
           { label: "Editar", onClick: () => startEdit(c) },
           { label: c.active ? "Desativar" : "Ativar", onClick: () => toggleActive(c) },
@@ -115,7 +131,7 @@ export const Coupons = () => {
         footer={(
           <>
             <button onClick={() => setOpen(false)} className="btn-da btn-da-ghost text-xs">Cancelar</button>
-            <button onClick={save} data-testid="coupon-save" className="btn-da btn-da-primary text-xs">{form.id ? "Guardar" : "Criar"}</button>
+            <button onClick={save} disabled={saving} data-testid="coupon-save" className="btn-da btn-da-primary text-xs disabled:opacity-60">{saving ? "A guardar…" : (form.id ? "Guardar" : "Criar")}</button>
           </>
         )}
       >
@@ -146,10 +162,10 @@ export const Coupons = () => {
           </FormRow>
           <div className="grid sm:grid-cols-2 gap-4">
             <FormRow label="Válido a partir de">
-              <input type="date" className={fieldClass} value={form.validFrom} onChange={(e) => u("validFrom", e.target.value)} data-testid="coupon-valid-from" />
+              <input type="date" className={fieldClass} value={form.validFrom || ""} onChange={(e) => u("validFrom", e.target.value)} data-testid="coupon-valid-from" />
             </FormRow>
             <FormRow label="Válido até">
-              <input type="date" className={fieldClass} value={form.validUntil} onChange={(e) => u("validUntil", e.target.value)} data-testid="coupon-valid-until" />
+              <input type="date" className={fieldClass} value={form.validUntil || ""} onChange={(e) => u("validUntil", e.target.value)} data-testid="coupon-valid-until" />
             </FormRow>
           </div>
           <FormRow label="Limite de utilizações" hint="0 = sem limite.">
@@ -164,7 +180,7 @@ export const Coupons = () => {
             </FormRow>
             {form.scope === "category" && (
               <div className="mt-3 space-y-2" data-testid="coupon-scope-categories">
-                {adminCategories.map((c) => (
+                {cats.map((c) => (
                   <label key={c.slug} className="flex items-center gap-2 font-body text-sm">
                     <input
                       type="checkbox"
@@ -179,7 +195,7 @@ export const Coupons = () => {
             )}
             {form.scope === "product" && (
               <div className="mt-3 space-y-2 max-h-48 overflow-y-auto" data-testid="coupon-scope-products">
-                {adminProducts.map((p) => (
+                {products.map((p) => (
                   <label key={p.id} className="flex items-center gap-2 font-body text-sm">
                     <input
                       type="checkbox"

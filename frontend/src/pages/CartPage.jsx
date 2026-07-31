@@ -4,24 +4,32 @@ import { Minus, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useCart } from "../context/CartContext";
 import { formatEUR } from "../lib/format";
-import { initialCoupons } from "../admin/data/mockMarketing";
+import { getCouponByCode } from "../lib/adminCoupons";
 import { validateCoupon, couponToPromo } from "../lib/coupons";
 
 export const CartPage = () => {
   const { items, totals, updateQty, removeItem, promo, applyPromo, clearPromo } = useCart();
   const [couponCode, setCouponCode] = useState("");
+  const [applying, setApplying] = useState(false);
 
-  const applyCoupon = (e) => {
+  const applyCoupon = async (e) => {
     e.preventDefault();
     const code = couponCode.trim().toUpperCase();
     if (!code) return;
-    const coupon = initialCoupons.find((c) => c.code === code);
-    if (!coupon) { toast.error("Cupão inválido."); return; }
-    const result = validateCoupon(coupon, { subtotal: totals.subtotal, items });
-    if (!result.ok) { toast.error(result.reason); return; }
-    applyPromo(couponToPromo(coupon));
-    toast.success(`Cupão ${coupon.code} aplicado.`);
-    setCouponCode("");
+    setApplying(true);
+    try {
+      const coupon = await getCouponByCode(code);
+      if (!coupon) { toast.error("Cupão inválido."); return; }
+      const result = validateCoupon(coupon, { subtotal: totals.subtotal, items });
+      if (!result.ok) { toast.error(result.reason); return; }
+      applyPromo(couponToPromo(coupon));
+      toast.success(`Cupão ${coupon.code} aplicado.`);
+      setCouponCode("");
+    } catch (err) {
+      toast.error("Erro ao validar o cupão", { description: err.message });
+    } finally {
+      setApplying(false);
+    }
   };
 
   if (items.length === 0) {
@@ -79,7 +87,7 @@ export const CartPage = () => {
                 data-testid="cartpage-coupon-input"
                 className="flex-1 bg-white border hairline rounded-lg px-3.5 py-2.5 font-body text-sm focus:outline-none focus:border-[var(--da-leaf)]"
               />
-              <button type="submit" data-testid="cartpage-coupon-apply" className="btn-da btn-da-outline text-xs whitespace-nowrap">Aplicar</button>
+              <button type="submit" disabled={applying} data-testid="cartpage-coupon-apply" className="btn-da btn-da-outline text-xs whitespace-nowrap disabled:opacity-60">{applying ? "A validar…" : "Aplicar"}</button>
             </form>
           )}
 

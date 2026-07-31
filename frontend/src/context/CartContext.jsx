@@ -48,6 +48,7 @@ export const CartProvider = ({ children }) => {
           price: product.price,
           image: product.images?.[0],
           size: product.size,
+          category: product.category,
           qty,
         },
       ];

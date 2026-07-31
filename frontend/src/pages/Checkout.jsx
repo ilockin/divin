@@ -8,7 +8,7 @@ import { formatEUR } from "../lib/format";
 import { createOrder } from "../lib/orders";
 import { supabase } from "../lib/supabaseClient";
 import { getSettings } from "../lib/storeSettings";
-import { initialCoupons } from "../admin/data/mockMarketing";
+import { getCouponByCode } from "../lib/adminCoupons";
 import { validateCoupon, couponToPromo } from "../lib/coupons";
 
 const STEPS = ["Contacto e Envio", "Método de Envio", "Pagamento"];
@@ -39,17 +39,21 @@ export const Checkout = () => {
 
   const update = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
-  const applyCoupon = (e) => {
+  const applyCoupon = async (e) => {
     e.preventDefault();
     const code = couponCode.trim().toUpperCase();
     if (!code) return;
-    const coupon = initialCoupons.find((c) => c.code === code);
-    if (!coupon) { toast.error("Cupão inválido."); return; }
-    const result = validateCoupon(coupon, { subtotal: totals.subtotal, items });
-    if (!result.ok) { toast.error(result.reason); return; }
-    applyPromo(couponToPromo(coupon));
-    toast.success(`Cupão ${coupon.code} aplicado.`);
-    setCouponCode("");
+    try {
+      const coupon = await getCouponByCode(code);
+      if (!coupon) { toast.error("Cupão inválido."); return; }
+      const result = validateCoupon(coupon, { subtotal: totals.subtotal, items });
+      if (!result.ok) { toast.error(result.reason); return; }
+      applyPromo(couponToPromo(coupon));
+      toast.success(`Cupão ${coupon.code} aplicado.`);
+      setCouponCode("");
+    } catch (err) {
+      toast.error("Erro ao validar o cupão", { description: err.message });
+    }
   };
 
   const afterDiscount = totals.subtotal - totals.discount;
