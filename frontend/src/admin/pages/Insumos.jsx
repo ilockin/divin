@@ -1,53 +1,59 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
 import { DataTable, StatusBadge } from "../components/DataTable";
 import { Modal } from "../components/Modal";
 import { PageHeader, FormRow, fieldClass } from "../components/Bits";
 import { useAdmin } from "../context/AdminContext";
-import { SUPPLIERS, INSUMO_CATEGORIES, INSUMO_UNITS } from "../data/mockErp";
+import { INSUMO_CATEGORIES, INSUMO_UNITS } from "../data/mockErp";
+import { listSuppliers, createInsumo, updateInsumo, deleteInsumo } from "../../lib/adminProduction";
 import { formatEUR3 } from "../../lib/format";
-
-const supplierName = (id) => SUPPLIERS.find((s) => s.id === id)?.name || "—";
 
 const emptyInsumo = {
   id: null, name: "", category: INSUMO_CATEGORIES[0], unit: "ml",
-  supplierId: SUPPLIERS[0].id, cost: 0, stock: 0, minStock: 0,
+  supplierId: "", cost: 0, stock: 0, minStock: 0,
 };
 
 export const Insumos = () => {
   const { insumos, setInsumos } = useAdmin();
   const [open, setOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [suppliers, setSuppliers] = useState([]);
   const [form, setForm] = useState(emptyInsumo);
+
+  useEffect(() => { listSuppliers().then(setSuppliers).catch(() => {}); }, []);
+  const supplierName = (id) => suppliers.find((s) => s.id === id)?.name || "—";
 
   const u = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
   const startNew = () => { setForm(emptyInsumo); setOpen(true); };
   const startEdit = (row) => { setForm({ ...row }); setOpen(true); };
 
-  const remove = (row) => {
+  const remove = async (row) => {
     if (!window.confirm(`Remover o insumo "${row.name}"?`)) return;
-    setInsumos((prev) => prev.filter((x) => x.id !== row.id));
-    toast.success("Insumo removido.");
+    try {
+      await deleteInsumo(row.id);
+      setInsumos((prev) => prev.filter((x) => x.id !== row.id));
+      toast.success("Insumo removido.");
+    } catch (e) { toast.error("Erro ao remover", { description: e.message }); }
   };
 
-  const save = () => {
+  const save = async () => {
     if (!form.name.trim()) { toast.error("Indica o nome do insumo."); return; }
-    const payload = {
-      ...form,
-      cost: parseFloat(form.cost) || 0,
-      stock: parseFloat(form.stock) || 0,
-      minStock: parseFloat(form.minStock) || 0,
-    };
-    if (form.id) {
-      setInsumos((prev) => prev.map((x) => x.id === form.id ? payload : x));
-      toast.success("Insumo atualizado.");
-    } else {
-      const newId = "i" + String(insumos.length + 1).padStart(2, "0");
-      setInsumos((prev) => [...prev, { ...payload, id: newId }]);
-      toast.success("Insumo criado.");
-    }
-    setOpen(false);
+    setSaving(true);
+    try {
+      if (form.id) {
+        const updated = await updateInsumo(form.id, form);
+        setInsumos((prev) => prev.map((x) => x.id === form.id ? updated : x));
+        toast.success("Insumo atualizado.");
+      } else {
+        const created = await createInsumo(form);
+        setInsumos((prev) => [...prev, created]);
+        toast.success("Insumo criado.");
+      }
+      setOpen(false);
+    } catch (e) { toast.error("Erro ao guardar", { description: e.message }); }
+    finally { setSaving(false); }
   };
 
   const lowCount = insumos.filter((i) => i.stock <= i.minStock).length;
@@ -115,7 +121,7 @@ export const Insumos = () => {
         footer={(
           <>
             <button onClick={() => setOpen(false)} className="btn-da btn-da-ghost text-xs">Cancelar</button>
-            <button onClick={save} data-testid="insumo-save" className="btn-da btn-da-primary text-xs">{form.id ? "Guardar" : "Criar"}</button>
+            <button onClick={save} disabled={saving} data-testid="insumo-save" className="btn-da btn-da-primary text-xs disabled:opacity-60">{saving ? "A guardar…" : (form.id ? "Guardar" : "Criar")}</button>
           </>
         )}
       >
@@ -137,7 +143,8 @@ export const Insumos = () => {
           </div>
           <FormRow label="Fornecedor">
             <select className={fieldClass} value={form.supplierId} onChange={(e) => u("supplierId", e.target.value)} data-testid="insumo-supplier">
-              {SUPPLIERS.map((s) => (<option key={s.id} value={s.id}>{s.name}</option>))}
+              <option value="">— sem fornecedor —</option>
+              {suppliers.map((s) => (<option key={s.id} value={s.id}>{s.name}</option>))}
             </select>
           </FormRow>
           <div className="grid sm:grid-cols-3 gap-4">

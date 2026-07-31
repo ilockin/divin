@@ -1,9 +1,11 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { ROLES, adminUsers, adminProducts, adminOrders, adminAttributes, stockMovements as initialMovements, storeSettings as initialSettings } from "../data/mockAdmin";
+import { ROLES, adminUsers, adminOrders, adminAttributes, stockMovements as initialMovements, storeSettings as initialSettings } from "../data/mockAdmin";
 import { useAuth } from "../../context/AuthContext";
 import { loadArticles, saveArticles } from "../../lib/articles";
-import { initialInsumos, initialRecipes, initialProductionOrders, initialPurchases, initialLanguages, initialShippingZones, initialDistrictRules, initialCategoryRules } from "../data/mockErp";
+import { initialPurchases, initialLanguages, initialShippingZones, initialDistrictRules, initialCategoryRules } from "../data/mockErp";
 import { listAllMethods } from "../../lib/adminShipping";
+import { listInsumos, loadRecipes, listProductionOrders } from "../../lib/adminProduction";
+import { listAllProducts } from "../../lib/adminProducts";
 import { initialCoupons } from "../data/mockMarketing";
 import { loadPages, savePages } from "../../lib/pages";
 import { loadPopups, savePopups } from "../../lib/popups";
@@ -25,16 +27,20 @@ export const AdminProvider = ({ children }) => {
   const realRole = authProfile?.role || "admin";
   const [viewAsRole, setViewAsRole] = useState(null);
   const [users, setUsers] = useState(adminUsers);
-  const [productsList, setProductsList] = useState(adminProducts);
+  const [productsList, setProductsList] = useState([]);
+  useEffect(() => { listAllProducts().then(setProductsList).catch(() => {}); }, []);
   const [orders, setOrders] = useState(adminOrders);
   const [articles, setArticles] = useState(loadArticles);
   const [attributes, setAttributes] = useState(adminAttributes);
   const [movements, setMovements] = useState(initialMovements);
   const [settings, setSettings] = useState(initialSettings);
   // Produção / ERP
-  const [insumos, setInsumos] = useState(initialInsumos);
-  const [recipes, setRecipes] = useState(initialRecipes);
-  const [productionOrders, setProductionOrders] = useState(initialProductionOrders);
+  const [insumos, setInsumos] = useState([]);
+  const [recipes, setRecipes] = useState({});
+  const [productionOrders, setProductionOrders] = useState([]);
+  useEffect(() => { listInsumos().then(setInsumos).catch(() => {}); }, []);
+  useEffect(() => { loadRecipes().then(setRecipes).catch(() => {}); }, []);
+  useEffect(() => { listProductionOrders().then(setProductionOrders).catch(() => {}); }, []);
   const [purchases, setPurchases] = useState(initialPurchases);
   // Envios & idiomas (partilhados com /admin/envios)
   const [shippingMethods, setShippingMethods] = useState([]);
