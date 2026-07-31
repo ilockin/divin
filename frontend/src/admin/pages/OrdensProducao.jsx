@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useParams, Navigate } from "react-router-dom";
 import { Plus, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
@@ -7,49 +7,48 @@ import { Modal } from "../components/Modal";
 import { PageHeader, SectionTitle, FormRow, fieldClass, KpiCard } from "../components/Bits";
 import { useAdmin } from "../context/AdminContext";
 import { PRODUCTION_STATES, getInsumo, recipeCost } from "../data/mockErp";
+import { createProductionOrder, updateProductionOrderStatus, deleteProductionOrder } from "../../lib/adminProduction";
 import { formatEUR } from "../../lib/format";
 
 const stateOf = (id) => PRODUCTION_STATES.find((s) => s.id === id);
-
-const nextOrderId = (orders) => {
-  const year = new Date().getFullYear();
-  const nums = orders
-    .map((o) => parseInt(String(o.id).split("-").pop(), 10))
-    .filter((n) => !Number.isNaN(n));
-  const next = (nums.length ? Math.max(...nums) : 0) + 1;
-  return `OP-${year}-${String(next).padStart(3, "0")}`;
-};
 
 export const OrdensProducao = () => {
   const { productionOrders, setProductionOrders, products } = useAdmin();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ productId: products[0]?.id || "", qty: 1, notes: "" });
+  const [creating, setCreating] = useState(false);
+  const [form, setForm] = useState({ productId: "", qty: 1, notes: "" });
+
+  useEffect(() => { if (!form.productId && products.length) setForm((f) => ({ ...f, productId: products[0].id })); }, [products, form.productId]);
 
   const productName = (id) => products.find((p) => p.id === id)?.name || "—";
 
-  const create = () => {
+  const create = async () => {
     if (!form.productId || !form.qty) { toast.error("Escolhe o produto e a quantidade."); return; }
-    const id = nextOrderId(productionOrders);
-    setProductionOrders((prev) => [
-      { id, productId: form.productId, qty: parseInt(form.qty, 10), status: "planeada", date: new Date().toISOString().slice(0, 10), notes: form.notes },
-      ...prev,
-    ]);
-    setOpen(false);
-    setForm({ productId: products[0]?.id || "", qty: 1, notes: "" });
-    toast.success(`Ordem ${id} criada.`);
-    navigate(`/admin/ordens-producao/${id}`);
+    setCreating(true);
+    try {
+      const order = await createProductionOrder(form);
+      setProductionOrders((prev) => [order, ...prev]);
+      setOpen(false);
+      setForm({ productId: products[0]?.id || "", qty: 1, notes: "" });
+      toast.success(`Ordem ${order.orderNumber} criada.`);
+      navigate(`/admin/ordens-producao/${order.id}`);
+    } catch (e) { toast.error("Erro ao criar ordem", { description: e.message }); }
+    finally { setCreating(false); }
   };
 
-  const remove = (row) => {
-    if (!window.confirm(`Remover a ordem ${row.id}?`)) return;
-    setProductionOrders((prev) => prev.filter((x) => x.id !== row.id));
-    toast.success("Ordem removida.");
+  const remove = async (row) => {
+    if (!window.confirm(`Remover a ordem ${row.orderNumber}?`)) return;
+    try {
+      await deleteProductionOrder(row.id);
+      setProductionOrders((prev) => prev.filter((x) => x.id !== row.id));
+      toast.success("Ordem removida.");
+    } catch (e) { toast.error("Erro ao remover", { description: e.message }); }
   };
 
   const columns = [
-    { key: "id", label: "Nº", sortable: true,
-      render: (o) => <Link to={`/admin/ordens-producao/${o.id}`} className="font-semibold text-[var(--da-forest)] hover:text-[var(--da-leaf)]">{o.id}</Link> },
+    { key: "orderNumber", label: "Nº", sortable: true,
+      render: (o) => <Link to={`/admin/ordens-producao/${o.id}`} className="font-semibold text-[var(--da-forest)] hover:text-[var(--da-leaf)]">{o.orderNumber}</Link> },
     { key: "productId", label: "Produto",
       render: (o) => productName(o.productId) },
     { key: "qty", label: "Quantidade", sortable: true,
@@ -77,7 +76,7 @@ export const OrdensProducao = () => {
         data={productionOrders}
         columns={columns}
         getRowId={(o) => o.id}
-        searchKeys={["id"]}
+        searchKeys={["orderNumber"]}
         pageSize={10}
         rowActions={(o) => [
           { label: "Ver detalhe", onClick: () => navigate(`/admin/ordens-producao/${o.id}`) },
@@ -93,7 +92,7 @@ export const OrdensProducao = () => {
         footer={(
           <>
             <button onClick={() => setOpen(false)} className="btn-da btn-da-ghost text-xs">Cancelar</button>
-            <button onClick={create} data-testid="ordem-create" className="btn-da btn-da-primary text-xs">Criar ordem</button>
+            <button onClick={create} disabled={creating} data-testid="ordem-create" className="btn-da btn-da-primary text-xs disabled:opacity-60">{creating ? "A criar…" : "Criar ordem"}</button>
           </>
         )}
       >
@@ -136,15 +135,18 @@ export const OrdemProducaoDetail = () => {
   });
   const hasShortage = requirements.some((r) => r.shortage);
 
-  const setStatus = (status) => {
-    setProductionOrders((prev) => prev.map((o) => o.id === order.id ? { ...o, status } : o));
-    toast.success(`Estado atualizado: ${stateOf(status)?.label}.`);
+  const setStatus = async (status) => {
+    try {
+      await updateProductionOrderStatus(order.id, status);
+      setProductionOrders((prev) => prev.map((o) => o.id === order.id ? { ...o, status } : o));
+      toast.success(`Estado atualizado: ${stateOf(status)?.label}.`);
+    } catch (e) { toast.error("Erro ao atualizar estado", { description: e.message }); }
   };
 
   return (
     <div data-testid="admin-ordem-detail">
       <PageHeader
-        title={`Ordem ${order.id}`}
+        title={`Ordem ${order.orderNumber}`}
         subtitle={product ? product.name : "Produto removido"}
         actions={<Link to="/admin/ordens-producao" className="btn-da btn-da-ghost text-xs">Voltar</Link>}
       />
