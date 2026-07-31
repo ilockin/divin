@@ -1,10 +1,11 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Plus, X, FlaskConical, Check } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, SectionTitle, FormRow, fieldClass, KpiCard } from "../components/Bits";
 import { StatusBadge } from "../components/DataTable";
 import { useAdmin } from "../context/AdminContext";
 import { getInsumo, lineCost, recipeMargin } from "../data/mockErp";
+import { saveRecipe } from "../../lib/adminProduction";
 import { formatEUR, formatEUR3 } from "../../lib/format";
 
 let rowSeq = 0;
@@ -16,15 +17,20 @@ const newRow = (insumos) => {
 
 export const FichaTecnica = () => {
   const { products, insumos, recipes, setRecipes } = useAdmin();
-  const [selectedId, setSelectedId] = useState(products[0]?.id || null);
-  const [lines, setLines] = useState(() => recipes[products[0]?.id]?.lines?.map((l) => ({ ...l })) || []);
+  const [selectedId, setSelectedId] = useState(null);
+  const [lines, setLines] = useState([]);
+  const [saving, setSaving] = useState(false);
+
+  // produtos e fichas carregam do Supabase (async): selecionar o 1.º produto
+  // quando chegam, e sincronizar as linhas com a ficha do produto selecionado.
+  useEffect(() => { if (!selectedId && products.length) setSelectedId(products[0].id); }, [products, selectedId]);
+  useEffect(() => {
+    if (selectedId) setLines(recipes[selectedId]?.lines?.map((l) => ({ ...l })) || []);
+  }, [selectedId, recipes]);
 
   const product = products.find((p) => p.id === selectedId);
 
-  const selectProduct = (id) => {
-    setSelectedId(id);
-    setLines(recipes[id]?.lines?.map((l) => ({ ...l })) || []);
-  };
+  const selectProduct = (id) => setSelectedId(id);
 
   const addLine = () => setLines((prev) => [...prev, newRow(insumos)]);
   const removeLine = (id) => setLines((prev) => prev.filter((l) => l.id !== id));
@@ -42,13 +48,19 @@ export const FichaTecnica = () => {
 
   const marginTone = margemPct < 20 ? "negative" : "positive";
 
-  const save = () => {
+  const save = async () => {
     if (lines.length === 0) { toast.error("Adiciona pelo menos um insumo à ficha."); return; }
-    setRecipes((prev) => ({
-      ...prev,
-      [selectedId]: { updatedAt: new Date().toISOString(), lines: lines.map((l) => ({ ...l })) },
-    }));
-    toast.success(`Ficha técnica de "${product.name}" guardada.`);
+    setSaving(true);
+    try {
+      await saveRecipe(selectedId, lines);
+      setRecipes((prev) => ({
+        ...prev,
+        [selectedId]: { updatedAt: new Date().toISOString(), lines: lines.map((l) => ({ ...l })) },
+      }));
+      toast.success(`Ficha técnica de "${product.name}" guardada.`);
+    } catch (e) {
+      toast.error("Erro ao guardar a ficha", { description: e.message });
+    } finally { setSaving(false); }
   };
 
   return (
@@ -101,7 +113,7 @@ export const FichaTecnica = () => {
                       Preço de venda: {formatEUR(product.price)} · {recipes[selectedId] ? <StatusBadge tone="green">Com ficha</StatusBadge> : <StatusBadge tone="muted">Sem ficha</StatusBadge>}
                     </p>
                   </div>
-                  <button onClick={save} data-testid="ficha-save" className="btn-da btn-da-primary text-xs">Guardar ficha</button>
+                  <button onClick={save} disabled={saving} data-testid="ficha-save" className="btn-da btn-da-primary text-xs disabled:opacity-60">{saving ? "A guardar…" : "Guardar ficha"}</button>
                 </div>
 
                 {/* linhas */}
