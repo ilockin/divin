@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useEffect } from "react";
 import "@/App.css";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { captureAffiliateRef } from "@/lib/affiliateRef";
 import { CartProvider } from "@/context/CartContext";
 import { AuthProvider } from "@/context/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
@@ -142,11 +143,19 @@ const Admin = () => (
   </AdminProvider>
 );
 
+// Captura o ?ref=CÓDIGO de afiliado em qualquer navegação e guarda-o até à compra.
+const AffiliateRefCapture = () => {
+  const location = useLocation();
+  useEffect(() => { captureAffiliateRef(location.search); }, [location.search]);
+  return null;
+};
+
 function App() {
   return (
     <div className="App">
       <BrowserRouter>
         <AuthProvider>
+          <AffiliateRefCapture />
           <Routes>
             <Route path="/admin/*" element={<AdminProtectedRoute><Admin /></AdminProtectedRoute>} />
             <Route path="/*" element={<Storefront />} />

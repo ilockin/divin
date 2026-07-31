@@ -1,42 +1,47 @@
-import React, { useMemo } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import { DataTable, StatusBadge } from "../components/DataTable";
 import { PageHeader, KpiCard } from "../components/Bits";
-import { useAdmin } from "../context/AdminContext";
-import { calcCommission } from "../../lib/commission";
+import { affiliateAdminAggregates, updateAffiliateCode, setAffiliateActive } from "../../lib/adminAffiliates";
 import { formatEUR } from "../../lib/format";
 import { TrendingUp, ShoppingCart, Percent } from "lucide-react";
 
+const genCode = () => "DA-AFIL-" + Math.random().toString(36).slice(2, 7).toUpperCase();
+
 export const Affiliates = () => {
-  const { users, orders, products } = useAdmin();
+  const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const rows = useMemo(() => {
-    const commissionFor = (order) =>
-      order.items.reduce((sum, item) => {
-        const p = products.find((x) => x.id === item.id);
-        return p ? sum + calcCommission(p, item.qty) : sum;
-      }, 0);
-    const afiliados = users.filter((u) => u.role === "afiliado");
-    return afiliados.map((u) => {
-      const myOrders = orders.filter((o) => o.affiliateCode === u.affiliateCode);
-      const revenue = myOrders.reduce((s, o) => s + (o.payment === "pago" ? o.total : 0), 0);
-      const commission = myOrders.reduce((s, o) => s + commissionFor(o), 0);
-      return { ...u, salesCount: myOrders.length, revenue, commission };
-    });
-  }, [users, orders, products]);
+  const load = useCallback(async () => {
+    setLoading(true);
+    try { setRows(await affiliateAdminAggregates()); }
+    catch (e) { toast.error("Erro ao carregar afiliados", { description: e.message }); }
+    finally { setLoading(false); }
+  }, []);
+  useEffect(() => { load(); }, [load]);
 
-  const totalCommission = rows.reduce((s, r) => s + r.commission, 0);
-  const totalSales = rows.reduce((s, r) => s + r.salesCount, 0);
+  const totalCommission = useMemo(() => rows.reduce((s, r) => s + r.commission, 0), [rows]);
+  const totalSales = useMemo(() => rows.reduce((s, r) => s + r.salesCount, 0), [rows]);
+
+  const setCode = async (r) => {
+    const code = window.prompt(`Código de afiliado para ${r.name}:`, r.affiliateCode || genCode());
+    if (code === null) return;
+    try { await updateAffiliateCode(r.id, code.trim().toUpperCase()); toast.success("Código atualizado."); await load(); }
+    catch (e) { toast.error("Erro ao guardar código", { description: e.message }); }
+  };
+
+  const toggleActive = async (r) => {
+    try { await setAffiliateActive(r.id, !r.affiliateActive); toast.success(r.affiliateActive ? "Afiliado desativado." : "Afiliado ativado."); await load(); }
+    catch (e) { toast.error("Erro ao atualizar", { description: e.message }); }
+  };
 
   const columns = [
     { key: "name", label: "Afiliado", sortable: true,
-      render: (r) => (
-        <div>
-          <p className="font-semibold text-[var(--da-forest)]">{r.name}</p>
-          <p className="font-body text-[11px] text-[var(--da-muted)] mt-0.5">{r.email}</p>
-        </div>
-      ) },
+      render: (r) => <p className="font-semibold text-[var(--da-forest)]">{r.name}</p> },
     { key: "affiliateCode", label: "Código",
-      render: (r) => <span className="text-[var(--da-muted)]">{r.affiliateCode}</span> },
+      render: (r) => r.affiliateCode
+        ? <span className="text-[var(--da-muted)]">{r.affiliateCode}</span>
+        : <span className="text-red-700 text-xs">sem código</span> },
     { key: "salesCount", label: "Vendas", sortable: true },
     { key: "revenue", label: "Receita gerada", sortable: true, render: (r) => formatEUR(r.revenue) },
     { key: "commission", label: "Comissão acumulada", sortable: true, render: (r) => formatEUR(r.commission) },
@@ -46,7 +51,7 @@ export const Affiliates = () => {
 
   return (
     <div data-testid="admin-affiliates">
-      <PageHeader title="Afiliados" subtitle="Comissão acumulada por cada afiliado, com base nas vendas atribuídas ao seu link." />
+      <PageHeader title="Afiliados" subtitle="Comissão acumulada por cada afiliado, com base nas vendas pagas atribuídas ao seu link." />
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         <KpiCard testid="kpi-affiliates-count" label="Afiliados ativos" value={rows.filter((r) => r.affiliateActive).length} icon={TrendingUp} />
@@ -59,9 +64,13 @@ export const Affiliates = () => {
         data={rows}
         columns={columns}
         getRowId={(r) => r.id}
-        searchKeys={["name", "email", "affiliateCode"]}
+        searchKeys={["name", "affiliateCode"]}
         pageSize={10}
-        emptyMessage="Ainda não há afiliados registados."
+        emptyMessage={loading ? "A carregar…" : "Ainda não há afiliados registados."}
+        rowActions={(r) => [
+          { label: r.affiliateCode ? "Editar código" : "Gerar código", onClick: () => setCode(r) },
+          { label: r.affiliateActive ? "Desativar" : "Ativar", onClick: () => toggleActive(r) },
+        ]}
       />
     </div>
   );

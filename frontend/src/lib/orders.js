@@ -1,4 +1,5 @@
 import { supabase } from "./supabaseClient";
+import { getAffiliateRef, clearAffiliateRef } from "./affiliateRef";
 
 export async function createOrder({ items, form, shippingCost, discountAmount, userId }) {
   const subtotal = items.reduce((s, i) => s + i.price * i.qty, 0);
@@ -15,6 +16,7 @@ export async function createOrder({ items, form, shippingCost, discountAmount, u
       shipping_cost: shippingCost,
       discount_amount: discountAmount,
       total,
+      affiliate_code: getAffiliateRef(),
       shipping_address: {
         name: form.name,
         line1: form.address,
@@ -43,6 +45,7 @@ export async function createOrder({ items, form, shippingCost, discountAmount, u
   const { error: itemsErr } = await supabase.from("order_items").insert(orderItems);
   if (itemsErr) throw itemsErr;
 
+  clearAffiliateRef();
   return order;
 }
 

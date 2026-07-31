@@ -83,7 +83,8 @@ export const AdminProvider = ({ children }) => {
     email: authUser?.email || "—",
     role,
     roleLabel: ROLES.find((r) => r.id === role)?.label || "—",
-    affiliateCode: role === "afiliado" ? "DA-AFIL-001" : undefined,
+    affiliateCode: authProfile?.affiliate_code || undefined,
+    affiliateActive: authProfile?.affiliate_active !== false,
   }), [authProfile, authUser, role]);
 
   const value = {
