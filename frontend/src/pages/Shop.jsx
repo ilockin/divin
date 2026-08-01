@@ -4,19 +4,22 @@ import { ProductCard } from "../components/ProductCard";
 import { loadProducts, loadCategories } from "../lib/products";
 import { ChevronDown } from "lucide-react";
 
-const SKIN = [
-  { id: "todos", label: "Todos os tipos" },
-  { id: "sensivel", label: "Sensível" },
-  { id: "seca", label: "Seca" },
-];
-const PURPOSES = [
-  "relaxamento", "foco", "hidratacao", "calmante", "luminosidade", "nutricao", "reparacao", "respiracao", "conforto", "tonificante", "renovacao", "limpeza", "fortalecimento", "ambiente",
-];
+// Rótulos amigáveis (fallback: capitaliza o slug).
+const SKIN_LABEL = {
+  todos: "Todos", sensivel: "Sensível", seca: "Seca", oleosa: "Oleosa", mista: "Mista", normal: "Normal",
+};
 const PURPOSE_LABEL = {
   relaxamento: "Relaxamento", foco: "Foco", hidratacao: "Hidratação", calmante: "Calmante",
   luminosidade: "Luminosidade", nutricao: "Nutrição", reparacao: "Reparação", respiracao: "Respiração",
   conforto: "Conforto", tonificante: "Tonificante", renovacao: "Renovação", limpeza: "Limpeza",
   fortalecimento: "Fortalecimento", ambiente: "Ambiente",
+};
+const prettify = (map, slug) => map[slug] || (slug.charAt(0).toUpperCase() + slug.slice(1).replace(/-/g, " "));
+// Valores distintos de um campo-array dos produtos, ignorando "todos".
+const distinctFrom = (products, key) => {
+  const set = new Set();
+  products.forEach((p) => (p[key] || []).forEach((v) => { if (v && v !== "todos") set.add(v); }));
+  return [...set].sort();
 };
 const SORTS = [
   { id: "novidades", label: "Novidades" },
@@ -49,6 +52,10 @@ export const Shop = () => {
   }, []);
 
   useEffect(() => { setPage(1); }, [categoryParam, subcatParam, queryParam, skin, purpose, veganOnly, sort]);
+
+  // Opções de filtro derivadas do catálogo real.
+  const availableSkin = useMemo(() => distinctFrom(allProducts, "skinType"), [allProducts]);
+  const availablePurposes = useMemo(() => distinctFrom(allProducts, "purpose"), [allProducts]);
 
   const filtered = useMemo(() => {
     let list = [...allProducts];
@@ -149,36 +156,43 @@ export const Shop = () => {
             ))}
           </div>
 
-          <div>
-            <h4 className="text-xs tracking-[0.22em] uppercase text-[var(--da-forest)] mb-4">Tipo de pele</h4>
-            <div className="space-y-2">
-              {SKIN.map((s) => (
-                <label key={s.id} className="flex items-center gap-2 font-body text-sm cursor-pointer">
-                  <input type="radio" name="skin" checked={skin === s.id} onChange={() => setSkin(s.id)} data-testid={`skin-${s.id}`} />
-                  {s.label}
+          {availableSkin.length > 0 && (
+            <div>
+              <h4 className="text-xs tracking-[0.22em] uppercase text-[var(--da-forest)] mb-4">Tipo de pele</h4>
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 font-body text-sm cursor-pointer">
+                  <input type="radio" name="skin" checked={skin === ""} onChange={() => setSkin("")} data-testid="skin-todos" />
+                  Todos
                 </label>
-              ))}
-              <button onClick={() => setSkin("")} className="text-xs text-[var(--da-muted)] underline">Limpar</button>
+                {availableSkin.map((id) => (
+                  <label key={id} className="flex items-center gap-2 font-body text-sm cursor-pointer">
+                    <input type="radio" name="skin" checked={skin === id} onChange={() => setSkin(id)} data-testid={`skin-${id}`} />
+                    {prettify(SKIN_LABEL, id)}
+                  </label>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
-          <div>
-            <h4 className="text-xs tracking-[0.22em] uppercase text-[var(--da-forest)] mb-4">Finalidade</h4>
-            <div className="flex flex-wrap gap-2">
-              {PURPOSES.map((p) => (
-                <button
-                  key={p}
-                  onClick={() => setPurpose(purpose === p ? "" : p)}
-                  data-testid={`purpose-${p}`}
-                  className={`text-[11px] tracking-[0.1em] uppercase font-body px-3 py-1 rounded-full border transition ${
-                    purpose === p ? "bg-[var(--da-forest)] text-white border-[var(--da-forest)]" : "border-[var(--da-line)] text-[var(--da-forest)] hover:border-[var(--da-forest)]"
-                  }`}
-                >
-                  {PURPOSE_LABEL[p]}
-                </button>
-              ))}
+          {availablePurposes.length > 0 && (
+            <div>
+              <h4 className="text-xs tracking-[0.22em] uppercase text-[var(--da-forest)] mb-4">Finalidade</h4>
+              <div className="flex flex-wrap gap-2">
+                {availablePurposes.map((p) => (
+                  <button
+                    key={p}
+                    onClick={() => setPurpose(purpose === p ? "" : p)}
+                    data-testid={`purpose-${p}`}
+                    className={`text-[11px] tracking-[0.1em] uppercase font-body px-3 py-1 rounded-full border transition ${
+                      purpose === p ? "bg-[var(--da-forest)] text-white border-[var(--da-forest)]" : "border-[var(--da-line)] text-[var(--da-forest)] hover:border-[var(--da-forest)]"
+                    }`}
+                  >
+                    {prettify(PURPOSE_LABEL, p)}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           <div>
             <label className="flex items-center gap-2 font-body text-sm cursor-pointer">
