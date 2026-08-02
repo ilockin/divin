@@ -10,14 +10,22 @@ import {
 
 export const NewsletterBar = ({ content }) => {
   const [email, setEmail] = useState("");
+  const [sending, setSending] = useState(false);
   if (!content.visible) return null;
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!email) return;
-    addSubscriber(email, "footer");
-    toast.success("Subscrição registada", { description: "Obrigado por te juntares ao nosso círculo." });
-    setEmail("");
+    setSending(true);
+    try {
+      await addSubscriber(email, "footer");
+      toast.success("Subscrição registada", { description: "Obrigado por te juntares ao nosso círculo." });
+      setEmail("");
+    } catch (err) {
+      toast.error("Não foi possível subscrever", { description: err.message });
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -42,8 +50,8 @@ export const NewsletterBar = ({ content }) => {
             data-testid="newsletter-email"
             className="flex-1 bg-transparent border border-white/30 px-5 py-3 rounded-full text-sm font-body placeholder:text-white/50 focus:outline-none focus:border-[var(--da-olive)]"
           />
-          <button type="submit" className="btn-da btn-da-primary" data-testid="newsletter-submit">
-            {content.buttonText}
+          <button type="submit" disabled={sending} className="btn-da btn-da-primary disabled:opacity-60" data-testid="newsletter-submit">
+            {sending ? "A enviar…" : content.buttonText}
           </button>
         </form>
       </div>

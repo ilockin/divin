@@ -42,7 +42,7 @@ export const InfoSection = ({ content }) => (
 
 // Formulário gerado a partir de content.fields. `interactive=false` (usado no editor) impede a
 // submissão real — mostra só um aviso de pré-visualização, sem gravar lead nem limpar o estado.
-export const FormSection = ({ content, values, onChange, onSubmit, interactive = true }) => (
+export const FormSection = ({ content, values, onChange, onSubmit, interactive = true, sending = false }) => (
   <form onSubmit={onSubmit} className="bg-white rounded-2xl border hairline p-6 sm:p-8 space-y-4" data-testid="contact-form">
     {content.fields.map((f) => (
       <label key={f.id} className="block">
@@ -70,6 +70,6 @@ export const FormSection = ({ content, values, onChange, onSubmit, interactive =
         )}
       </label>
     ))}
-    <button type="submit" className="btn-da btn-da-primary" data-testid="contact-submit">{content.submitText}</button>
+    <button type="submit" disabled={sending} className="btn-da btn-da-primary disabled:opacity-60" data-testid="contact-submit">{sending ? "A enviar…" : content.submitText}</button>
   </form>
 );

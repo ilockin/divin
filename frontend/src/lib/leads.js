@@ -1,33 +1,41 @@
-import { initialLeads } from "../admin/data/mockLeads";
+import { supabase } from "./supabaseClient";
+import { submitPublicForm } from "./publicForms";
 
-const LEADS_KEY = "divinarte-leads-v1";
+// Mensagens do formulário de contacto. A tabela é só do staff (são dados pessoais); a
+// submissão pública passa pela Edge Function `public-forms`.
 
-export const loadLeads = () => {
-  try {
-    const raw = localStorage.getItem(LEADS_KEY);
-    return raw ? JSON.parse(raw) : initialLeads;
-  } catch {
-    return initialLeads;
-  }
-};
-
-export const saveLeads = (leads) => {
-  localStorage.setItem(LEADS_KEY, JSON.stringify(leads));
-};
+const normalize = (row) => ({
+  id: row.id,
+  status: row.status,
+  note: row.note || "",
+  fieldsSnapshot: row.fields_snapshot || [],
+  values: row.values || {},
+  submittedAt: row.created_at,
+});
 
 // Chamado pelo formulário de contacto público (sem AdminContext) para guardar uma nova submissão.
 // fieldsSnapshot guarda os rótulos dos campos no momento da submissão, para a lista no admin
 // continuar legível mesmo que os campos do formulário sejam alterados depois.
-export const addLead = (values, fieldsSnapshot) => {
-  const leads = loadLeads();
-  const lead = {
-    id: "lead-" + Date.now(),
-    submittedAt: new Date().toISOString(),
-    status: "novo",
-    note: "",
-    fieldsSnapshot,
-    values,
-  };
-  saveLeads([lead, ...leads]);
-  return lead;
-};
+export const addLead = (values, fieldsSnapshot) => submitPublicForm("lead", { values, fieldsSnapshot });
+
+export async function loadLeads() {
+  const { data, error } = await supabase
+    .from("leads")
+    .select("id, status, note, fields_snapshot, values, created_at")
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data || []).map(normalize);
+}
+
+export async function updateLead(id, { status, note }) {
+  const patch = {};
+  if (status !== undefined) patch.status = status;
+  if (note !== undefined) patch.note = note;
+  const { error } = await supabase.from("leads").update(patch).eq("id", id);
+  if (error) throw error;
+}
+
+export async function deleteLead(id) {
+  const { error } = await supabase.from("leads").delete().eq("id", id);
+  if (error) throw error;
+}

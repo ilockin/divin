@@ -6,35 +6,66 @@ import { DataTable, StatusBadge } from "../components/DataTable";
 import { PageHeader } from "../components/Bits";
 import { useAdmin } from "../context/AdminContext";
 import { TRIGGER_TYPES, PLACEMENT_TYPES, emptyPopup } from "../data/mockPopups";
+import { createPopup as createPopupRow, updatePopup, deletePopup } from "../../lib/popups";
 
 const triggerLabel = (p) => TRIGGER_TYPES.find((t) => t.id === p.trigger.type)?.label || p.trigger.type;
 const placementLabel = (p) => PLACEMENT_TYPES.find((t) => t.id === p.placement.type)?.label || p.placement.type;
 
 export const Popups = () => {
-  const { popups, setPopups } = useAdmin();
+  const { popups, reloadPopups } = useAdmin();
   const navigate = useNavigate();
 
-  const createPopup = () => {
-    const popup = emptyPopup();
-    setPopups((prev) => [popup, ...prev]);
-    navigate(`/admin/popups/${popup.id}`);
+  const createPopup = async () => {
+    try {
+      // O id passa a ser gerado pela base de dados (uuid); `emptyPopup()` continua a servir
+      // para os valores por omissão do gatilho, segmentação e frequência.
+      const { id, ...defaults } = emptyPopup();
+      const popup = await createPopupRow(defaults);
+      await reloadPopups();
+      navigate(`/admin/popups/${popup.id}`);
+    } catch (e) {
+      toast.error("Erro ao criar o pop-up", { description: e.message });
+    }
   };
 
-  const remove = (p) => {
+  const remove = async (p) => {
     if (!window.confirm(`Remover o pop-up "${p.name}"?`)) return;
-    setPopups((prev) => prev.filter((x) => x.id !== p.id));
-    toast.success("Pop-up removido.");
+    try {
+      await deletePopup(p.id);
+      await reloadPopups();
+      toast.success("Pop-up removido.");
+    } catch (e) {
+      toast.error("Erro ao remover", { description: e.message });
+    }
   };
 
-  const toggleActive = (p) => {
-    setPopups((prev) => prev.map((x) => (x.id === p.id ? { ...x, status: x.status === "ativo" ? "inativo" : "ativo" } : x)));
-    toast.success(p.status === "ativo" ? "Pop-up desativado." : "Pop-up ativado.");
+  const toggleActive = async (p) => {
+    const status = p.status === "ativo" ? "inativo" : "ativo";
+    try {
+      await updatePopup(p.id, { status });
+      await reloadPopups();
+      toast.success(status === "ativo" ? "Pop-up ativado." : "Pop-up desativado.");
+    } catch (e) {
+      toast.error("Erro ao alterar o estado", { description: e.message });
+    }
   };
 
-  const duplicate = (p) => {
-    const clone = { ...emptyPopup(), name: `${p.name} (cópia)`, width: p.width, blocks: p.blocks.map((b) => ({ ...b, props: { ...b.props } })), trigger: { ...p.trigger }, placement: { ...p.placement }, frequency: p.frequency };
-    setPopups((prev) => [clone, ...prev]);
-    toast.success("Pop-up duplicado.");
+  const duplicate = async (p) => {
+    try {
+      await createPopupRow({
+        name: `${p.name} (cópia)`,
+        status: "inativo",
+        width: p.width,
+        blocks: p.blocks.map((b) => ({ ...b, props: { ...b.props } })),
+        trigger: { ...p.trigger },
+        placement: { ...p.placement },
+        frequency: p.frequency,
+      });
+      await reloadPopups();
+      toast.success("Pop-up duplicado.");
+    } catch (e) {
+      toast.error("Erro ao duplicar", { description: e.message });
+    }
   };
 
   const columns = [

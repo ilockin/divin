@@ -5,28 +5,39 @@ import { Modal } from "../components/Modal";
 import { PageHeader } from "../components/Bits";
 import { useAdmin } from "../context/AdminContext";
 import { REVIEW_STATUSES } from "../data/mockReviews";
+import { setReviewStatus, deleteReview } from "../../lib/reviews";
 
 const statusOf = (id) => REVIEW_STATUSES.find((s) => s.id === id);
 const productNameOf = (products, productId) => products.find((p) => p.id === productId)?.name || productId;
 
 export const Reviews = () => {
-  const { reviews, setReviews, products } = useAdmin();
+  const { reviews, reloadReviews, products } = useAdmin();
   const [open, setOpen] = useState(false);
   const [current, setCurrent] = useState(null);
 
   const openReview = (review) => { setCurrent(review); setOpen(true); };
 
-  const setStatus = (review, status) => {
-    setReviews((prev) => prev.map((r) => (r.id === review.id ? { ...r, status } : r)));
-    setCurrent((c) => (c && c.id === review.id ? { ...c, status } : c));
-    toast.success(status === "aprovado" ? "Avaliação aprovada." : status === "rejeitado" ? "Avaliação rejeitada." : "Avaliação atualizada.");
+  const setStatus = async (review, status) => {
+    try {
+      await setReviewStatus(review.id, status);
+      await reloadReviews();
+      setCurrent((c) => (c && c.id === review.id ? { ...c, status } : c));
+      toast.success(status === "aprovado" ? "Avaliação aprovada." : status === "rejeitado" ? "Avaliação rejeitada." : "Avaliação atualizada.");
+    } catch (e) {
+      toast.error("Erro ao atualizar", { description: e.message });
+    }
   };
 
-  const remove = (review) => {
+  const remove = async (review) => {
     if (!window.confirm("Remover esta avaliação?")) return;
-    setReviews((prev) => prev.filter((r) => r.id !== review.id));
-    if (current?.id === review.id) setOpen(false);
-    toast.success("Avaliação removida.");
+    try {
+      await deleteReview(review.id);
+      await reloadReviews();
+      if (current?.id === review.id) setOpen(false);
+      toast.success("Avaliação removida.");
+    } catch (e) {
+      toast.error("Erro ao remover", { description: e.message });
+    }
   };
 
   const columns = [

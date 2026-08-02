@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Link, useParams, useNavigate, Navigate } from "react-router-dom";
 import {
   LayoutTemplate, Type, Image as ImageIcon, Images, GalleryHorizontal, ShoppingBag, Megaphone, Video as VideoIcon,
@@ -12,6 +12,7 @@ import { categories } from "../../data/mock";
 import { FormRow, fieldClass, PageHeader } from "../components/Bits";
 import { BlockView } from "../../components/blocks/BlockRenderer";
 import { BlockPropsFields } from "./PageBuilder";
+import { getPopup, updatePopup } from "../../lib/popups";
 
 const BLOCK_ICONS = {
   hero: LayoutTemplate, texto: Type, imagem: ImageIcon, galeria: Images, carrossel: GalleryHorizontal, produtos: ShoppingBag,
@@ -22,16 +23,22 @@ const BLOCK_ICONS = {
 export const PopupBuilder = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { popups, setPopups, pages, products } = useAdmin();
-  const popup = popups.find((p) => p.id === id);
+  const { reloadPopups, pages, products } = useAdmin();
 
-  const [name, setName] = useState(popup?.name || "");
-  const [width, setWidth] = useState(popup?.width || 480);
-  const [status, setStatus] = useState(popup?.status || "inativo");
-  const [blocks, setBlocks] = useState(popup ? popup.blocks.map((b) => ({ ...b, props: { ...b.props } })) : []);
-  const [trigger, setTrigger] = useState(popup?.trigger || { type: "time", seconds: 8, percent: 50 });
-  const [placement, setPlacement] = useState(popup?.placement || { type: "all", value: "" });
-  const [frequency, setFrequency] = useState(popup?.frequency || "session");
+  // Carrega o pop-up diretamente da base de dados: numa ligação direta a /admin/popups/:id
+  // a lista do contexto ainda não chegou e o construtor redirecionaria por engano.
+  const [popup, setPopup] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const [name, setName] = useState("");
+  const [width, setWidth] = useState(480);
+  const [status, setStatus] = useState("inativo");
+  const [blocks, setBlocks] = useState([]);
+  const [trigger, setTrigger] = useState({ type: "time", seconds: 8, percent: 50 });
+  const [placement, setPlacement] = useState({ type: "all", value: "" });
+  const [frequency, setFrequency] = useState("session");
   const [selectedId, setSelectedId] = useState(null);
 
   const selected = useMemo(() => blocks.find((b) => b.id === selectedId), [blocks, selectedId]);
@@ -41,7 +48,26 @@ export const PopupBuilder = () => {
     return [...PLACEMENT_PAGE_OPTIONS, ...custom];
   }, [pages]);
 
-  if (!popup) return <Navigate to="/admin/popups" replace />;
+  useEffect(() => {
+    setLoading(true);
+    getPopup(id)
+      .then((p) => {
+        if (!p) { setNotFound(true); return; }
+        setPopup(p);
+        setName(p.name || "");
+        setWidth(p.width || 480);
+        setStatus(p.status || "inativo");
+        setBlocks(p.blocks.map((b) => ({ ...b, props: { ...b.props } })));
+        setTrigger(p.trigger?.type ? p.trigger : { type: "time", seconds: 8, percent: 50 });
+        setPlacement(p.placement?.type ? p.placement : { type: "all", value: "" });
+        setFrequency(p.frequency || "session");
+      })
+      .catch(() => setNotFound(true))
+      .finally(() => setLoading(false));
+  }, [id]);
+
+  if (notFound) return <Navigate to="/admin/popups" replace />;
+  if (loading || !popup) return <div data-testid="admin-popup-builder-loading" className="py-12" />;
 
   const addBlock = (type) => {
     const nb = makeBlock(type);
@@ -72,10 +98,18 @@ export const PopupBuilder = () => {
   const updateProp = (key, value) =>
     setBlocks((prev) => prev.map((b) => (b.id === selectedId ? { ...b, props: { ...b.props, [key]: value } } : b)));
 
-  const save = () => {
+  const save = async () => {
     if (!name.trim()) { toast.error("Indica o nome do pop-up."); return; }
-    setPopups((prev) => prev.map((p) => (p.id === popup.id ? { ...p, name: name.trim(), width: parseInt(width, 10) || 320, status, blocks, trigger, placement, frequency } : p)));
-    toast.success("Pop-up guardado.");
+    setSaving(true);
+    try {
+      await updatePopup(popup.id, { name: name.trim(), width: parseInt(width, 10) || 320, status, blocks, trigger, placement, frequency });
+      await reloadPopups();
+      toast.success("Pop-up guardado.");
+    } catch (e) {
+      toast.error("Erro ao guardar", { description: e.message });
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -203,7 +237,7 @@ export const PopupBuilder = () => {
       </div>
 
       <div className="flex justify-end mt-5">
-        <button onClick={save} data-testid="popup-save" className="btn-da btn-da-primary text-xs"><Save size={14} /> Guardar</button>
+        <button onClick={save} disabled={saving} data-testid="popup-save" className="btn-da btn-da-primary text-xs disabled:opacity-60"><Save size={14} /> {saving ? "A guardar…" : "Guardar"}</button>
       </div>
     </div>
   );

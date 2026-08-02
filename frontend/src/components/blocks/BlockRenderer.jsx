@@ -11,13 +11,21 @@ import { addSubscriber } from "../../lib/newsletter";
 
 const NewsletterBlock = ({ props: p }) => {
   const [email, setEmail] = useState("");
+  const [sending, setSending] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!email) return;
-    addSubscriber(email, "bloco");
-    toast.success("Subscrição registada", { description: "Obrigado por te juntares ao nosso círculo." });
-    setEmail("");
+    setSending(true);
+    try {
+      await addSubscriber(email, "bloco");
+      toast.success("Subscrição registada", { description: "Obrigado por te juntares ao nosso círculo." });
+      setEmail("");
+    } catch (err) {
+      toast.error("Não foi possível subscrever", { description: err.message });
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -33,7 +41,7 @@ const NewsletterBlock = ({ props: p }) => {
           placeholder="o-seu@email.pt"
           className="px-4 py-2.5 rounded-full border hairline bg-white font-body text-sm text-[var(--da-ink)] focus:outline-none focus:border-[var(--da-leaf)]"
         />
-        <button type="submit" className="px-6 py-2.5 rounded-full bg-[var(--da-leaf)] text-white font-body text-sm">{p.buttonText}</button>
+        <button type="submit" disabled={sending} className="px-6 py-2.5 rounded-full bg-[var(--da-leaf)] text-white font-body text-sm disabled:opacity-60">{sending ? "A enviar…" : p.buttonText}</button>
       </form>
     </div>
   );

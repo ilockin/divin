@@ -5,27 +5,42 @@ import { Modal } from "../components/Modal";
 import { PageHeader, FormRow, fieldClass } from "../components/Bits";
 import { useAdmin } from "../context/AdminContext";
 import { LEAD_STATUSES } from "../data/mockLeads";
+import { updateLead, deleteLead } from "../../lib/leads";
 
 const statusOf = (id) => LEAD_STATUSES.find((s) => s.id === id);
 const primaryValue = (lead) => lead.values.name || lead.values.email || Object.values(lead.values)[0] || "—";
 
 export const Leads = () => {
-  const { leads, setLeads } = useAdmin();
+  const { leads, reloadLeads } = useAdmin();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(null);
+  const [saving, setSaving] = useState(false);
 
   const openLead = (lead) => { setForm({ ...lead }); setOpen(true); };
 
-  const remove = (lead) => {
+  const remove = async (lead) => {
     if (!window.confirm("Remover este lead?")) return;
-    setLeads((prev) => prev.filter((x) => x.id !== lead.id));
-    toast.success("Lead removido.");
+    try {
+      await deleteLead(lead.id);
+      await reloadLeads();
+      toast.success("Lead removido.");
+    } catch (e) {
+      toast.error("Erro ao remover", { description: e.message });
+    }
   };
 
-  const save = () => {
-    setLeads((prev) => prev.map((x) => x.id === form.id ? { ...x, status: form.status, note: form.note } : x));
-    toast.success("Lead atualizado.");
-    setOpen(false);
+  const save = async () => {
+    setSaving(true);
+    try {
+      await updateLead(form.id, { status: form.status, note: form.note });
+      await reloadLeads();
+      toast.success("Lead atualizado.");
+      setOpen(false);
+    } catch (e) {
+      toast.error("Erro ao guardar", { description: e.message });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const columns = [
@@ -73,7 +88,7 @@ export const Leads = () => {
         footer={(
           <>
             <button onClick={() => setOpen(false)} className="btn-da btn-da-ghost text-xs">Cancelar</button>
-            <button onClick={save} data-testid="lead-save" className="btn-da btn-da-primary text-xs">Guardar</button>
+            <button onClick={save} disabled={saving} data-testid="lead-save" className="btn-da btn-da-primary text-xs disabled:opacity-60">{saving ? "A guardar…" : "Guardar"}</button>
           </>
         )}
       >

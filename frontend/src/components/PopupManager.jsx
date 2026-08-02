@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useLocation, useSearchParams } from "react-router-dom";
 import { X } from "lucide-react";
-import { loadPopups } from "../lib/popups";
+import { loadActivePopups } from "../lib/popups";
 import { findProduct, products as catalogProducts } from "../data/mock";
 import { BlockRenderer } from "./blocks/BlockRenderer";
 
@@ -50,15 +50,19 @@ export const PopupManager = () => {
   const [active, setActive] = useState(null);
   const triggeredRef = useRef(false);
 
+  // Carregados uma vez; o efeito dos acionadores abaixo tem de continuar síncrono para poder
+  // devolver a função de limpeza dos timers e listeners.
+  const [popups, setPopups] = useState([]);
+  useEffect(() => { loadActivePopups().then(setPopups).catch(() => {}); }, []);
+
   useEffect(() => {
     triggeredRef.current = false;
     setActive(null);
 
     const categoriaParam = searchParams.get("categoria") || "";
     const seen = loadSeen();
-    const candidates = loadPopups().filter(
+    const candidates = popups.filter(
       (p) =>
-        p.status === "ativo" &&
         matchesPlacement(p, pathname, categoriaParam) &&
         !(p.frequency === "session" && seen[p.id])
     );
@@ -93,7 +97,7 @@ export const PopupManager = () => {
     });
 
     return () => cleanups.forEach((fn) => fn());
-  }, [pathname, searchParams]);
+  }, [popups, pathname, searchParams]);
 
   if (!active) return null;
 

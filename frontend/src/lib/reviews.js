@@ -1,58 +1,69 @@
-import { initialReviews } from "../admin/data/mockReviews";
-import { adminOrders } from "../admin/data/mockAdmin";
+import { supabase } from "./supabaseClient";
+import { submitPublicForm } from "./publicForms";
 
-const REVIEWS_KEY = "divinarte-reviews-v1";
+// Avaliações de produto. A loja lê a vista public_reviews (só aprovadas, sem o e-mail do
+// autor); o staff lê e modera a tabela. A escrita é sempre pela Edge Function `public-forms`,
+// que verifica no servidor se quem submete comprou mesmo o produto.
 
-export const loadReviews = () => {
-  try {
-    const raw = localStorage.getItem(REVIEWS_KEY);
-    return raw ? JSON.parse(raw) : initialReviews;
-  } catch {
-    return initialReviews;
-  }
-};
+const normalize = (row) => ({
+  id: row.id,
+  productId: row.product_id,
+  name: row.name,
+  email: row.email,
+  rating: row.rating,
+  comment: row.comment,
+  status: row.status,
+  submittedAt: row.created_at,
+});
 
-export const saveReviews = (reviews) => {
-  localStorage.setItem(REVIEWS_KEY, JSON.stringify(reviews));
-};
+// ── Loja ──────────────────────────────────────────────────────────────────────
 
-// Verificação de compra (mock): existe uma encomenda paga, do e-mail indicado, com este produto.
-export const canReview = (email, productId) => {
-  const normalized = (email || "").trim().toLowerCase();
-  if (!normalized) return false;
-  return adminOrders.some(
-    (o) =>
-      o.payment === "pago" &&
-      o.customer.email.toLowerCase() === normalized &&
-      o.items.some((it) => it.id === productId)
-  );
-};
+export async function loadApprovedReviews(productId) {
+  const { data, error } = await supabase
+    .from("public_reviews")
+    .select("id, product_id, name, rating, comment, created_at")
+    .eq("product_id", productId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data || []).map(normalize);
+}
 
-// Chamado pelo formulário de avaliação na página de produto (sem AdminContext).
-export const addReview = ({ productId, name, email, rating, comment }) => {
-  const reviews = loadReviews();
-  const review = {
-    id: "rev-" + Date.now(),
-    productId,
-    name,
-    email,
-    rating,
-    comment,
-    submittedAt: new Date().toISOString(),
-    status: "pendente",
-  };
-  saveReviews([review, ...reviews]);
-  return review;
-};
-
-export const loadApprovedReviews = (productId) =>
-  loadReviews()
-    .filter((r) => r.productId === productId && r.status === "aprovado")
-    .sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt));
-
-export const getRatingSummary = (productId) => {
-  const approved = loadApprovedReviews(productId);
+export async function getRatingSummary(productId) {
+  const approved = await loadApprovedReviews(productId);
   if (approved.length === 0) return { average: 0, count: 0 };
   const sum = approved.reduce((acc, r) => acc + r.rating, 0);
   return { average: Math.round((sum / approved.length) * 10) / 10, count: approved.length };
-};
+}
+
+// Decide se o formulário aparece. A decisão que conta é a da Edge Function — esta serve só
+// para não mostrar um formulário que iria ser recusado.
+export async function canReview(productId) {
+  const { data, error } = await supabase.rpc("can_review", { p_product_id: productId });
+  if (error) return false;
+  return data === true;
+}
+
+// O nome e o e-mail não são enviados: a Edge Function tira-os da sessão.
+export const addReview = ({ productId, rating, comment }) =>
+  submitPublicForm("review", { productId, rating, comment });
+
+// ── Admin ─────────────────────────────────────────────────────────────────────
+
+export async function listReviews() {
+  const { data, error } = await supabase
+    .from("reviews")
+    .select("id, product_id, name, email, rating, comment, status, created_at")
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data || []).map(normalize);
+}
+
+export async function setReviewStatus(id, status) {
+  const { error } = await supabase.from("reviews").update({ status }).eq("id", id);
+  if (error) throw error;
+}
+
+export async function deleteReview(id) {
+  const { error } = await supabase.from("reviews").delete().eq("id", id);
+  if (error) throw error;
+}

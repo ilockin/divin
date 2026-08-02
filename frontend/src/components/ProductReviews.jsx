@@ -1,7 +1,9 @@
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { Star } from "lucide-react";
 import { toast } from "sonner";
 import { loadApprovedReviews, getRatingSummary, canReview, addReview } from "../lib/reviews";
+import { useAuth } from "../context/AuthContext";
 
 const StarRow = ({ rating, size = 16 }) => (
   <div className="flex items-center gap-0.5" aria-label={`${rating} de 5 estrelas`}>
@@ -11,32 +13,47 @@ const StarRow = ({ rating, size = 16 }) => (
   </div>
 );
 
-const emptyForm = { name: "", email: "", rating: 0, comment: "" };
+const emptyForm = { rating: 0, comment: "" };
 
 export const ProductReviews = ({ productId }) => {
-  const [approved, setApproved] = useState(() => loadApprovedReviews(productId));
-  const [summary, setSummary] = useState(() => getRatingSummary(productId));
+  const { user } = useAuth();
+  const [approved, setApproved] = useState([]);
+  const [summary, setSummary] = useState({ average: 0, count: 0 });
   const [form, setForm] = useState(emptyForm);
   const [hoverRating, setHoverRating] = useState(0);
+  const [sending, setSending] = useState(false);
+  // A identidade de quem avalia vem da sessão, não do formulário — quem escrevesse o e-mail
+  // de um cliente podia antes publicar em nome dele.
+  const [allowed, setAllowed] = useState(false);
 
-  const refresh = () => {
-    setApproved(loadApprovedReviews(productId));
-    setSummary(getRatingSummary(productId));
-  };
+  const refresh = useCallback(() => {
+    loadApprovedReviews(productId).then(setApproved).catch(() => {});
+    getRatingSummary(productId).then(setSummary).catch(() => {});
+  }, [productId]);
 
-  const submit = (e) => {
+  useEffect(() => { refresh(); }, [refresh]);
+
+  useEffect(() => {
+    if (!user) { setAllowed(false); return; }
+    canReview(productId).then(setAllowed).catch(() => setAllowed(false));
+  }, [user, productId]);
+
+  const submit = async (e) => {
     e.preventDefault();
-    if (!form.name.trim() || !form.email.trim() || !form.rating || !form.comment.trim()) {
-      toast.error("Preencha o nome, e-mail, estrelas e comentário.");
+    if (!form.rating || !form.comment.trim()) {
+      toast.error("Escolhe as estrelas e escreve um comentário.");
       return;
     }
-    if (!canReview(form.email, productId)) {
-      toast.error("Só clientes que compraram este produto podem avaliar.");
-      return;
+    setSending(true);
+    try {
+      await addReview({ productId, rating: form.rating, comment: form.comment.trim() });
+      toast.success("Avaliação enviada — fica visível depois de aprovada.");
+      setForm(emptyForm);
+    } catch (err) {
+      toast.error("Não foi possível enviar", { description: err.message });
+    } finally {
+      setSending(false);
     }
-    addReview({ productId, name: form.name.trim(), email: form.email.trim(), rating: form.rating, comment: form.comment.trim() });
-    toast.success("Avaliação enviada — fica visível depois de aprovada.");
-    setForm(emptyForm);
   };
 
   return (
@@ -67,27 +84,29 @@ export const ProductReviews = ({ productId }) => {
         </div>
       )}
 
+      {!user && (
+        <div className="bg-[var(--da-cream-2)]/60 rounded-2xl p-6 sm:p-8" data-testid="review-login-prompt">
+          <h3 className="text-lg">Deixe a sua avaliação</h3>
+          <p className="font-body text-sm text-[var(--da-muted)] mt-2 leading-relaxed">
+            Só clientes que compraram este produto podem avaliar.{" "}
+            <Link to="/conta/login" className="link-underline text-[var(--da-forest)]">Inicie sessão</Link> para deixar a sua opinião.
+          </p>
+        </div>
+      )}
+
+      {user && !allowed && (
+        <div className="bg-[var(--da-cream-2)]/60 rounded-2xl p-6 sm:p-8" data-testid="review-not-allowed">
+          <h3 className="text-lg">Deixe a sua avaliação</h3>
+          <p className="font-body text-sm text-[var(--da-muted)] mt-2 leading-relaxed">
+            Só é possível avaliar produtos de uma encomenda já paga. Ainda não encontrámos nenhuma na sua conta com este produto.
+          </p>
+        </div>
+      )}
+
+      {user && allowed && (
       <form onSubmit={submit} className="bg-[var(--da-cream-2)]/60 rounded-2xl p-6 sm:p-8 space-y-4" data-testid="review-form">
         <h3 className="text-lg">Deixe a sua avaliação</h3>
-        <p className="font-body text-xs text-[var(--da-muted)]">Só clientes que compraram este produto podem avaliar.</p>
-
-        <div className="grid sm:grid-cols-2 gap-4">
-          <input
-            className="w-full rounded-xl border hairline px-4 py-2.5 font-body text-sm bg-white"
-            placeholder="O seu nome"
-            value={form.name}
-            onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-            data-testid="review-name"
-          />
-          <input
-            className="w-full rounded-xl border hairline px-4 py-2.5 font-body text-sm bg-white"
-            placeholder="O seu e-mail"
-            type="email"
-            value={form.email}
-            onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-            data-testid="review-email"
-          />
-        </div>
+        <p className="font-body text-xs text-[var(--da-muted)]">A avaliação fica publicada em seu nome, depois de aprovada.</p>
 
         <div data-testid="review-rating-input">
           <p className="text-xs tracking-[0.22em] uppercase text-[var(--da-forest)] mb-2">Estrelas</p>
@@ -117,8 +136,11 @@ export const ProductReviews = ({ productId }) => {
           data-testid="review-comment"
         />
 
-        <button type="submit" className="btn-da btn-da-primary" data-testid="review-submit">Enviar avaliação</button>
+        <button type="submit" disabled={sending} className="btn-da btn-da-primary disabled:opacity-60" data-testid="review-submit">
+          {sending ? "A enviar…" : "Enviar avaliação"}
+        </button>
       </form>
+      )}
     </section>
   );
 };

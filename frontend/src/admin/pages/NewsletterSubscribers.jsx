@@ -3,16 +3,22 @@ import { toast } from "sonner";
 import { DataTable, StatusBadge } from "../components/DataTable";
 import { PageHeader } from "../components/Bits";
 import { useAdmin } from "../context/AdminContext";
+import { deleteSubscriber } from "../../lib/newsletter";
 
 const SOURCE_LABELS = { footer: "Rodapé", bloco: "Bloco Newsletter" };
 
 export const NewsletterSubscribers = () => {
-  const { subscribers, setSubscribers } = useAdmin();
+  const { subscribers, reloadSubscribers } = useAdmin();
 
-  const remove = (s) => {
+  const remove = async (s) => {
     if (!window.confirm(`Remover "${s.email}" da lista?`)) return;
-    setSubscribers((prev) => prev.filter((x) => x.id !== s.id));
-    toast.success("Subscritor removido.");
+    try {
+      await deleteSubscriber(s.id);
+      await reloadSubscribers();
+      toast.success("Subscritor removido.");
+    } catch (e) {
+      toast.error("Erro ao remover", { description: e.message });
+    }
   };
 
   const columns = [
