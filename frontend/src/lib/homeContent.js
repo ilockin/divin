@@ -1,16 +1,6 @@
 import { initialHomeContent } from "../admin/data/mockHomeContent";
+import { getContent, saveContent } from "./siteContent";
 
-const HOME_CONTENT_KEY = "divinarte-home-content-v1";
+export const loadHomeContent = () => getContent("home", initialHomeContent);
 
-export const loadHomeContent = () => {
-  try {
-    const raw = localStorage.getItem(HOME_CONTENT_KEY);
-    return raw ? JSON.parse(raw) : initialHomeContent;
-  } catch {
-    return initialHomeContent;
-  }
-};
-
-export const saveHomeContent = (content) => {
-  localStorage.setItem(HOME_CONTENT_KEY, JSON.stringify(content));
-};
+export const saveHomeContent = (content) => saveContent("home", content);

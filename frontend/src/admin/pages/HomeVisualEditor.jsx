@@ -20,8 +20,8 @@ const previewCart = {
 };
 
 export const HomeVisualEditor = () => {
-  const { homeContent, setHomeContent } = useAdmin();
-  const { draft, updateField, save, resetToDefaults, isDirty } = useContentDraft(homeContent, setHomeContent, initialHomeContent);
+  const { homeContent, saveHomeContent } = useAdmin();
+  const { draft, updateField, save, saving, resetToDefaults, isDirty } = useContentDraft(homeContent, saveHomeContent, initialHomeContent);
   const [selectedKey, setSelectedKey] = useState(null);
 
   const updateTrustLabel = (i, value) =>
@@ -36,7 +36,7 @@ export const HomeVisualEditor = () => {
 
   return (
     <div data-testid="admin-home-editor" className="-m-6 lg:-m-8 flex flex-col h-[calc(100vh-112px)]">
-      <EditorTopBar title="Conteúdo da Página Inicial" onReset={resetToDefaults} onSave={save} isDirty={isDirty} pages={EDITABLE_PAGES.filter((p) => p.path !== "/admin/conteudo-inicio")} />
+      <EditorTopBar title="Conteúdo da Página Inicial" onReset={resetToDefaults} onSave={save} saving={saving} isDirty={isDirty} pages={EDITABLE_PAGES.filter((p) => p.path !== "/admin/conteudo-inicio")} />
 
       <div className="flex-1 flex min-h-0">
         {/* tela — a Home real, secção a secção */}

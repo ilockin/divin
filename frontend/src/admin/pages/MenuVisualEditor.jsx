@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Plus, Trash2, Save, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, FormRow, fieldClass, SectionTitle } from "../components/Bits";
@@ -8,8 +8,17 @@ import { makeMenuItem, initialMenuContent } from "../data/mockMenuContent";
 const clone = (c) => JSON.parse(JSON.stringify(c));
 
 export const MenuVisualEditor = () => {
-  const { menuContent, setMenuContent } = useAdmin();
+  const { menuContent, saveMenuContent } = useAdmin();
   const [draft, setDraft] = useState(() => clone(menuContent));
+  const [saving, setSaving] = useState(false);
+
+  // O menu chega do Supabase depois da primeira renderização — sincronizar o rascunho
+  // enquanto não houver edições por gravar.
+  const dirtyRef = useRef(false);
+  dirtyRef.current = JSON.stringify(draft) !== JSON.stringify(menuContent);
+  useEffect(() => {
+    if (!dirtyRef.current) setDraft(clone(menuContent));
+  }, [menuContent]);
 
   const updateItem = (id, key, value) =>
     setDraft((prev) => ({ ...prev, items: prev.items.map((it) => (it.id === id ? { ...it, [key]: value } : it)) }));
@@ -29,9 +38,16 @@ export const MenuVisualEditor = () => {
   const removeChild = (itemId, childId) =>
     setDraft((prev) => ({ ...prev, items: prev.items.map((it) => (it.id !== itemId ? it : { ...it, children: it.children.filter((c) => c.id !== childId) })) }));
 
-  const save = () => {
-    setMenuContent(draft);
-    toast.success("Menu atualizado.");
+  const save = async () => {
+    setSaving(true);
+    try {
+      await saveMenuContent(draft);
+      toast.success("Menu atualizado.");
+    } catch (e) {
+      toast.error("Erro ao guardar", { description: e.message });
+    } finally {
+      setSaving(false);
+    }
   };
   const resetToDefaults = () => {
     if (!window.confirm("Repor o menu predefinido? (só passa a valer depois de Guardar)")) return;
@@ -47,7 +63,7 @@ export const MenuVisualEditor = () => {
         actions={(
           <>
             <button onClick={resetToDefaults} data-testid="menu-reset" className="btn-da btn-da-outline text-xs"><RotateCcw size={14} /> Repor predefinições</button>
-            <button onClick={save} data-testid="menu-save" className="btn-da btn-da-primary text-xs"><Save size={14} /> Guardar</button>
+            <button onClick={save} disabled={saving} data-testid="menu-save" className="btn-da btn-da-primary text-xs disabled:opacity-60"><Save size={14} /> {saving ? "A guardar…" : "Guardar"}</button>
           </>
         )}
       />

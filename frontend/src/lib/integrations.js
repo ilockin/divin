@@ -1,19 +1,9 @@
 import { initialIntegrations } from "../admin/data/mockIntegrations";
+import { getContent, saveContent } from "./siteContent";
 
-const INTEGRATIONS_KEY = "divinarte-integrations-v1";
+export const loadIntegrations = () => getContent("integrations", initialIntegrations);
 
-export const loadIntegrations = () => {
-  try {
-    const raw = localStorage.getItem(INTEGRATIONS_KEY);
-    return raw ? JSON.parse(raw) : initialIntegrations;
-  } catch {
-    return initialIntegrations;
-  }
-};
-
-export const saveIntegrations = (integrations) => {
-  localStorage.setItem(INTEGRATIONS_KEY, JSON.stringify(integrations));
-};
+export const saveIntegrations = (integrations) => saveContent("integrations", integrations);
 
 // Insere `html` em `target` (document.head/body) e garante que quaisquer <script> dentro dele
 // são realmente executados — atribuir innerHTML por si só não corre <script>s.
@@ -38,11 +28,17 @@ const injectHtml = (target, html, prepend = false) => {
   });
 };
 
+// Guarda contra injeção repetida: a configuração vem agora do Supabase (assíncrona), por isso
+// nada garante que uma segunda chamada não chegue antes de a primeira ter terminado.
+let applied = false;
+
 // Chamado uma vez ao carregar a aplicação (ver src/index.js). Lê o que foi guardado nas
 // Definições e injeta na página real: gtag (Analytics/Ads), verificação do Search Console,
 // e o código avançado de cabeçalho/body/rodapé.
-export const applyIntegrations = () => {
-  const cfg = loadIntegrations();
+export const applyIntegrations = async () => {
+  if (applied) return;
+  applied = true;
+  const cfg = await loadIntegrations();
 
   if (cfg.googleAnalyticsId || cfg.googleAdsId) {
     const gtagId = cfg.googleAnalyticsId || cfg.googleAdsId;

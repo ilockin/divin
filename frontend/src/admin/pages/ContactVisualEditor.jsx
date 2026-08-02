@@ -18,8 +18,8 @@ const SECTIONS = [
 ];
 
 export const ContactVisualEditor = () => {
-  const { contactContent, setContactContent } = useAdmin();
-  const { draft, updateField, save, resetToDefaults, isDirty } = useContentDraft(contactContent, setContactContent, initialContactContent);
+  const { contactContent, saveContactContent } = useAdmin();
+  const { draft, updateField, save, saving, resetToDefaults, isDirty } = useContentDraft(contactContent, saveContactContent, initialContactContent);
   const [selectedKey, setSelectedKey] = useState(null);
 
   const updateFormField = (id, key, value) =>
@@ -39,7 +39,7 @@ export const ContactVisualEditor = () => {
 
   return (
     <div data-testid="admin-contact-editor" className="-m-6 lg:-m-8 flex flex-col h-[calc(100vh-112px)]">
-      <EditorTopBar title="Conteúdo da Página Contacto" onReset={resetToDefaults} onSave={save} isDirty={isDirty} pages={EDITABLE_PAGES.filter((p) => p.path !== "/admin/conteudo-contacto")} />
+      <EditorTopBar title="Conteúdo da Página Contacto" onReset={resetToDefaults} onSave={save} saving={saving} isDirty={isDirty} pages={EDITABLE_PAGES.filter((p) => p.path !== "/admin/conteudo-contacto")} />
 
       <div className="flex-1 flex min-h-0">
         <main className="flex-1 overflow-y-auto bg-[var(--da-cream-2)]/40 p-6" onClick={() => setSelectedKey(null)}>

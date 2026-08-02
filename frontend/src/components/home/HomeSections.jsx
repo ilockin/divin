@@ -162,7 +162,8 @@ export const TestimonialsSection = ({ content }) => (
 );
 
 export const BlogSection = ({ content }) => {
-  const posts = loadPublishedArticles().slice(0, 3);
+  const [posts, setPosts] = useState([]);
+  useEffect(() => { loadPublishedArticles().then((all) => setPosts(all.slice(0, 3))).catch(() => {}); }, []);
   return (
   <section className="container-da pb-24">
     <div className="flex items-end justify-between mb-12 flex-wrap gap-4">

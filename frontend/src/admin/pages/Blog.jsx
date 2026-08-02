@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useParams, Navigate } from "react-router-dom";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
@@ -6,21 +6,33 @@ import { DataTable, StatusBadge } from "../components/DataTable";
 import { PageHeader, FormRow, fieldClass, SectionTitle } from "../components/Bits";
 import { RichTextEditor } from "../components/RichTextEditor";
 import { useAdmin } from "../context/AdminContext";
+import { createArticle, updateArticle, deleteArticle, setArticleStatus, findArticle } from "../../lib/articles";
 
 const CATEGORIES = ["Rituais", "Ingredientes", "Saber mais", "Marca"];
 
 export const Blog = () => {
-  const { articles, setArticles } = useAdmin();
+  const { articles, reloadArticles } = useAdmin();
   const navigate = useNavigate();
 
-  const toggle = (a) => {
-    setArticles((prev) => prev.map((x) => x.slug === a.slug ? { ...x, status: x.status === "publicado" ? "rascunho" : "publicado" } : x));
-    toast.success(a.status === "publicado" ? "Movido para rascunho." : "Publicado.");
+  const toggle = async (a) => {
+    const next = a.status === "publicado" ? "rascunho" : "publicado";
+    try {
+      await setArticleStatus(a.slug, next);
+      await reloadArticles();
+      toast.success(next === "publicado" ? "Publicado." : "Movido para rascunho.");
+    } catch (e) {
+      toast.error("Erro ao alterar o estado", { description: e.message });
+    }
   };
-  const remove = (a) => {
+  const remove = async (a) => {
     if (!window.confirm(`Remover "${a.title}"?`)) return;
-    setArticles((prev) => prev.filter((x) => x.slug !== a.slug));
-    toast.success("Artigo removido.");
+    try {
+      await deleteArticle(a.slug);
+      await reloadArticles();
+      toast.success("Artigo removido.");
+    } catch (e) {
+      toast.error("Erro ao remover", { description: e.message });
+    }
   };
 
   const cols = [
@@ -77,40 +89,64 @@ const emptyArticle = { slug: null, title: "", category: "Rituais", excerpt: "", 
 
 export const ArticleForm = () => {
   const { slug } = useParams();
-  const { articles, setArticles } = useAdmin();
+  const { reloadArticles } = useAdmin();
   const navigate = useNavigate();
   const isNew = slug === "novo";
-  const existing = !isNew && articles.find((a) => a.slug === slug);
-  const [form, setForm] = useState(() => existing ? { ...existing } : emptyArticle);
+  const [form, setForm] = useState(emptyArticle);
+  // Vai buscar o artigo à base de dados em vez de o procurar na lista do contexto: numa ligação
+  // direta a /admin/blog/:slug a lista ainda não chegou e redirecionaria por engano.
+  const [loading, setLoading] = useState(!isNew);
+  const [notFound, setNotFound] = useState(false);
+  const [saving, setSaving] = useState(false);
 
-  if (!isNew && !existing) return <Navigate to="/admin/blog" replace />;
+  useEffect(() => {
+    if (isNew) return;
+    setLoading(true);
+    findArticle(slug)
+      // As colunas opcionais chegam a null da base de dados; os inputs são controlados e
+      // não podem receber null.
+      .then((a) => { if (a) setForm({ ...emptyArticle, ...Object.fromEntries(Object.entries(a).filter(([, v]) => v !== null)) }); else setNotFound(true); })
+      .catch(() => setNotFound(true))
+      .finally(() => setLoading(false));
+  }, [slug, isNew]);
 
   const u = (k, v) => setForm((f) => ({ ...f, [k]: v }));
   const slugify = (s) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
 
-  const save = () => {
+  const save = async () => {
     if (!form.title) { toast.error("Indica o título."); return; }
     const finalSlug = form.slug || slugify(form.title);
     const payload = { ...form, slug: finalSlug };
-    if (isNew) {
-      setArticles((prev) => [{ ...payload, cover: payload.cover || "https://images.unsplash.com/photo-1556228852-80b6e5eeff06?auto=format&fit=crop&w=1200&q=70" }, ...prev]);
-      toast.success("Artigo criado.");
-    } else {
-      setArticles((prev) => prev.map((a) => a.slug === existing.slug ? payload : a));
-      toast.success("Artigo atualizado.");
+    setSaving(true);
+    try {
+      if (isNew) {
+        await createArticle({ ...payload, cover: payload.cover || "https://images.unsplash.com/photo-1556228852-80b6e5eeff06?auto=format&fit=crop&w=1200&q=70" });
+        toast.success("Artigo criado.");
+      } else {
+        await updateArticle(slug, payload);
+        toast.success("Artigo atualizado.");
+      }
+      await reloadArticles();
+      navigate("/admin/blog");
+    } catch (e) {
+      toast.error("Erro ao guardar", { description: e.message });
+    } finally {
+      setSaving(false);
     }
-    navigate("/admin/blog");
   };
+
+  if (notFound) return <Navigate to="/admin/blog" replace />;
+  if (loading) return <div data-testid="admin-article-loading" className="py-12" />;
 
   return (
     <div data-testid="admin-article-form">
       <PageHeader
-        title={isNew ? "Novo artigo" : `Editar: ${existing?.title}`}
+        title={isNew ? "Novo artigo" : `Editar: ${form.title}`}
         subtitle={isNew ? "Escreve um novo artigo para o blog." : "Atualiza o conteúdo do artigo."}
         actions={(
           <>
             <Link to="/admin/blog" className="btn-da btn-da-ghost text-xs">Cancelar</Link>
-            <button onClick={save} data-testid="article-save" className="btn-da btn-da-primary text-xs">{isNew ? "Criar" : "Guardar"}</button>
+            <button onClick={save} disabled={saving} data-testid="article-save" className="btn-da btn-da-primary text-xs disabled:opacity-60">{saving ? "A guardar…" : (isNew ? "Criar" : "Guardar")}</button>
           </>
         )}
       />

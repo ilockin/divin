@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams, useNavigate, Navigate } from "react-router-dom";
 import {
   DndContext, DragOverlay, PointerSensor, useSensor, useSensors, closestCenter, useDraggable, useDroppable,
@@ -17,6 +17,7 @@ import { useAdmin } from "../context/AdminContext";
 import { BLOCK_LIBRARY, BLOCK_LABELS, BLOCK_FIELDS, BLOCK_LISTS, makeBlock, rebalanceColumns } from "../data/mockPages";
 import { FormRow, fieldClass } from "../components/Bits";
 import { BlockView } from "../../components/blocks/BlockRenderer";
+import { getPage, updatePage } from "../../lib/pages";
 
 const BLOCK_ICONS = {
   hero: LayoutTemplate, texto: Type, imagem: ImageIcon, galeria: Images, carrossel: GalleryHorizontal, produtos: ShoppingBag,
@@ -133,12 +134,18 @@ const DEVICE = { desktop: "100%", tablet: "768px", telemovel: "390px" };
 export const PageBuilder = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { pages, setPages, products } = useAdmin();
-  const page = pages.find((p) => p.id === id);
+  const { reloadPages, products } = useAdmin();
 
-  const [title, setTitle] = useState(page?.title || "");
-  const [slug, setSlug] = useState(page?.slug || "");
-  const [blocks, setBlocks] = useState(page ? page.blocks.map((b) => ({ ...b, props: { ...b.props } })) : []);
+  // Carrega a página diretamente da base de dados: numa ligação direta a /admin/paginas/:id
+  // a lista do contexto ainda não chegou e o construtor redirecionaria por engano.
+  const [page, setPage] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const [title, setTitle] = useState("");
+  const [slug, setSlug] = useState("");
+  const [blocks, setBlocks] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
   const [undoStack, setUndoStack] = useState([]);
   const [redoStack, setRedoStack] = useState([]);
@@ -152,7 +159,22 @@ export const PageBuilder = () => {
 
   const selected = useMemo(() => blocks.find((b) => b.id === selectedId), [blocks, selectedId]);
 
-  if (!page) return <Navigate to="/admin/paginas" replace />;
+  useEffect(() => {
+    setLoading(true);
+    getPage(id)
+      .then((p) => {
+        if (!p) { setNotFound(true); return; }
+        setPage(p);
+        setTitle(p.title || "");
+        setSlug(p.slug || "");
+        setBlocks(p.blocks.map((b) => ({ ...b, props: { ...b.props } })));
+      })
+      .catch(() => setNotFound(true))
+      .finally(() => setLoading(false));
+  }, [id]);
+
+  if (notFound) return <Navigate to="/admin/paginas" replace />;
+  if (loading || !page) return <div data-testid="admin-page-builder-loading" className="py-12" />;
 
   // histórico
   const commit = (next) => { setUndoStack((u) => [...u, blocks]); setRedoStack([]); setBlocks(next); };
@@ -247,11 +269,21 @@ export const PageBuilder = () => {
   };
 
   // persistência
-  const persist = (extra = {}) => {
-    setPages((prev) => prev.map((p) => p.id === page.id ? { ...p, title, slug, blocks, date: new Date().toISOString().slice(0, 10), ...extra } : p));
+  const persist = async (extra = {}) => {
+    setSaving(true);
+    try {
+      await updatePage(page.id, { title, slug, blocks, date: new Date().toISOString().slice(0, 10), ...extra });
+      await reloadPages();
+      return true;
+    } catch (e) {
+      toast.error("Erro ao guardar", { description: e.message });
+      return false;
+    } finally {
+      setSaving(false);
+    }
   };
-  const onSave = () => { persist(); toast.success("Página guardada."); };
-  const onPublish = () => { persist({ status: "publicado" }); toast.success("Página publicada."); };
+  const onSave = async () => { if (await persist()) toast.success("Página guardada."); };
+  const onPublish = async () => { if (await persist({ status: "publicado" })) toast.success("Página publicada."); };
 
   return (
     <div data-testid="admin-page-builder" className="-m-6 lg:-m-8 flex flex-col h-[calc(100vh-112px)]">
@@ -277,8 +309,8 @@ export const PageBuilder = () => {
           </div>
 
           <button onClick={() => setPreview((v) => !v)} data-testid="pb-preview" className={`btn-da text-xs ${preview ? "btn-da-primary" : "btn-da-outline"}`}><Eye size={14} /> {preview ? "Editar" : "Pré-visualizar"}</button>
-          <button onClick={onSave} data-testid="pb-save" className="btn-da btn-da-outline text-xs"><Save size={14} /> Guardar</button>
-          <button onClick={onPublish} data-testid="pb-publish" className="btn-da btn-da-primary text-xs"><Send size={14} /> Publicar</button>
+          <button onClick={onSave} disabled={saving} data-testid="pb-save" className="btn-da btn-da-outline text-xs disabled:opacity-60"><Save size={14} /> {saving ? "A guardar…" : "Guardar"}</button>
+          <button onClick={onPublish} disabled={saving} data-testid="pb-publish" className="btn-da btn-da-primary text-xs disabled:opacity-60"><Send size={14} /> Publicar</button>
         </div>
       </div>
 

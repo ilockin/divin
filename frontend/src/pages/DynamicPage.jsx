@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { getPublishedPage } from "../lib/pages";
 import { BlockRenderer } from "../components/blocks/BlockRenderer";
@@ -6,7 +6,19 @@ import { products as catalogProducts } from "../data/mock";
 
 export const DynamicPage = () => {
   const { slug } = useParams();
-  const page = getPublishedPage(slug);
+  const [page, setPage] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setLoading(true);
+    getPublishedPage(slug)
+      .then(setPage)
+      .catch(() => setPage(null))
+      .finally(() => setLoading(false));
+  }, [slug]);
+
+  // Só mostrar "não encontrada" depois do pedido terminar.
+  if (loading) return <div className="container-da py-24" data-testid="dynamic-page-loading" />;
 
   if (!page) {
     return (

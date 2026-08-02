@@ -12,8 +12,8 @@ import { SelectableSection } from "../components/contentEditor/SelectableSection
 import { useContentDraft } from "../hooks/useContentDraft";
 
 export const FooterVisualEditor = () => {
-  const { footerContent, setFooterContent } = useAdmin();
-  const { draft, setDraft, updateField, save, resetToDefaults, isDirty } = useContentDraft(footerContent, setFooterContent, initialFooterContent);
+  const { footerContent, saveFooterContent } = useAdmin();
+  const { draft, setDraft, updateField, save, saving, resetToDefaults, isDirty } = useContentDraft(footerContent, saveFooterContent, initialFooterContent);
   const [selectedKey, setSelectedKey] = useState(null);
 
   const updateRoot = (key, value) => setDraft((prev) => ({ ...prev, [key]: value }));
@@ -30,7 +30,7 @@ export const FooterVisualEditor = () => {
 
   return (
     <div data-testid="admin-footer-editor" className="-m-6 lg:-m-8 flex flex-col h-[calc(100vh-112px)]">
-      <EditorTopBar title="Conteúdo do Rodapé" onReset={resetToDefaults} onSave={save} isDirty={isDirty} pages={EDITABLE_PAGES.filter((p) => p.path !== "/admin/conteudo-rodape")} />
+      <EditorTopBar title="Conteúdo do Rodapé" onReset={resetToDefaults} onSave={save} saving={saving} isDirty={isDirty} pages={EDITABLE_PAGES.filter((p) => p.path !== "/admin/conteudo-rodape")} />
 
       <div className="flex-1 flex min-h-0">
         <main className="flex-1 overflow-y-auto bg-[var(--da-cream-2)]/40" onClick={() => setSelectedKey(null)}>

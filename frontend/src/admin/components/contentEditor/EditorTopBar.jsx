@@ -4,13 +4,14 @@ import { Save, RotateCcw, X } from "lucide-react";
 
 // `pages`: lista opcional [{ label, path }] das outras páginas editáveis, para o seletor "Editar outra página".
 // `isDirty`/`onSave`: usados para perguntar antes de navegar com alterações por guardar.
-export const EditorTopBar = ({ title, onReset, onSave, pages, isDirty }) => {
+export const EditorTopBar = ({ title, onReset, onSave, pages, isDirty, saving }) => {
   const navigate = useNavigate();
 
-  const guardedNavigate = (path) => {
+  const guardedNavigate = async (path) => {
     if (isDirty) {
       if (window.confirm("Tens alterações não guardadas. Queres guardá-las agora?")) {
-        onSave();
+        // Esperar pela gravação: sair antes disso esconderia um erro de escrita.
+        await onSave();
         navigate(path);
         return;
       }
@@ -42,8 +43,8 @@ export const EditorTopBar = ({ title, onReset, onSave, pages, isDirty }) => {
         <button onClick={onReset} data-testid="content-editor-reset" className="btn-da btn-da-outline text-xs">
           <RotateCcw size={14} /> Repor predefinições
         </button>
-        <button onClick={onSave} data-testid="content-editor-save" className="btn-da btn-da-primary text-xs">
-          <Save size={14} /> Guardar
+        <button onClick={onSave} disabled={saving} data-testid="content-editor-save" className="btn-da btn-da-primary text-xs disabled:opacity-60">
+          <Save size={14} /> {saving ? "A guardar…" : "Guardar"}
         </button>
       </div>
     </div>

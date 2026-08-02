@@ -10,8 +10,8 @@ import { SelectableSection } from "../components/contentEditor/SelectableSection
 import { useContentDraft } from "../hooks/useContentDraft";
 
 export const BlogVisualEditor = () => {
-  const { blogContent, setBlogContent } = useAdmin();
-  const { draft, updateField, save, resetToDefaults, isDirty } = useContentDraft(blogContent, setBlogContent, initialBlogContent);
+  const { blogContent, saveBlogContent } = useAdmin();
+  const { draft, updateField, save, saving, resetToDefaults, isDirty } = useContentDraft(blogContent, saveBlogContent, initialBlogContent);
   const [selected, setSelected] = useState(false);
 
   return (
@@ -20,6 +20,7 @@ export const BlogVisualEditor = () => {
         title="Conteúdo da Página Blog"
         onReset={resetToDefaults}
         onSave={save}
+        saving={saving}
         isDirty={isDirty}
         pages={EDITABLE_PAGES.filter((p) => p.path !== "/admin/conteudo-blog")}
       />

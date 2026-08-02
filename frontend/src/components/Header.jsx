@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { Search, ShoppingBag, User, Menu, X } from "lucide-react";
 import { Logo } from "./Logo";
 import { useCart } from "../context/CartContext";
 import { loadMenuContent } from "../lib/menuContent";
+import { initialMenuContent } from "../admin/data/mockMenuContent";
 
 const resolveClassName = (className) => (typeof className === "function" ? className({ isActive: false }) : className);
 
@@ -28,7 +29,11 @@ export const Header = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
   const navigate = useNavigate();
-  const navItems = loadMenuContent().items;
+  // O cabeçalho está em todas as páginas: arranca no menu de fábrica para não desaparecer
+  // enquanto o Supabase responde.
+  const [menu, setMenu] = useState(initialMenuContent);
+  useEffect(() => { loadMenuContent().then(setMenu).catch(() => {}); }, []);
+  const navItems = menu.items;
 
   const submitSearch = (e) => {
     e.preventDefault();

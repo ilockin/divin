@@ -5,7 +5,8 @@ import "@/index.css";
 import App from "@/App";
 import { applyIntegrations } from "@/lib/integrations";
 
-applyIntegrations();
+// Assíncrono (lê do Supabase) — não bloqueia o arranque da app.
+applyIntegrations().catch(() => {});
 
 const queryClient = new QueryClient({
   defaultOptions: {

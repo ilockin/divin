@@ -1,14 +1,17 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useParams, Navigate } from "react-router-dom";
 import { loadPublishedArticles, findArticle } from "../lib/articles";
 import { loadBlogContent } from "../lib/blogContent";
+import { initialBlogContent } from "../admin/data/mockBlogContent";
 import { HeaderSection } from "../components/blog/BlogSections";
 import { EditPageButton } from "../components/EditPageButton";
 import { EditArticleButton } from "../components/EditArticleButton";
 
 export const Blog = () => {
-  const content = loadBlogContent();
-  const posts = loadPublishedArticles();
+  const [content, setContent] = useState(initialBlogContent);
+  const [posts, setPosts] = useState([]);
+  useEffect(() => { loadBlogContent().then(setContent).catch(() => {}); }, []);
+  useEffect(() => { loadPublishedArticles().then(setPosts).catch(() => {}); }, []);
 
   return (
     <div className="container-da py-12" data-testid="blog-page">
@@ -33,10 +36,27 @@ export const Blog = () => {
 
 export const BlogPost = () => {
   const { slug } = useParams();
-  const post = findArticle(slug);
-  if (!post || post.status !== "publicado") return <Navigate to="/blog" replace />;
+  const [post, setPost] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [related, setRelated] = useState([]);
 
-  const related = loadPublishedArticles().filter((p) => p.slug !== slug).slice(0, 2);
+  useEffect(() => {
+    setLoading(true);
+    findArticle(slug)
+      .then(setPost)
+      .catch(() => setPost(null))
+      .finally(() => setLoading(false));
+  }, [slug]);
+
+  useEffect(() => {
+    loadPublishedArticles()
+      .then((all) => setRelated(all.filter((p) => p.slug !== slug).slice(0, 2)))
+      .catch(() => {});
+  }, [slug]);
+
+  // Só decidir "não existe" depois do pedido terminar, senão pisca um redirecionamento falso.
+  if (loading) return <div className="container-da py-24" data-testid="blog-post-loading" />;
+  if (!post || post.status !== "publicado") return <Navigate to="/blog" replace />;
 
   return (
     <article className="py-12" data-testid="blog-post-page">
