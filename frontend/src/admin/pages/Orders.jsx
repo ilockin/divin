@@ -6,6 +6,7 @@ import { DataTable, StatusBadge } from "../components/DataTable";
 import { PageHeader, SectionTitle } from "../components/Bits";
 import { loadAllOrders, updateOrderStatus, ORDER_STATUSES } from "../../lib/adminOrders";
 import { formatEUR } from "../../lib/format";
+import { paymentMethodLabel } from "../../lib/payments";
 
 const TONE_MAP = { ok: "ok", warn: "warn", info: "info", err: "err" };
 
@@ -56,6 +57,15 @@ export const Orders = () => {
     {
       key: "total", label: "Total", sortable: true,
       render: (o) => <span className="font-body text-sm font-semibold">{formatEUR(o.total)}</span>,
+    },
+    {
+      // Importa ao balcão: uma encomenda em numerário fica por pagar até ser levantada.
+      key: "payment_method", label: "Pagamento",
+      render: (o) => (
+        <StatusBadge tone={o.payment_method === "numerario" ? "amber" : "muted"}>
+          {paymentMethodLabel(o.payment_method)}
+        </StatusBadge>
+      ),
     },
     {
       key: "status", label: "Estado",

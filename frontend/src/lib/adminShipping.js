@@ -8,6 +8,7 @@ const fromRow = (r) => ({
   eta: r.eta || "",
   zones: r.zones || "",
   active: !!r.active,
+  isPickup: !!r.is_pickup,
   sortOrder: r.sort_order ?? 0,
 });
 
@@ -18,6 +19,7 @@ const toRow = (m) => ({
   eta: m.eta || null,
   zones: m.zones || null,
   active: !!m.active,
+  is_pickup: !!m.isPickup,
 });
 
 // Admin: todos os métodos (inclui inativos).

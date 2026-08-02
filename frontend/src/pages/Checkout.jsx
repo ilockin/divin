@@ -1,12 +1,14 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate, Link, Navigate } from "react-router-dom";
-import { Check, CreditCard, Smartphone, Wallet, Building2 } from "lucide-react";
+import { Check, Banknote, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
+import { loadStripe } from "@stripe/stripe-js";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { formatEUR } from "../lib/format";
 import { createOrder } from "../lib/orders";
-import { supabase } from "../lib/supabaseClient";
+import { createPaymentIntent } from "../lib/payments";
+import { StripePaymentStep } from "../components/checkout/StripePaymentStep";
 import { getSettings } from "../lib/storeSettings";
 import { listActiveMethods } from "../lib/adminShipping";
 import { getCouponByCode } from "../lib/adminCoupons";
@@ -21,12 +23,21 @@ export const Checkout = () => {
   const [submitted, setSubmitted] = useState(false);
   const [finishing, setFinishing] = useState(false);
   const [stripeConfig, setStripeConfig] = useState({ enabled: false, publishableKey: "" });
+  const [clientSecret, setClientSecret] = useState("");
+  const [order, setOrder] = useState(null);
+  const [preparing, setPreparing] = useState(false);
 
   useEffect(() => {
     getSettings(["stripe_enabled", "stripe_publishable_key"])
       .then((s) => setStripeConfig({ enabled: s.stripe_enabled === "true", publishableKey: s.stripe_publishable_key || "" }))
       .catch(() => {});
   }, []);
+
+  // loadStripe só pode correr uma vez por chave.
+  const stripePromise = useMemo(
+    () => (stripeConfig.publishableKey ? loadStripe(stripeConfig.publishableKey) : null),
+    [stripeConfig.publishableKey],
+  );
   const [couponCode, setCouponCode] = useState("");
   const [shipMethods, setShipMethods] = useState([]);
   const [form, setForm] = useState({
@@ -46,8 +57,6 @@ export const Checkout = () => {
   }, []);
 
   const { user } = useAuth();
-
-  if (items.length === 0 && !submitted) return <Navigate to="/carrinho" replace />;
 
   const update = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
@@ -73,10 +82,51 @@ export const Checkout = () => {
   const shippingPrice = selectedMethod ? selectedMethod.cost : 0;
   const total = afterDiscount + shippingPrice;
 
+  // O numerário só existe quando o cliente vai levantar a encomenda à loja.
+  const isPickup = !!selectedMethod?.isPickup;
+  const payingCash = isPickup && form.payment === "numerario";
+  const stripeReady = stripeConfig.enabled && !!stripeConfig.publishableKey;
+
   const next = () => setStep((s) => Math.min(STEPS.length - 1, s + 1));
   const prev = () => setStep((s) => Math.max(0, s - 1));
 
-  const finish = async () => {
+  const buildOrder = (paymentMethod) => createOrder({
+    items,
+    form: { ...form, name: `${form.firstName} ${form.lastName}`.trim() },
+    shippingCost: shippingPrice,
+    discountAmount: totals.discount,
+    userId: user?.id || null,
+    shippingMethodId: form.shipping || null,
+    couponCode: promo?.code || null,
+    paymentMethod,
+  });
+
+  // Pagamento online: a encomenda tem de existir antes do PaymentIntent (o id vai na metadata,
+  // e é por ele que o webhook a marca como paga). Fica em "pendente" até o Stripe confirmar.
+  useEffect(() => {
+    if (step !== 2 || payingCash || !stripeReady || clientSecret || preparing) return;
+    if (!user) return;
+    let cancelled = false;
+    setPreparing(true);
+    (async () => {
+      try {
+        const created = await buildOrder(null);
+        const secret = await createPaymentIntent(created.id);
+        if (cancelled) return;
+        setOrder(created);
+        setClientSecret(secret);
+      } catch (err) {
+        if (!cancelled) toast.error("Não foi possível preparar o pagamento", { description: err.message });
+      } finally {
+        if (!cancelled) setPreparing(false);
+      }
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, payingCash, stripeReady, user]);
+
+  // Numerário: não passa pelo Stripe. A encomenda fica por pagar até ser levantada na loja.
+  const finishCash = async () => {
     if (!user) {
       toast.error("Inicia sessão para finalizar a compra", { description: "Serás redireccionado para o login." });
       navigate("/conta/login?redirect=/checkout");
@@ -84,35 +134,20 @@ export const Checkout = () => {
     }
     setFinishing(true);
     try {
-      const order = await createOrder({
-        items,
-        form: { ...form, name: `${form.firstName} ${form.lastName}`.trim() },
-        shippingCost: shippingPrice,
-        discountAmount: totals.discount,
-        userId: user?.id || null,
-      });
-
-      // Redirecionar para Stripe se activado no painel de definições
-      if (stripeConfig.enabled && stripeConfig.publishableKey) {
-        const { data: stripe, error: stripeErr } = await supabase.functions.invoke("create-checkout-session", {
-          body: { order_id: order.id, origin: window.location.origin },
-        });
-        if (!stripeErr && stripe?.url) {
-          clear();
-          window.location.href = stripe.url;
-          return;
-        }
-      }
-
+      const created = await buildOrder("numerario");
       setSubmitted(true);
       clear();
-      navigate("/checkout/sucesso?order=" + order.order_number, { replace: true });
+      navigate("/checkout/sucesso?order=" + created.order_number, { replace: true });
     } catch (err) {
       toast.error("Erro ao registar encomenda", { description: err.message });
     } finally {
       setFinishing(false);
     }
   };
+
+  // Depois de todos os hooks: o passo de pagamento tem um useEffect e não pode ficar atrás
+  // de um return antecipado.
+  if (items.length === 0 && !submitted) return <Navigate to="/carrinho" replace />;
 
   return (
     <div className="container-da py-12" data-testid="checkout-page">
@@ -176,11 +211,55 @@ export const Checkout = () => {
           {step === 2 && (
             <section className="space-y-3" data-testid="step-payment">
               <h2 className="text-xl mb-4">Pagamento</h2>
-              <RadioCard checked={form.payment === "card"} onChange={() => update("payment", "card")} title="Cartão de crédito" desc="Visa, Mastercard — via Stripe" icon={CreditCard} testid="pay-card" />
-              <RadioCard checked={form.payment === "mbway"} onChange={() => update("payment", "mbway")} title="MB Way" desc="Pagamento via telemóvel" icon={Smartphone} testid="pay-mbway" />
-              <RadioCard checked={form.payment === "multibanco"} onChange={() => update("payment", "multibanco")} title="Multibanco" desc="Referência por e-mail" icon={Building2} testid="pay-multibanco" />
-              <RadioCard checked={form.payment === "paypal"} onChange={() => update("payment", "paypal")} title="PayPal" desc="Conta PayPal ou cartão" icon={Wallet} testid="pay-paypal" />
-              <p className="font-body text-xs text-[var(--da-muted)] mt-4 italic">Demonstração — nenhum pagamento real será processado.</p>
+
+              {/* Numerário: só quando o envio escolhido é recolha na loja. */}
+              {isPickup && (
+                <>
+                  <RadioCard
+                    checked={form.payment === "numerario"}
+                    onChange={() => update("payment", "numerario")}
+                    title="Numerário"
+                    desc="Pagamento em dinheiro na loja, ao levantar a encomenda."
+                    icon={Banknote}
+                    testid="pay-numerario"
+                  />
+                  {stripeReady && (
+                    <RadioCard
+                      checked={form.payment !== "numerario"}
+                      onChange={() => update("payment", "online")}
+                      title="Pagar agora"
+                      desc="Cartão, MB Way, Multibanco, PayPal ou carteira digital."
+                      icon={Check}
+                      testid="pay-online"
+                    />
+                  )}
+                </>
+              )}
+
+              {!payingCash && !stripeReady && (
+                <div className="bg-white border hairline rounded-2xl p-6 flex gap-3" data-testid="payment-unavailable">
+                  <AlertTriangle size={18} className="text-[var(--da-muted)] shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-body text-sm font-semibold text-[var(--da-forest)]">Pagamento indisponível</p>
+                    <p className="font-body text-sm text-[var(--da-muted)] mt-1 leading-relaxed">
+                      Não é possível concluir a compra neste momento.
+                      {isPickup ? " Escolhe Numerário para levantar e pagar na loja." : " Tenta novamente mais tarde ou contacta-nos."}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {!payingCash && stripeReady && preparing && (
+                <p className="font-body text-sm text-[var(--da-muted)]" data-testid="payment-preparing">A preparar o pagamento…</p>
+              )}
+
+              {!payingCash && stripeReady && clientSecret && (
+                <StripePaymentStep
+                  stripePromise={stripePromise}
+                  clientSecret={clientSecret}
+                  returnUrl={`${window.location.origin}/checkout/sucesso?order=${order?.order_number || ""}`}
+                />
+              )}
             </section>
           )}
 
@@ -190,8 +269,14 @@ export const Checkout = () => {
             ) : <span />}
             {step < STEPS.length - 1 ? (
               <button type="button" onClick={next} className="btn-da btn-da-primary" data-testid="step-next">Continuar</button>
+            ) : payingCash ? (
+              <button type="button" onClick={finishCash} disabled={finishing} className="btn-da btn-da-primary disabled:opacity-60" data-testid="checkout-finish">
+                {finishing ? "A registar…" : "Confirmar encomenda"}
+              </button>
             ) : (
-              <button type="button" onClick={finish} disabled={finishing} className="btn-da btn-da-primary disabled:opacity-60" data-testid="checkout-finish">{finishing ? "A registar…" : "Finalizar compra"}</button>
+              // Com Stripe, quem finaliza é o botão "Pagar agora" dentro dos Elements — o
+              // ecrã de sucesso deixa de ser alcançável sem confirmação do pagamento.
+              <span />
             )}
           </div>
         </div>

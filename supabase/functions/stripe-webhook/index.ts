@@ -54,7 +54,44 @@ serve(async (req) => {
 
     const event = JSON.parse(body);
 
+    // ── Ciclo do PaymentIntent (Stripe Elements na página de checkout) ────────
+    // O dinheiro só conta em `succeeded`. Métodos de notificação diferida — o Multibanco é o
+    // caso — passam por `processing` durante dias, entre a emissão da referência e o
+    // pagamento efetivo; nesse intervalo a encomenda TEM de continuar por pagar.
+    if (event.type.startsWith("payment_intent.")) {
+      const intent = event.data.object;
+      const orderId = intent.metadata?.order_id;
+      const method = intent.payment_method_types?.[0] ?? null;
+
+      if (orderId) {
+        if (event.type === "payment_intent.succeeded") {
+          await supabase.from("orders")
+            .update({ status: "pago", stripe_payment_intent_id: intent.id, payment_method: method })
+            .eq("id", orderId);
+        } else if (event.type === "payment_intent.processing") {
+          await supabase.from("orders")
+            .update({ status: "pendente", stripe_payment_intent_id: intent.id, payment_method: method })
+            .eq("id", orderId);
+        } else if (event.type === "payment_intent.payment_failed") {
+          await supabase.from("orders")
+            .update({ status: "pendente", payment_method: method })
+            .eq("id", orderId);
+        }
+      }
+    }
+
+    // ── Checkout Sessions (fluxo anterior, mantido para encomendas já em curso) ─
     if (event.type === "checkout.session.completed") {
+      const session = event.data.object;
+      const orderId = session.metadata?.order_id;
+      // `completed` não significa pago: num método diferido dispara quando a referência é
+      // emitida. Sem esta guarda, uma encomenda ficava paga sem dinheiro nenhum ter entrado.
+      if (orderId && session.payment_status === "paid") {
+        await supabase.from("orders").update({ status: "pago", stripe_session_id: session.id }).eq("id", orderId);
+      }
+    }
+
+    if (event.type === "checkout.session.async_payment_succeeded") {
       const session = event.data.object;
       const orderId = session.metadata?.order_id;
       if (orderId) {
@@ -62,7 +99,7 @@ serve(async (req) => {
       }
     }
 
-    if (event.type === "checkout.session.expired") {
+    if (event.type === "checkout.session.expired" || event.type === "checkout.session.async_payment_failed") {
       const session = event.data.object;
       const orderId = session.metadata?.order_id;
       if (orderId) {

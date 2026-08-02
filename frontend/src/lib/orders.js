@@ -1,7 +1,7 @@
 import { supabase } from "./supabaseClient";
 import { getAffiliateRef, clearAffiliateRef } from "./affiliateRef";
 
-export async function createOrder({ items, form, shippingCost, discountAmount, userId }) {
+export async function createOrder({ items, form, shippingCost, discountAmount, userId, shippingMethodId, couponCode, paymentMethod }) {
   const subtotal = items.reduce((s, i) => s + i.price * i.qty, 0);
   const total = subtotal + shippingCost - discountAmount;
 
@@ -12,10 +12,15 @@ export async function createOrder({ items, form, shippingCost, discountAmount, u
       user_id: userId || null,
       email: form.email,
       status: "pendente",
+      // Estes valores são indicativos: quem cobra é a Edge Function create-payment-intent,
+      // que os recalcula a partir de `products`, `shipping_methods` e `coupons`.
       subtotal,
       shipping_cost: shippingCost,
       discount_amount: discountAmount,
       total,
+      shipping_method_id: shippingMethodId || null,
+      coupon_code: couponCode || null,
+      payment_method: paymentMethod || null,
       affiliate_code: getAffiliateRef(),
       shipping_address: {
         name: form.name,

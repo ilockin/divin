@@ -4,11 +4,17 @@ import { Check } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
 import { formatEUR } from "../lib/format";
 import { getStatusInfo } from "../lib/orders";
+import { useCart } from "../context/CartContext";
 
 export const OrderSuccess = () => {
   const [params] = useSearchParams();
   const orderNumber = params.get("order") || "";
   const [order, setOrder] = useState(null);
+  const { clear } = useCart();
+
+  // O carrinho é esvaziado aqui e não antes de pagar: métodos como Multibanco, MB Way e
+  // PayPal saem da página, e se o cliente desistir a meio não pode ficar sem o carrinho.
+  useEffect(() => { if (orderNumber) clear(); }, [orderNumber]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!orderNumber) return;

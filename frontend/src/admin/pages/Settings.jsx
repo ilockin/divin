@@ -77,15 +77,18 @@ const Toggle = ({ checked, onChange, testid, disabled }) => (
   </button>
 );
 
-const emptyMethod = { id: null, name: "", description: "", cost: 0, eta: "", zones: "", active: true };
+const emptyMethod = { id: null, name: "", description: "", cost: 0, eta: "", zones: "", active: true, isPickup: false };
 
 const EMPTY_STRIPE = { stripe_enabled: "false", stripe_test_mode: "true", stripe_publishable_key: "", stripe_secret_key: "", stripe_webhook_secret: "" };
 
 export const Settings = () => {
-  const { settings, setSettings, role, shippingMethods, setShippingMethods, languages, setLanguages, integrations, setIntegrations } = useAdmin();
+  const { settings, setSettings, role, shippingMethods, setShippingMethods, languages, setLanguages, integrations, saveIntegrations } = useAdmin();
   const [form, setForm] = useState(settings);
   const [intForm, setIntForm] = useState(integrations);
   const ui = (key, value) => setIntForm((prev) => ({ ...prev, [key]: value }));
+
+  // As integrações vêm do Supabase depois da primeira renderização.
+  useEffect(() => { setIntForm(integrations); }, [integrations]);
 
   // ── Stripe ──────────────────────────────────────────────────────────────────
   const [stripe, setStripe] = useState(EMPTY_STRIPE);
@@ -128,10 +131,14 @@ export const Settings = () => {
     });
   };
 
-  const save = () => {
+  const save = async () => {
     setSettings(form);
-    setIntegrations(intForm);
-    toast.success("Definições guardadas.");
+    try {
+      await saveIntegrations(intForm);
+      toast.success("Definições guardadas.");
+    } catch (err) {
+      toast.error("Erro ao guardar as integrações", { description: err.message });
+    }
   };
 
   // ---- modos de envio (CRUD) ----
@@ -592,6 +599,13 @@ supabase functions deploy stripe-webhook --project-ref ${SUPABASE_PROJECT_REF}`}
           <FormRow label="Zonas / condições (opcional)">
             <input className={fieldClass} value={methodForm.zones} onChange={(e) => setMethodForm((f) => ({ ...f, zones: e.target.value }))} placeholder="ex.: Portugal Continental" data-testid="shipmethod-zones" />
           </FormRow>
+          <div className="flex items-center justify-between border-t hairline pt-4">
+            <div>
+              <span className="font-body text-sm">Recolha na loja</span>
+              <p className="font-body text-[11px] text-[var(--da-muted)] mt-0.5">Liberta o pagamento em numerário no checkout.</p>
+            </div>
+            <Toggle checked={methodForm.isPickup} onChange={(v) => setMethodForm((f) => ({ ...f, isPickup: v }))} testid="shipmethod-pickup" />
+          </div>
           <div className="flex items-center justify-between border-t hairline pt-4">
             <span className="font-body text-sm">Ativo</span>
             <Toggle checked={methodForm.active} onChange={(v) => setMethodForm((f) => ({ ...f, active: v }))} testid="shipmethod-active" />
