@@ -4,7 +4,9 @@ import { supabase } from "../lib/supabaseClient";
 const AuthContext = createContext(null);
 
 const fetchProfile = async (userId) => {
-  const { data } = await supabase.from("profiles").select("*").eq("id", userId).single();
+  const { data, error } = await supabase.from("profiles").select("*").eq("id", userId).single();
+  // Sem isto, uma falha de RLS/rede fica silenciosa e o utilizador vê só "Sem permissão".
+  if (error) console.error("[auth] falha ao carregar o perfil:", error.message);
   return data || null;
 };
 
