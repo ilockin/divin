@@ -11,6 +11,7 @@ import { createPaymentIntent } from "../lib/payments";
 import { StripePaymentStep } from "../components/checkout/StripePaymentStep";
 import { getSettings } from "../lib/storeSettings";
 import { listActiveMethods } from "../lib/adminShipping";
+import { loadZones, loadCategoryRules, resolveEligibleMethods } from "../lib/adminShippingRules";
 import { getCouponByCode } from "../lib/adminCoupons";
 import { validateCoupon, couponToPromo } from "../lib/coupons";
 
@@ -40,21 +41,42 @@ export const Checkout = () => {
   );
   const [couponCode, setCouponCode] = useState("");
   const [shipMethods, setShipMethods] = useState([]);
+  const [shipZones, setShipZones] = useState([]);
+  const [shipCategoryRules, setShipCategoryRules] = useState({ default: [], bySlug: {} });
   const [form, setForm] = useState({
     email: "", firstName: "", lastName: "", phone: "",
     address: "", city: "", zip: "", country: "Portugal",
     shipping: "", payment: "card",
   });
 
-  // Modos de envio ativos (geridos no admin). Seleciona o primeiro por defeito.
+  // Modos de envio ativos + regras (zona por país, categoria), geridos no admin.
   useEffect(() => {
-    listActiveMethods()
-      .then((methods) => {
-        setShipMethods(methods);
-        setForm((f) => (f.shipping ? f : { ...f, shipping: methods[0]?.id || "" }));
-      })
-      .catch(() => {});
+    listActiveMethods().then(setShipMethods).catch(() => {});
+    loadZones().then(setShipZones).catch(() => {});
+    loadCategoryRules().then(setShipCategoryRules).catch(() => {});
   }, []);
+
+  // Categorias distintas presentes no carrinho.
+  const cartCategories = useMemo(
+    () => [...new Set(items.map((it) => it.category).filter(Boolean))],
+    [items]
+  );
+
+  // Só os métodos elegíveis para o país de destino ∩ categorias do carrinho.
+  const eligibleMethods = useMemo(
+    () => resolveEligibleMethods({
+      methods: shipMethods, zones: shipZones, categoryRules: shipCategoryRules,
+      country: form.country, cartCategories,
+    }),
+    [shipMethods, shipZones, shipCategoryRules, form.country, cartCategories]
+  );
+
+  // Mantém uma seleção válida: se a atual deixar de ser elegível (mudou o país), escolhe a 1.ª.
+  useEffect(() => {
+    setForm((f) => (eligibleMethods.some((m) => m.id === f.shipping)
+      ? f
+      : { ...f, shipping: eligibleMethods[0]?.id || "" }));
+  }, [eligibleMethods]);
 
   const { user } = useAuth();
 
@@ -192,9 +214,9 @@ export const Checkout = () => {
           {step === 1 && (
             <section className="space-y-3" data-testid="step-shipping">
               <h2 className="text-xl mb-4">Método de envio</h2>
-              {shipMethods.length === 0 ? (
-                <p className="font-body text-sm text-[var(--da-muted)]">Sem métodos de envio disponíveis de momento.</p>
-              ) : shipMethods.map((m) => (
+              {eligibleMethods.length === 0 ? (
+                <p className="font-body text-sm text-[var(--da-muted)]">Sem métodos de envio disponíveis para o destino indicado.</p>
+              ) : eligibleMethods.map((m) => (
                 <RadioCard
                   key={m.id}
                   checked={form.shipping === m.id}
