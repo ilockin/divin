@@ -2,9 +2,10 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 import { ROLES, adminOrders, adminAttributes, stockMovements as initialMovements, storeSettings as initialSettings } from "../data/mockAdmin";
 import { useAuth } from "../../context/AuthContext";
 import { loadArticles } from "../../lib/articles";
-import { initialLanguages, initialShippingZones, initialDistrictRules, initialCategoryRules } from "../data/mockErp";
+import { initialLanguages } from "../data/mockErp";
 import { listPurchases } from "../../lib/adminPurchases";
 import { listAllMethods } from "../../lib/adminShipping";
+import { loadZones, loadDistrictRules, loadCategoryRules } from "../../lib/adminShippingRules";
 import { listInsumos, loadRecipes, listProductionOrders } from "../../lib/adminProduction";
 import { listAllProducts } from "../../lib/adminProducts";
 import { initialCoupons } from "../data/mockMarketing";
@@ -53,9 +54,15 @@ export const AdminProvider = ({ children }) => {
   const [shippingMethods, setShippingMethods] = useState([]);
   useEffect(() => { listAllMethods().then(setShippingMethods).catch(() => {}); }, []);
   const [languages, setLanguages] = useState(initialLanguages);
-  const [shippingZones, setShippingZones] = useState(initialShippingZones);
-  const [districtRules, setDistrictRules] = useState(initialDistrictRules);
-  const [categoryRules, setCategoryRules] = useState(initialCategoryRules);
+  const [shippingZones, setShippingZones] = useState([]);
+  const [districtRules, setDistrictRules] = useState({ PT: {}, ES: {} });
+  const [categoryRules, setCategoryRules] = useState({ default: [], bySlug: {} });
+  const reloadShippingZones = useCallback(() => loadZones().then(setShippingZones), []);
+  const reloadDistrictRules = useCallback(() => loadDistrictRules().then(setDistrictRules), []);
+  const reloadCategoryRules = useCallback(() => loadCategoryRules().then(setCategoryRules), []);
+  useEffect(() => { reloadShippingZones().catch(() => {}); }, [reloadShippingZones]);
+  useEffect(() => { reloadDistrictRules().catch(() => {}); }, [reloadDistrictRules]);
+  useEffect(() => { reloadCategoryRules().catch(() => {}); }, [reloadCategoryRules]);
   const [coupons, setCoupons] = useState(initialCoupons);
 
   // Interações públicas (Supabase). Sem auto-save: a gravação é sempre explícita, pelas
@@ -141,9 +148,9 @@ export const AdminProvider = ({ children }) => {
     purchases, setPurchases,
     shippingMethods, setShippingMethods,
     languages, setLanguages,
-    shippingZones, setShippingZones,
-    districtRules, setDistrictRules,
-    categoryRules, setCategoryRules,
+    shippingZones, setShippingZones, reloadShippingZones,
+    districtRules, setDistrictRules, reloadDistrictRules,
+    categoryRules, setCategoryRules, reloadCategoryRules,
     pages, setPages, reloadPages,
     popups, setPopups, reloadPopups,
     subscribers, setSubscribers, reloadSubscribers,

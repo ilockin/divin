@@ -8,6 +8,9 @@ import { useAdmin } from "../context/AdminContext";
 import { PT_DISTRICTS, ES_REGIONS } from "../data/mockErp";
 import { adminCategories } from "../data/mockAdmin";
 import { formatEUR } from "../../lib/format";
+import {
+  saveZone, deleteZone, saveDistrictRule, clearDistrictRule, saveCategoryRule, clearCategoryRule,
+} from "../../lib/adminShippingRules";
 
 // chips com os nomes dos métodos
 const MethodChips = ({ ids, methods, fallback = "—" }) => {
@@ -62,9 +65,9 @@ const TABS = [
 export const Envios = () => {
   const {
     shippingMethods,
-    shippingZones, setShippingZones,
-    districtRules, setDistrictRules,
-    categoryRules, setCategoryRules,
+    shippingZones, reloadShippingZones,
+    districtRules, reloadDistrictRules,
+    categoryRules, reloadCategoryRules,
   } = useAdmin();
 
   const [tab, setTab] = useState("zonas");
@@ -108,62 +111,53 @@ export const Envios = () => {
   });
 
   // ---- guardar ----
-  const saveEditor = () => {
+  const saveEditor = async () => {
     const e = editor;
-    if (e.kind === "zone") {
-      if (!e.name.trim()) { toast.error("Indica o nome da zona."); return; }
-      if (e.isNew) {
-        const id = "z-" + e.name.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
-        setShippingZones((prev) => [...prev, { id, name: e.name, active: e.active, methodIds: e.methodIds, overrides: e.overrides }]);
-        toast.success("Zona adicionada.");
-      } else {
-        setShippingZones((prev) => prev.map((z) => z.id === e.zoneId ? { ...z, name: e.name, active: e.active, methodIds: e.methodIds, overrides: e.overrides } : z));
-        toast.success("Zona atualizada.");
+    try {
+      if (e.kind === "zone") {
+        if (!e.name.trim()) { toast.error("Indica o nome da zona."); return; }
+        const id = e.isNew
+          ? "z-" + e.name.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "")
+          : e.zoneId;
+        await saveZone({ id, name: e.name, active: e.active, methodIds: e.methodIds, overrides: e.overrides });
+        await reloadShippingZones();
+        toast.success(e.isNew ? "Zona adicionada." : "Zona atualizada.");
+      } else if (e.kind === "district") {
+        await saveDistrictRule(e.country, e.name, { methodIds: e.methodIds, overrides: e.overrides });
+        await reloadDistrictRules();
+        toast.success("Regra de distrito guardada.");
+      } else if (e.kind === "category") {
+        await saveCategoryRule(e.isDefault ? "__default__" : e.slug, e.methodIds);
+        await reloadCategoryRules();
+        toast.success("Regra de categoria guardada.");
       }
-    } else if (e.kind === "district") {
-      setDistrictRules((prev) => {
-        const next = { ...prev, [e.country]: { ...prev[e.country] } };
-        if (e.methodIds.length === 0) delete next[e.country][e.name];
-        else next[e.country][e.name] = { methodIds: e.methodIds, overrides: e.overrides };
-        return next;
-      });
-      toast.success("Regra de distrito guardada.");
-    } else if (e.kind === "category") {
-      if (e.isDefault) {
-        setCategoryRules((prev) => ({ ...prev, default: e.methodIds }));
-      } else {
-        setCategoryRules((prev) => {
-          const bySlug = { ...prev.bySlug };
-          if (e.methodIds.length === 0) delete bySlug[e.slug];
-          else bySlug[e.slug] = e.methodIds;
-          return { ...prev, bySlug };
-        });
-      }
-      toast.success("Regra de categoria guardada.");
+      setEditor(null);
+    } catch (err) {
+      toast.error("Não foi possível guardar", { description: err.message });
     }
-    setEditor(null);
   };
 
-  const removeZone = (z) => {
+  const removeZone = async (z) => {
     if (!window.confirm(`Remover a zona "${z.name}"?`)) return;
-    setShippingZones((prev) => prev.filter((x) => x.id !== z.id));
-    toast.success("Zona removida.");
+    try {
+      await deleteZone(z.id);
+      await reloadShippingZones();
+      toast.success("Zona removida.");
+    } catch (err) { toast.error("Não foi possível remover", { description: err.message }); }
   };
-  const clearDistrict = (name) => {
-    setDistrictRules((prev) => {
-      const next = { ...prev, [country]: { ...prev[country] } };
-      delete next[country][name];
-      return next;
-    });
-    toast.success("Regra removida — passa a herdar da zona.");
+  const clearDistrict = async (name) => {
+    try {
+      await clearDistrictRule(country, name);
+      await reloadDistrictRules();
+      toast.success("Regra removida — passa a herdar da zona.");
+    } catch (err) { toast.error("Não foi possível remover", { description: err.message }); }
   };
-  const clearCategory = (slug) => {
-    setCategoryRules((prev) => {
-      const bySlug = { ...prev.bySlug };
-      delete bySlug[slug];
-      return { ...prev, bySlug };
-    });
-    toast.success("Regra removida — passa a usar a predefinida.");
+  const clearCategory = async (slug) => {
+    try {
+      await clearCategoryRule(slug);
+      await reloadCategoryRules();
+      toast.success("Regra removida — passa a usar a predefinida.");
+    } catch (err) { toast.error("Não foi possível remover", { description: err.message }); }
   };
 
   const districts = country === "PT" ? PT_DISTRICTS : ES_REGIONS;
